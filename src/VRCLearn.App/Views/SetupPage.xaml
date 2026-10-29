@@ -77,85 +77,10 @@
                         </StackPanel>
 
                         <StackPanel Visibility="{Binding Step, Converter={StaticResource StepVisibility}, ConverterParameter=1}">
-                            <TextBlock Style="{StaticResource StepHeading}" Text="{markup:Tr Settings.UnityHub}" />
+                            <TextBlock Style="{StaticResource StepHeading}" Text="{markup:Tr Setup.Locations}" />
                             <TextBlock
                                 Style="{StaticResource StepCaption}"
-                                Text="{markup:Tr Setup.UnityHint}" />
-
-                            <DockPanel Margin="{StaticResource Gap.Large}" Style="{StaticResource BrowseRow}">
-                                <ui:Button
-                                    DockPanel.Dock="Right"
-                                    Click="OnBrowseUnityHubClick"
-                                    Content="{markup:Tr Templates.Browse}"
-                                    Style="{StaticResource BrowseButton}" />
-                                <ui:TextBox
-                                    Style="{StaticResource PathTextBox}"
-                                    Text="{Binding Shared.UnityHubPath, Mode=OneWay}" />
-                            </DockPanel>
-                        </StackPanel>
-
-                        <StackPanel Visibility="{Binding Step, Converter={StaticResource StepVisibility}, ConverterParameter=2}">
-                            <TextBlock Style="{StaticResource StepHeading}" Text="{markup:Tr Setup.UnityVersions}" />
-                            <TextBlock
-                                Style="{StaticResource StepCaption}"
-                                Text="{markup:Tr Setup.UnityVersionsHint}" />
-
-                            <StackPanel Visibility="{Binding HasNoEditors, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                <TextBlock
-                                    Margin="{StaticResource Gap.Large}"
-                                    FontSize="{StaticResource FontSize.Subtitle}"
-                                    Text="{markup:Tr Setup.UnityVersionsEmpty}"
-                                    TextWrapping="Wrap" />
-                                <TextBlock
-                                    Margin="{StaticResource Gap.Small}"
-                                    Style="{StaticResource StepCaption}"
-                                    Text="{markup:Tr Setup.UnityVersionsEmptyHint}" />
-                            </StackPanel>
-
-                            <ItemsControl Margin="{StaticResource Gap.Large}" ItemsSource="{Binding InstalledEditors}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate>
-                                        <Grid Margin="0,8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="*" />
-                                            </Grid.ColumnDefinitions>
-                                            <ui:SymbolIcon
-                                                Grid.Column="0"
-                                                Margin="0,0,12,0"
-                                                VerticalAlignment="Center"
-                                                FontSize="{StaticResource IconSize.Inline}"
-                                                Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
-                                                Symbol="Checkmark24" />
-                                            <StackPanel Grid.Column="1">
-                                                <TextBlock Style="{StaticResource RowTitle}" Text="{Binding Version}" />
-                                                <TextBlock
-                                                    Margin="0,2,0,0"
-                                                    FontFamily="Consolas"
-                                                    FontSize="{StaticResource FontSize.Caption}"
-                                                    Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                                    Text="{Binding Path}"
-                                                    TextTrimming="CharacterEllipsis" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-
-                            <WrapPanel Margin="{StaticResource Gap.Large}" HorizontalAlignment="Left">
-                                <ui:Button
-                                    Margin="{StaticResource Gap.Wrapped}"
-                                    Appearance="Secondary"
-                                    Command="{Binding DetectEditorsCommand}"
-                                    Content="{markup:Tr Setup.UnityVersionsRefresh}" />
-                                <ui:Button
-                                    Margin="{StaticResource Gap.Wrapped}"
-                                    Appearance="Secondary"
-                                    Click="OnAddUnityEditorClick"
-                                    Content="{markup:Tr Setup.UnityVersionsAdd}" />
-                            </WrapPanel>
-
-                            <Separator Margin="{StaticResource Gap.Large}" />
+                                Text="{markup:Tr Setup.LocationsHint}" />
 
                             <TextBlock
                                 Margin="{StaticResource Gap.Large}"
@@ -178,13 +103,17 @@
                                     Style="{StaticResource PathTextBox}"
                                     Text="{Binding Shared.ProjectDirectory, Mode=OneWay}" />
                             </DockPanel>
-                        </StackPanel>
 
-                        <StackPanel Visibility="{Binding Step, Converter={StaticResource StepVisibility}, ConverterParameter=3}">
-                            <TextBlock Style="{StaticResource StepHeading}" Text="{markup:Tr Setup.Storage}" />
                             <TextBlock
-                                Style="{StaticResource StepCaption}"
-                                Text="{markup:Tr Settings.BackupDirectoryHint}" />
+                                Margin="{StaticResource Gap.Large}"
+                                Style="{StaticResource RowTitle}"
+                                Text="{markup:Tr Settings.BackupDirectory}" />
+                            <TextBlock
+                                Margin="{StaticResource Gap.Small}"
+                                FontSize="{StaticResource FontSize.Body}"
+                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                Text="{markup:Tr Settings.BackupDirectoryHint}"
+                                TextWrapping="Wrap" />
 
                             <DockPanel Margin="{StaticResource Gap.Large}" Style="{StaticResource BrowseRow}">
                                 <ui:Button
@@ -196,44 +125,6 @@
                                     Style="{StaticResource PathTextBox}"
                                     Text="{Binding Shared.BackupDirectory, Mode=OneWay}" />
                             </DockPanel>
-
-                            <TextBlock
-                                Margin="{StaticResource Gap.Large}"
-                                Style="{StaticResource RowTitle}"
-                                Text="{markup:Tr Settings.CachePath}" />
-
-                            <DockPanel Margin="{StaticResource Gap.Large}" Style="{StaticResource BrowseRow}">
-                                <ui:Button
-                                    DockPanel.Dock="Right"
-                                    Click="OnRestoreCacheDirectoryClick"
-                                    Content="{markup:Tr Settings.CachePath.Reset}"
-                                    IsEnabled="{Binding Cache.HasCustom}"
-                                    Style="{StaticResource BrowseButton}" />
-                                <ui:Button
-                                    DockPanel.Dock="Right"
-                                    Click="OnBrowseCacheDirectoryClick"
-                                    Content="{markup:Tr Templates.Browse}"
-                                    Style="{StaticResource BrowseButton}" />
-                                <ui:TextBox
-                                    Style="{StaticResource PathTextBox}"
-                                    Text="{Binding Cache.Current, Mode=OneWay}" />
-                            </DockPanel>
-
-                            <TextBlock
-                                Margin="{StaticResource Gap.Small}"
-                                FontSize="{StaticResource FontSize.Body}"
-                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                Text="{markup:Tr Settings.CachePathHint}"
-                                TextWrapping="Wrap" />
-
-                            <StackPanel
-                                Margin="{StaticResource Gap.Row}"
-                                HorizontalAlignment="Left"
-                                Orientation="Horizontal">
-                                <ui:ProgressRing
-                                    Style="{StaticResource BusyRing}"
-                                    Visibility="{Binding Cache.IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                            </StackPanel>
 
                             <HeaderedContentControl Margin="{StaticResource Gap.Large}" Style="{StaticResource FieldRow}">
                                 <HeaderedContentControl.Header>

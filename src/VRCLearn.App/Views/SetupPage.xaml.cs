@@ -38,40 +38,6 @@ public partial class SetupPage : UserControl
             AnimationService.Current?.Enabled == true);
     }
 
-    private void OnBrowseUnityHubClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not SetupViewModel viewModel)
-        {
-            return;
-        }
-
-        var selected = DialogService.Instance.PickFile(
-            LocalizationService.Instance["Settings.UnityHub"],
-            "Unity Hub.exe|Unity Hub.exe|*.exe|*.*");
-
-        if (selected is not null)
-        {
-            viewModel.Shared.UnityHubPath = selected;
-        }
-    }
-
-    private void OnAddUnityEditorClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not SetupViewModel viewModel)
-        {
-            return;
-        }
-
-        var selected = DialogService.Instance.PickFile(
-            LocalizationService.Instance["Setup.UnityVersionsAdd"],
-            "Unity.exe|Unity.exe|*.exe|*.*");
-
-        if (selected is not null)
-        {
-            viewModel.AddUnityEditor(selected);
-        }
-    }
-
     private void OnBrowseProjectDirectoryClick(object sender, RoutedEventArgs e)
     {
         if (DataContext is not SetupViewModel viewModel)
@@ -103,31 +69,6 @@ public partial class SetupPage : UserControl
         if (selected is not null)
         {
             viewModel.Shared.BackupDirectory = selected;
-        }
-    }
-
-    private async void OnBrowseCacheDirectoryClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not SetupViewModel viewModel)
-        {
-            return;
-        }
-
-        var selected = DialogService.Instance.PickFolder(
-            LocalizationService.Instance["Settings.CachePath"],
-            viewModel.Cache.Current);
-
-        if (selected is not null)
-        {
-            await viewModel.Cache.ChangeAsync(selected);
-        }
-    }
-
-    private async void OnRestoreCacheDirectoryClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is SetupViewModel viewModel)
-        {
-            await viewModel.Cache.RestoreAsync();
         }
     }
 }
