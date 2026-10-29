@@ -1,7 +1,0 @@
-{
-  "dependencies": {
-    "com.vrchat.worlds": {
-      "version": "3.x"
-    }
-  }
-}

@@ -22,49 +22,31 @@ public sealed class TemplateLibrary
     private readonly IReadOnlyDictionary<string, ProjectTemplate> _byId;
     private readonly IReadOnlyList<string> _order;
     private readonly IReadOnlyDictionary<string, AlcomTemplate> _alcom;
-    private readonly IReadOnlyDictionary<string, BuiltinTemplateKind> _builtinKinds;
-    private readonly IBuiltinTemplateStore _builtin;
 
     private TemplateLibrary(
         IReadOnlyDictionary<string, ProjectTemplate> byId,
         IReadOnlyList<string> order,
-        IReadOnlyDictionary<string, AlcomTemplate> alcom,
-        IReadOnlyDictionary<string, BuiltinTemplateKind> builtinKinds,
-        IBuiltinTemplateStore builtin)
+        IReadOnlyDictionary<string, AlcomTemplate> alcom)
     {
         _byId = byId;
         _order = order;
         _alcom = alcom;
-        _builtinKinds = builtinKinds;
-        _builtin = builtin;
     }
 
-    /// <summary>内置三个排前面，然后是按名字排的 <c>.vrclearn-template</c>。</summary>
+    /// <summary>空白项目排前面，然后是按名字排的 <c>.vrclearn-template</c>。</summary>
     public IReadOnlyList<ProjectTemplate> Templates => [.. _order.Select(x => _byId[x])];
 
     public static TemplateLibrary Build(
-        IBuiltinTemplateStore builtinStore,
         IReadOnlyList<AlcomTemplateFile> alcomFiles,
         IReadOnlyList<UnityVersion> installed)
     {
-        var byId = new Dictionary<string, ProjectTemplate>();
-        var alcomById = new Dictionary<string, AlcomTemplate>();
-        var builtinKinds = new Dictionary<string, BuiltinTemplateKind>();
-        var order = new List<string>();
-
-        foreach (var template in builtinStore.Templates)
+        var byId = new Dictionary<string, ProjectTemplate>
         {
-            var id = TemplateFormat.IdOf(template.Kind);
+            [TemplateFormat.BlankId] = new(TemplateFormat.BlankId, "Blank", installed, true),
+        };
 
-            byId[id] = new ProjectTemplate(
-                id,
-                template.Kind.ToString(),
-                template.Kind == BuiltinTemplateKind.Blank ? installed : template.UnityVersions,
-                true);
-
-            order.Add(id);
-            builtinKinds[id] = template.Kind;
-        }
+        var order = new List<string> { TemplateFormat.BlankId };
+        var alcomById = new Dictionary<string, AlcomTemplate>();
 
         foreach (var file in alcomFiles.OrderBy(x => x.Template.DisplayName, StringComparer.CurrentCultureIgnoreCase))
         {
@@ -85,7 +67,7 @@ public sealed class TemplateLibrary
 
         ResolveBases(byId, alcomById);
 
-        return new TemplateLibrary(byId, order, alcomById, builtinKinds, builtinStore);
+        return new TemplateLibrary(byId, order, alcomById);
     }
 
     private static void ResolveBases(
@@ -145,22 +127,22 @@ public sealed class TemplateLibrary
         var dependencies = new Dictionary<string, DependencyRange>();
         var packages = new List<string>();
 
-        var builtin = PlanInto(id, dependencies, packages);
+        Resolve(id, dependencies, packages);
 
-        return new TemplatePlan(_builtin.Open(builtin, unityVersion), dependencies, packages);
+        return new TemplatePlan(null, dependencies, packages);
     }
 
-    private BuiltinTemplateKind PlanInto(
+    private void Resolve(
         string id,
         Dictionary<string, DependencyRange> dependencies,
         List<string> packages)
     {
-        if (!_alcom.TryGetValue(id, out var alcom))
+        if (id == TemplateFormat.BlankId || !_alcom.TryGetValue(id, out var alcom))
         {
-            return _builtinKinds[id];
+            return;
         }
 
-        var builtin = PlanInto(alcom.Base, dependencies, packages);
+        Resolve(alcom.Base, dependencies, packages);
 
         foreach (var (name, text) in alcom.VpmDependencies)
         {
@@ -172,7 +154,5 @@ public sealed class TemplateLibrary
         }
 
         packages.AddRange(alcom.UnityPackages);
-
-        return builtin;
     }
 }

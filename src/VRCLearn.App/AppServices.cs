@@ -77,7 +77,6 @@ public static class AppServices
             .AddSingleton<ProjectBackupRunner>()
             .AddSingleton<AutoBackupService>()
             .AddSingleton<UnityProjectOpener>()
-            .AddSingleton<IBuiltinTemplateStore, FileSystemBuiltinTemplateStore>()
             .AddSingleton<IUserTemplateStore, FileSystemUserTemplateStore>()
             .AddSingleton<IBackupStore, PhysicalBackupStore>()
             .AddSingleton<IResourceStore, ResourceStore>()

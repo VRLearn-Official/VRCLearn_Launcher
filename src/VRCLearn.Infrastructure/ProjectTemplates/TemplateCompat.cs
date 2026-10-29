@@ -1,3 +1,5 @@
+using System.Text.Json.Nodes;
+using VRCLearn.Core.Configuration;
 using VRCLearn.Core.Templates;
 
 namespace VRCLearn.Infrastructure.ProjectTemplates;
@@ -37,8 +39,22 @@ public static class TemplateCompat
         return upgraded;
     }
 
-    private static string UpgradeContent(string content) =>
-        content
-            .Replace(TemplateFormat.LegacyMagic, TemplateFormat.Magic, StringComparison.Ordinal)
-            .Replace(TemplateFormat.LegacyNamespace, TemplateFormat.Namespace, StringComparison.Ordinal);
+    private static string UpgradeContent(string content)
+    {
+        if (JsonNode.Parse(content) is not JsonObject root)
+        {
+            return content;
+        }
+
+        root["$type"] = TemplateFormat.Magic;
+
+        if (root["base"] is JsonValue value
+            && value.TryGetValue<string>(out var baseId)
+            && baseId.StartsWith(TemplateFormat.LegacyNamespace, StringComparison.Ordinal))
+        {
+            root["base"] = TemplateFormat.BlankId;
+        }
+
+        return root.ToJsonString(JsonDefaults.Indented);
+    }
 }

@@ -16,7 +16,6 @@ namespace VRCLearn.App.ViewModels;
 
 public sealed partial class TemplatesViewModel : PageViewModelBase
 {
-    private readonly IBuiltinTemplateStore _templates;
     private readonly IUserTemplateStore _userTemplates;
     private readonly IUnityEditorLocator _editors;
     private readonly RepositoryService _repositories;
@@ -30,7 +29,6 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
     private PackageCatalog _catalog = PackageCatalog.FromRepositories([]);
 
     public TemplatesViewModel(
-        IBuiltinTemplateStore templates,
         IUserTemplateStore userTemplates,
         IUnityEditorLocator editors,
         RepositoryService repositories,
@@ -44,7 +42,6 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
     {
         _logger = logger;
         _configStore = configStore;
-        _templates = templates;
         _userTemplates = userTemplates;
         _editors = editors;
         _repositories = repositories;
@@ -54,7 +51,7 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
         _localization.PropertyChanged += (_, _) => _ = ReloadAsync();
         _dialogs = dialogs;
 
-        _library = TemplateLibrary.Build(templates, [], []);
+        _library = TemplateLibrary.Build([], []);
     }
 
     protected override ILogger Logger => _logger;
@@ -70,7 +67,6 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
         var user = await _userTemplates.LoadAsync(CancellationToken.None);
 
         _library = TemplateLibrary.Build(
-            _templates,
             user.AlcomTemplates,
             [.. _editors
                 .FindEditors()
@@ -385,9 +381,11 @@ public sealed class TemplateOption(ProjectTemplate template, bool isFavorite, Lo
 
     public AlcomTemplate? Definition { get; } = template.Definition;
 
-    public string Display { get; } = template.IsAvailable
-        ? template.DisplayName
-        : localization.Format("Templates.Unavailable", template.DisplayName);
+    public string Display { get; } = template.Id == TemplateFormat.BlankId
+        ? localization["Templates.Builtin.Blank"]
+        : template.IsAvailable
+            ? template.DisplayName
+            : localization.Format("Templates.Unavailable", template.DisplayName);
 
     public IReadOnlyList<UnityVersion> UnityVersions { get; } = template.UnityVersions;
 

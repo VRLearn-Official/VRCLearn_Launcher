@@ -461,7 +461,7 @@ public sealed partial class ProjectDetailViewModel(
         var template = new AlcomTemplate(
             ProjectName,
             TemplateFormat.NewAnonymousId(),
-            BaseId(ProjectType),
+            TemplateFormat.BlankId,
             $"{unityVersion.Major}.{unityVersion.Minor}.{unityVersion.Revision}",
             _project.InstalledPackages.ToDictionary(x => x.Key, x => x.Value.Version.ToString()),
             [],
@@ -479,13 +479,6 @@ public sealed partial class ProjectDetailViewModel(
             Status = localization.Format("ProjectDetail.Template.Failed", exception.Message);
         }
     }
-
-    private static string BaseId(ProjectType type) => type switch
-    {
-        ProjectType.Avatars or ProjectType.UpmAvatars => TemplateFormat.IdOf(BuiltinTemplateKind.Avatars),
-        ProjectType.Worlds or ProjectType.UpmWorlds => TemplateFormat.IdOf(BuiltinTemplateKind.Worlds),
-        _ => TemplateFormat.IdOf(BuiltinTemplateKind.Blank),
-    };
 
     [RelayCommand]
     private async Task OpenInUnity()

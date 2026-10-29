@@ -127,6 +127,7 @@
   "Settings.RerunSetupButton": "重新运行",
   "Settings.ProjectPath": "新建项目默认目录",
   "Settings.ProjectPathHint": "从模板创建项目时的默认目录。",
+  "Templates.Builtin.Blank": "空白项目",
   "Templates.Subtitle": "模板决定新项目的预装内容。",
   "Templates.Favorite": "收藏",
   "Templates.Unfavorite": "取消收藏",

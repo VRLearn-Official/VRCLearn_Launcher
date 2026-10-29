@@ -127,6 +127,7 @@
   "Settings.RerunSetupButton": "Run again",
   "Settings.ProjectPath": "Default folder for new projects",
   "Settings.ProjectPathHint": "Default folder when creating a project from a template.",
+  "Templates.Builtin.Blank": "Blank project",
   "Templates.Subtitle": "A template decides what a new project starts with.",
   "Templates.Favorite": "Favorite",
   "Templates.Unfavorite": "Unfavorite",
