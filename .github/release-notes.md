@@ -18,7 +18,7 @@ Get-FileHash .\VRCLearnLauncher-<版本>-win-x64-Setup.exe -Algorithm SHA256
 
 ## 本次更新
 
-- 稳定性修复
+- 模板支持携带工程文件，新建项目时一并复制
 
 安装包暂未签名，首次运行时 Windows SmartScreen 可能提示；选择「更多信息」→「仍要运行」。
 
@@ -50,6 +50,6 @@ sha256sum -c VRCLearnLauncher-<version>-win-x64-Setup.exe.sha256
 
 ## What's new
 
-- Stability fixes
+- Templates can carry project files, which are copied when a project is created
 
 The installer is not code-signed yet, so Windows SmartScreen may warn on first run. Choose "More info" and then "Run anyway".
