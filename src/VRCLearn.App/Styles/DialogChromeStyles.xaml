@@ -24,10 +24,7 @@
                             <RowDefinition Height="*" />
                         </Grid.RowDefinitions>
 
-                        <Grid
-                            Grid.Row="0"
-                            Background="Transparent"
-                            MouseLeftButtonDown="OnCaptionDrag">
+                        <Grid Grid.Row="0" Background="Transparent">
                             <TextBlock
                                 Margin="16,0,0,0"
                                 VerticalAlignment="Center"

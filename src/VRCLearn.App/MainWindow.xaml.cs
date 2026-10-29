@@ -5,6 +5,7 @@ using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
+using System.Windows.Shell;
 using Microsoft.Extensions.Logging;
 using Wpf.Ui.Controls;
 using VRCLearn.App.Services;
@@ -14,6 +15,8 @@ namespace VRCLearn.App;
 
 public partial class MainWindow : FluentWindow
 {
+    private const double CaptionHeight = 88;
+
     private const double PageShiftOffset = 6;
 
     private const double HeaderShiftOffset = 20;
@@ -60,6 +63,26 @@ public partial class MainWindow : FluentWindow
                 PlayPageTransition(page);
             }
         };
+    }
+
+    protected override void SetWindowChrome()
+    {
+        base.SetWindowChrome();
+
+        WindowChrome.SetWindowChrome(
+            this,
+            new WindowChrome
+            {
+                CaptionHeight = CaptionHeight,
+                CornerRadius = default,
+                GlassFrameThickness = WindowBackdropType == WindowBackdropType.None
+                    ? new Thickness(0.00001)
+                    : new Thickness(-1),
+                ResizeBorderThickness = ResizeMode == ResizeMode.NoResize
+                    ? default
+                    : new Thickness(4),
+                UseAeroCaptionButtons = false,
+            });
     }
 
     private void UpdateSidebarClips()
@@ -252,16 +275,6 @@ public partial class MainWindow : FluentWindow
         {
             e.Cancel = true;
         }
-    }
-
-    private void OnCaptionDrag(object sender, MouseButtonEventArgs e)
-    {
-        if (e.ChangedButton != MouseButton.Left || WindowState == WindowState.Maximized)
-        {
-            return;
-        }
-
-        DragMove();
     }
 
     private void OnPageDragOver(object sender, DragEventArgs e)

@@ -2,7 +2,6 @@
     x:Class="VRCLearn.App.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-    xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:markup="clr-namespace:VRCLearn.App.Markup"
     xmlns:views="clr-namespace:VRCLearn.App.Views"
@@ -255,11 +254,7 @@
                 <RowDefinition Height="*" />
             </Grid.RowDefinitions>
 
-            <Grid
-                Grid.Row="0"
-                Background="Transparent"
-                MouseLeftButtonDown="OnCaptionDrag"
-                shell:WindowChrome.IsHitTestVisibleInChrome="True">
+            <Grid Grid.Row="0" Background="Transparent">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
