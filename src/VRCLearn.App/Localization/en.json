@@ -671,6 +671,8 @@
   "Plugins.CheckUpdates": "Check for updates",
   "Plugins.UpdateTo": "Update to {0}",
   "Plugins.UpdateTitle": "Update plugin",
+  "Plugins.UpdateProgressTitle": "Updating plugin",
+  "Plugins.UpdateProgress": "Downloading and installing \"{0}\" {1}…",
   "Plugins.UpdateMessage": "A new version of \"{0}\" is available: {1} → {2}. Download and install it now?",
   "Plugins.UpdateMessageRunning": "\"{0}\" is running and will be closed for the update: {1} → {2}. Download and install it now?",
   "Plugins.UpdateConfirm": "Update",

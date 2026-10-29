@@ -132,8 +132,8 @@
                         Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <ui:SymbolIcon
                             FontSize="{StaticResource IconSize.Inline}"
-                            Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
-                            Symbol="ArrowSync24" />
+                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                            Symbol="ArrowCircleUp24" />
                     </ui:Button>
                     <ui:Button
                         Margin="{StaticResource Gap.Inline}"

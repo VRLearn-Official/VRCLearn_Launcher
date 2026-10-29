@@ -1,4 +1,5 @@
 ﻿using System.IO;
+using System.Runtime.ExceptionServices;
 using System.Windows;
 using System.Windows.Media.Animation;
 using Microsoft.Extensions.DependencyInjection;
@@ -83,6 +84,38 @@ public sealed class DialogService
         Prepare(dialog, owner);
 
         return dialog.ShowDialog() == true;
+    }
+
+    public async Task RunBusyAsync(string title, string message, Func<Task> work)
+    {
+        var dialog = new BusyDialog(title, message);
+
+        Prepare(dialog);
+
+        ExceptionDispatchInfo? failure = null;
+
+        dialog.Loaded += async (_, _) =>
+        {
+            try
+            {
+                await work();
+            }
+            catch (Exception exception)
+            {
+                failure = ExceptionDispatchInfo.Capture(exception);
+            }
+            finally
+            {
+                if (dialog.IsVisible)
+                {
+                    dialog.Close();
+                }
+            }
+        };
+
+        dialog.ShowDialog();
+
+        failure?.Throw();
     }
 
     public void ShowAutoBackup()

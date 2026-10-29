@@ -1,0 +1,36 @@
+<views:DialogWindowBase
+    x:Class="VRCLearn.App.Views.BusyDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:views="clr-namespace:VRCLearn.App.Views"
+    Width="420"
+    ResizeMode="NoResize"
+    WindowStartupLocation="CenterOwner"
+    Style="{StaticResource DialogWindow}">
+
+    <views:DialogChrome Style="{StaticResource DialogChromeStyle}" ShowTitle="False">
+        <StackPanel Margin="20,0,20,44">
+            <StackPanel Orientation="Horizontal">
+                <ui:ProgressRing
+                    Width="28"
+                    Height="28"
+                    IsIndeterminate="True" />
+                <TextBlock
+                    x:Name="TitleText"
+                    Margin="12,0,0,0"
+                    VerticalAlignment="Center"
+                    FontSize="{StaticResource FontSize.Section}"
+                    FontWeight="SemiBold"
+                    TextWrapping="Wrap" />
+            </StackPanel>
+
+            <TextBlock
+                x:Name="MessageText"
+                Margin="{StaticResource Gap.Small}"
+                FontSize="{StaticResource FontSize.Body}"
+                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                TextWrapping="Wrap" />
+        </StackPanel>
+    </views:DialogChrome>
+</views:DialogWindowBase>

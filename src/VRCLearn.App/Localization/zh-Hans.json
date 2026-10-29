@@ -671,6 +671,8 @@
   "Plugins.CheckUpdates": "检查更新",
   "Plugins.UpdateTo": "更新到 {0}",
   "Plugins.UpdateTitle": "更新插件",
+  "Plugins.UpdateProgressTitle": "正在更新插件",
+  "Plugins.UpdateProgress": "正在下载并安装「{0}」{1}…",
   "Plugins.UpdateMessage": "插件「{0}」有新版本：{1} → {2}。现在下载并安装？",
   "Plugins.UpdateMessageRunning": "插件「{0}」正在运行，更新会关闭它：{1} → {2}。现在下载并安装？",
   "Plugins.UpdateConfirm": "更新",

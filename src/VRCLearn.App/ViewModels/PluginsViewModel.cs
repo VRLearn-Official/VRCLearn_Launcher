@@ -354,57 +354,13 @@ public sealed partial class PluginsViewModel : PageViewModelBase
 
             try
             {
-                Directory.CreateDirectory(directory);
-
-                var path = Path.Combine(directory, $"{item.Id}-{candidate.Version}.vclplugin");
-
-                if (candidate.Sha256 is null)
-                {
-                    _logger.LogWarning(
-                        "插件市场记录缺少 sha256：{Id} {Version}",
-                        item.Id,
-                        candidate.Version);
-                }
-
-                await _download.DownloadAsync(
-                    new DownloadRequest(candidate.PackageUri, path, candidate.Sha256),
-                    progress: null,
-                    CancellationToken.None);
-
-                var (manifest, actualSha256) = await _manager
-                    .InspectPackageAsync(path, CancellationToken.None);
-
-                if (!string.Equals(manifest.Id, item.Id, StringComparison.Ordinal)
-                    || manifest.Version != candidate.Version)
-                {
-                    Status = _localization["Plugins.UpdatePackageMismatch"];
-                    return;
-                }
-
-                var compatibility = PluginCompatibility.Check(
-                    manifest,
-                    PluginHostInfo.Version,
-                    PluginHostInfo.ApiVersion);
-
-                if (compatibility.Count > 0)
-                {
-                    Status = _localization.Format(
-                        "Plugins.UpdateFailed",
-                        string.Join("; ", compatibility));
-                    return;
-                }
-
-                var result = await _manager.UpdateAsync(
-                    item.Id,
-                    path,
-                    candidate.Sha256 ?? actualSha256,
-                    CancellationToken.None);
-
-                Status = result.Outcome == PluginInstallOutcome.PendingRestart
-                    ? _localization.Format("Plugins.UpdatePending", item.Name)
-                    : _localization.Format("Plugins.UpdateDone", item.Name, candidate.Version.ToString());
-
-                _updates.Remove(item.Id);
+                await _dialogs.RunBusyAsync(
+                    _localization["Plugins.UpdateProgressTitle"],
+                    _localization.Format(
+                        "Plugins.UpdateProgress",
+                        item.Name,
+                        candidate.Version.ToString()),
+                    () => RunUpdateAsync(item, candidate, directory));
             }
             catch (Exception exception) when (
                 exception is PluginPackageException or PluginManifestException
@@ -427,6 +383,64 @@ public sealed partial class PluginsViewModel : PageViewModelBase
             _updateGate.Release();
             Rebuild();
         }
+    }
+
+    private async Task RunUpdateAsync(
+        PluginItemViewModel item,
+        PluginHubUpdateCandidate candidate,
+        string directory)
+    {
+        Directory.CreateDirectory(directory);
+
+        var path = Path.Combine(directory, $"{item.Id}-{candidate.Version}.vclplugin");
+
+        if (candidate.Sha256 is null)
+        {
+            _logger.LogWarning(
+                "插件市场记录缺少 sha256：{Id} {Version}",
+                item.Id,
+                candidate.Version);
+        }
+
+        await _download.DownloadAsync(
+            new DownloadRequest(candidate.PackageUri, path, candidate.Sha256),
+            progress: null,
+            CancellationToken.None);
+
+        var (manifest, actualSha256) = await _manager
+            .InspectPackageAsync(path, CancellationToken.None);
+
+        if (!string.Equals(manifest.Id, item.Id, StringComparison.Ordinal)
+            || manifest.Version != candidate.Version)
+        {
+            Status = _localization["Plugins.UpdatePackageMismatch"];
+            return;
+        }
+
+        var compatibility = PluginCompatibility.Check(
+            manifest,
+            PluginHostInfo.Version,
+            PluginHostInfo.ApiVersion);
+
+        if (compatibility.Count > 0)
+        {
+            Status = _localization.Format(
+                "Plugins.UpdateFailed",
+                string.Join("; ", compatibility));
+            return;
+        }
+
+        var result = await _manager.UpdateAsync(
+            item.Id,
+            path,
+            candidate.Sha256 ?? actualSha256,
+            CancellationToken.None);
+
+        Status = result.Outcome == PluginInstallOutcome.PendingRestart
+            ? _localization.Format("Plugins.UpdatePending", item.Name)
+            : _localization.Format("Plugins.UpdateDone", item.Name, candidate.Version.ToString());
+
+        _updates.Remove(item.Id);
     }
 
     [RelayCommand]
