@@ -5,6 +5,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using VRCLearn.App.Services;
 using VRCLearn.Core.Collections;
+using VRCLearn.Core.IO;
 using VRCLearn.Core.Packages;
 using VRCLearn.Core.Templates;
 using VRCLearn.Core.Unity;
@@ -18,6 +19,7 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
 {
     private readonly IUserTemplateStore _userTemplates;
     private readonly IUnityEditorLocator _editors;
+    private readonly IFileIoFactory _fileIo;
     private readonly RepositoryService _repositories;
     private readonly UserPackageService _userPackages;
     private readonly LocalizationService _localization;
@@ -31,6 +33,7 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
     public TemplatesViewModel(
         IUserTemplateStore userTemplates,
         IUnityEditorLocator editors,
+        IFileIoFactory fileIo,
         RepositoryService repositories,
         UserPackageService userPackages,
         LocalizationService localization,
@@ -44,6 +47,7 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
         _configStore = configStore;
         _userTemplates = userTemplates;
         _editors = editors;
+        _fileIo = fileIo;
         _repositories = repositories;
         _userPackages = userPackages;
         _localization = localization;
@@ -51,7 +55,7 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
         _localization.PropertyChanged += (_, _) => _ = ReloadAsync();
         _dialogs = dialogs;
 
-        _library = TemplateLibrary.Build([], []);
+        _library = TemplateLibrary.Build([], [], _fileIo);
     }
 
     protected override ILogger Logger => _logger;
@@ -71,7 +75,8 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
             [.. _editors
                 .FindEditors()
                 .Select(x => x.Version)
-                .Where(x => UnityReleaseCatalog.SupportedVersions.Contains(x))]);
+                .Where(x => UnityReleaseCatalog.SupportedVersions.Contains(x))],
+            _fileIo);
 
         var favorites = _configStore.Current.FavoriteTemplates;
 

@@ -22,15 +22,18 @@ public sealed class TemplateLibrary
     private readonly IReadOnlyDictionary<string, ProjectTemplate> _byId;
     private readonly IReadOnlyList<string> _order;
     private readonly IReadOnlyDictionary<string, AlcomTemplate> _alcom;
+    private readonly IFileIoFactory _fileIo;
 
     private TemplateLibrary(
         IReadOnlyDictionary<string, ProjectTemplate> byId,
         IReadOnlyList<string> order,
-        IReadOnlyDictionary<string, AlcomTemplate> alcom)
+        IReadOnlyDictionary<string, AlcomTemplate> alcom,
+        IFileIoFactory fileIo)
     {
         _byId = byId;
         _order = order;
         _alcom = alcom;
+        _fileIo = fileIo;
     }
 
     /// <summary>空白项目排前面，然后是按名字排的 <c>.vrclearn-template</c>。</summary>
@@ -38,7 +41,8 @@ public sealed class TemplateLibrary
 
     public static TemplateLibrary Build(
         IReadOnlyList<AlcomTemplateFile> alcomFiles,
-        IReadOnlyList<UnityVersion> installed)
+        IReadOnlyList<UnityVersion> installed,
+        IFileIoFactory fileIo)
     {
         var byId = new Dictionary<string, ProjectTemplate>
         {
@@ -67,7 +71,7 @@ public sealed class TemplateLibrary
 
         ResolveBases(byId, alcomById);
 
-        return new TemplateLibrary(byId, order, alcomById);
+        return new TemplateLibrary(byId, order, alcomById, fileIo);
     }
 
     private static void ResolveBases(
@@ -129,7 +133,26 @@ public sealed class TemplateLibrary
 
         Resolve(id, dependencies, packages);
 
-        return new TemplatePlan(null, dependencies, packages);
+        return new TemplatePlan(SourceOf(template), dependencies, packages);
+    }
+
+    private IFileIo? SourceOf(ProjectTemplate template)
+    {
+        if (template.Definition?.Files is not { Length: > 0 } files || template.SourceFile is null)
+        {
+            return null;
+        }
+
+        var directory = Path.GetFullPath(Path.GetDirectoryName(template.SourceFile)!);
+        var path = Path.GetFullPath(Path.Combine(directory, files));
+
+        if (!path.StartsWith(directory + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)
+            || !Directory.Exists(path))
+        {
+            return null;
+        }
+
+        return _fileIo.For(path);
     }
 
     private void Resolve(

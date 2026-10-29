@@ -13,7 +13,8 @@ public sealed record AlcomTemplate(
     string? UnityVersion,
     IReadOnlyDictionary<string, string> VpmDependencies,
     IReadOnlyList<string> UnityPackages,
-    DateTimeOffset? UpdatedAt)
+    DateTimeOffset? UpdatedAt,
+    string? Files = null)
 {
     public static AlcomTemplate? TryParse(string content)
     {
@@ -65,7 +66,8 @@ public sealed record AlcomTemplate(
             JsonText.Of(json["unityVersion"]),
             dependencies,
             packages,
-            ParseDate(JsonText.Of(json["updateDate"])));
+            ParseDate(JsonText.Of(json["updateDate"])),
+            JsonText.Of(json["files"]) is { Length: > 0 } files ? files : null);
     }
 
     private static DateTimeOffset? ParseDate(string? text) =>
@@ -88,6 +90,11 @@ public sealed record AlcomTemplate(
         if (UpdatedAt is { } updated)
         {
             json["updateDate"] = updated.ToString("yyyy-MM-ddTHH:mm:ss");
+        }
+
+        if (Files is { Length: > 0 } files)
+        {
+            json["files"] = files;
         }
 
         if (VpmDependencies.Count > 0)
