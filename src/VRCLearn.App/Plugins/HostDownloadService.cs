@@ -13,11 +13,13 @@ public sealed class HostDownloadService : IDownloadService, IDisposable
 {
     private const int BufferSize = 81920;
     private const long ReportInterval = 256 * 1024;
-    private const int ParallelConnections = 4;
-    private const long SegmentSize = 8 * 1024 * 1024;
+    private const int ParallelConnections = 2;
+    private const long SegmentSize = 16 * 1024 * 1024;
+    private const int MaxAttempts = 4;
 
     private readonly HttpClient _http;
     private readonly ILogger<HostDownloadService> _logger;
+    private long _resumeAt;
 
     public HostDownloadService(MutableProxy proxy, ILogger<HostDownloadService> logger)
     {
@@ -204,35 +206,108 @@ public sealed class HostDownloadService : IDownloadService, IDisposable
         return true;
     }
 
-    private async Task<HttpResponseMessage> SendRangeAsync(
+    private Task<HttpResponseMessage> SendRangeAsync(
         Uri url,
         long from,
         long to,
+        CancellationToken cancellationToken) =>
+        SendAsync(url, new RangeHeaderValue(from, to), cancellationToken);
+
+    private async Task<HttpResponseMessage> SendAsync(
+        Uri url,
+        RangeHeaderValue? range,
         CancellationToken cancellationToken)
     {
-        using var message = new HttpRequestMessage(HttpMethod.Get, url);
-        message.Headers.Range = new RangeHeaderValue(from, to);
-
-        var response = await _http
-            .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
-            .ConfigureAwait(false);
-
-        try
+        for (var attempt = 1; ; attempt++)
         {
-            response.EnsureSuccessStatusCode();
+            await WaitForServerAsync(cancellationToken).ConfigureAwait(false);
 
-            if (response.RequestMessage?.RequestUri is { } finalUri
-                && finalUri.Scheme != Uri.UriSchemeHttps)
+            using var message = new HttpRequestMessage(HttpMethod.Get, url);
+            message.Headers.Range = range;
+
+            var response = await _http
+                .SendAsync(message, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
+                .ConfigureAwait(false);
+
+            if (IsThrottled(response.StatusCode) && attempt < MaxAttempts)
             {
-                throw new InvalidOperationException("download was redirected to a non-https url");
+                var delay = RetryDelay(response, attempt);
+
+                _logger.LogWarning(
+                    "服务器返回 {Status}，暂停 {Delay} 后重试：{Url}",
+                    (int)response.StatusCode,
+                    delay,
+                    url);
+
+                response.Dispose();
+                PauseAll(delay);
+                continue;
             }
 
-            return response;
+            try
+            {
+                response.EnsureSuccessStatusCode();
+
+                if (response.RequestMessage?.RequestUri is { } finalUri
+                    && finalUri.Scheme != Uri.UriSchemeHttps)
+                {
+                    throw new InvalidOperationException("download was redirected to a non-https url");
+                }
+
+                return response;
+            }
+            catch
+            {
+                response.Dispose();
+                throw;
+            }
         }
-        catch
+    }
+
+    private static bool IsThrottled(HttpStatusCode status) =>
+        status is HttpStatusCode.TooManyRequests or HttpStatusCode.ServiceUnavailable;
+
+    private static TimeSpan RetryDelay(HttpResponseMessage response, int attempt)
+    {
+        var after = response.Headers.RetryAfter;
+        var delay = after?.Delta;
+
+        if (delay is null && after?.Date is { } date)
         {
-            response.Dispose();
-            throw;
+            delay = date - DateTimeOffset.UtcNow;
+        }
+
+        var backoff = TimeSpan.FromSeconds(2 * attempt);
+        var wait = delay is { } value && value > TimeSpan.Zero ? value : backoff;
+
+        return wait + TimeSpan.FromMilliseconds(Random.Shared.Next(0, 500));
+    }
+
+    private void PauseAll(TimeSpan delay)
+    {
+        var until = DateTime.UtcNow.Add(delay).Ticks;
+        var current = Interlocked.Read(ref _resumeAt);
+
+        while (until > current
+            && Interlocked.CompareExchange(ref _resumeAt, until, current) != current)
+        {
+            current = Interlocked.Read(ref _resumeAt);
+        }
+    }
+
+    private async Task WaitForServerAsync(CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            var wait = new DateTime(Interlocked.Read(ref _resumeAt), DateTimeKind.Utc)
+                - DateTime.UtcNow;
+
+            if (wait <= TimeSpan.Zero)
+            {
+                return;
+            }
+
+            await Task.Delay(wait, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -242,17 +317,7 @@ public sealed class HostDownloadService : IDownloadService, IDisposable
         IProgress<DownloadProgress>? progress,
         CancellationToken cancellationToken)
     {
-        using var response = await _http
-            .GetAsync(url, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
-            .ConfigureAwait(false);
-
-        response.EnsureSuccessStatusCode();
-
-        if (response.RequestMessage?.RequestUri is { } finalUri
-            && finalUri.Scheme != Uri.UriSchemeHttps)
-        {
-            throw new InvalidOperationException("download was redirected to a non-https url");
-        }
+        using var response = await SendAsync(url, null, cancellationToken).ConfigureAwait(false);
 
         var total = response.Content.Headers.ContentLength;
 
