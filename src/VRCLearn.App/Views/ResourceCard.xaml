@@ -1,0 +1,81 @@
+<UserControl
+    x:Class="VRCLearn.App.Views.ResourceCard"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:markup="clr-namespace:VRCLearn.App.Markup">
+
+    <ui:Card Margin="0,0,12,12" Padding="10">
+        <StackPanel>
+            <Border
+                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                CornerRadius="{StaticResource Radius.Control}"
+                ClipToBounds="True">
+                <Grid>
+                    <ui:SymbolIcon
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        FontSize="32"
+                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                        Symbol="Image24" />
+                    <Image Source="{Binding Cover}" Stretch="UniformToFill" />
+                    <CheckBox
+                        Margin="8"
+                        HorizontalAlignment="Left"
+                        VerticalAlignment="Top"
+                        Background="{DynamicResource ApplicationBackgroundBrush}"
+                        IsChecked="{Binding IsSelected}" />
+                    <Border
+                        Margin="8"
+                        Padding="6,1"
+                        HorizontalAlignment="Right"
+                        VerticalAlignment="Top"
+                        Background="{DynamicResource SystemFillColorCriticalBrush}"
+                        CornerRadius="{StaticResource Radius.Control}"
+                        Visibility="{Binding IsExpired, Converter={StaticResource BooleanToVisibilityConverter}}">
+                        <TextBlock
+                            FontSize="{StaticResource FontSize.Caption}"
+                            Foreground="White"
+                            Text="{markup:Tr Resources.Card.Expired}" />
+                    </Border>
+                </Grid>
+            </Border>
+
+            <TextBlock
+                Margin="2,8,2,0"
+                FontWeight="SemiBold"
+                Text="{Binding Name}"
+                TextTrimming="CharacterEllipsis" />
+
+            <StackPanel
+                Margin="0,6,0,0"
+                HorizontalAlignment="Right"
+                Orientation="Horizontal">
+                <ui:Button
+                    Margin="8,0,0,0"
+                    Padding="6,0"
+                    VerticalAlignment="Center"
+                    Appearance="Transparent"
+                    Cursor="Hand"
+                    BorderThickness="0"
+                    Command="{Binding DataContext.OpenManualCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                    CommandParameter="{Binding}"
+                    ToolTip="{markup:Tr Resources.Card.Manual}"
+                    Visibility="{Binding HasManual, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:SymbolIcon FontSize="{StaticResource IconSize.Inline}" Symbol="Book24" />
+                </ui:Button>
+                <ui:Button
+                    Command="{Binding DataContext.ImportResourceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                    CommandParameter="{Binding}"
+                    Content="{markup:Tr Resources.Card.Import}"
+                    Style="{StaticResource RowButton}" />
+                <ui:Button
+                    Command="{Binding DataContext.EditResourceCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                    CommandParameter="{Binding}"
+                    Content="{markup:Tr Resources.Card.Edit}"
+                    Style="{StaticResource RowButton}" />
+            </StackPanel>
+        </StackPanel>
+    </ui:Card>
+</UserControl>

@@ -1,0 +1,79 @@
+<UserControl
+    x:Class="VRCLearn.App.Views.PluginsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:markup="clr-namespace:VRCLearn.App.Markup"
+    xmlns:views="clr-namespace:VRCLearn.App.Views">
+
+    <ScrollViewer Style="{StaticResource PageScroll}">
+        <StackPanel>
+            <Grid Margin="{StaticResource Gap.Field}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <ui:TextBox
+                    Grid.Column="0"
+                    ClearButtonEnabled="True"
+                    PlaceholderText="{markup:Tr Plugins.Search}"
+                    Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+                <ComboBox
+                    Grid.Column="1"
+                    MinWidth="130"
+                    Margin="{StaticResource Gap.Inline}"
+                    DisplayMemberPath="Display"
+                    ItemsSource="{Binding SortOptions}"
+                    SelectedValue="{Binding SelectedSort}"
+                    SelectedValuePath="Value"
+                    ToolTip="{markup:Tr Plugins.Sort}" />
+                <ui:Button
+                    Grid.Column="2"
+                    Margin="{StaticResource Gap.Inline}"
+                    Appearance="Secondary"
+                    Command="{Binding OpenPluginDirectoryCommand}"
+                    Content="{markup:Tr Plugins.OpenDirectory}" />
+                <ui:Button
+                    Grid.Column="3"
+                    Margin="{StaticResource Gap.Inline}"
+                    Appearance="Primary"
+                    Command="{Binding InstallFromFileCommand}"
+                    Content="{markup:Tr Plugins.Install}" />
+                <ui:ProgressRing
+                    Grid.Column="4"
+                    Margin="{StaticResource Gap.Inline}"
+                    Style="{StaticResource BusyRing}"
+                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+            </Grid>
+
+            <TextBlock
+                Margin="{StaticResource Gap.Field}"
+                Style="{StaticResource Caption}"
+                Text="{markup:Tr Plugins.Empty}"
+                Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+            <TextBlock
+                Margin="{StaticResource Gap.Field}"
+                Style="{StaticResource Caption}"
+                Text="{markup:Tr Plugins.SearchEmpty}"
+                Visibility="{Binding IsSearchEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+            <ItemsControl Margin="{StaticResource Gap.Field}" ItemsSource="{Binding FilteredPlugins}">
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <UniformGrid Columns="4" />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <views:PluginCard />
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

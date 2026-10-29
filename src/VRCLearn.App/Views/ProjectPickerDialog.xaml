@@ -1,0 +1,196 @@
+<views:DialogWindowBase
+    x:Class="VRCLearn.App.Views.ProjectPickerDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:markup="clr-namespace:VRCLearn.App.Markup"
+    xmlns:views="clr-namespace:VRCLearn.App.Views"
+    Title="{markup:Tr Resources.Picker.Title}"
+    Width="600"
+    WindowStartupLocation="CenterOwner"
+    Style="{StaticResource DialogWindow}">
+
+    <views:DialogChrome Style="{StaticResource DialogChromeStyle}">
+        <Grid Margin="24,4,24,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <StackPanel>
+                <TextBlock
+                    x:Name="HintText"
+                    Style="{StaticResource Caption}"
+                    TextWrapping="Wrap" />
+                <TextBlock
+                    x:Name="CountText"
+                    Margin="0,4,0,0"
+                    Style="{StaticResource Caption}"
+                    Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+            </StackPanel>
+
+            <ui:Card
+                Grid.Row="1"
+                MinHeight="140"
+                MaxHeight="320"
+                Margin="0,16,0,0"
+                Padding="8">
+                <Grid>
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Visibility="{Binding ElementName=ProjectList, Path=HasItems, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                        <ui:SymbolIcon
+                            HorizontalAlignment="Center"
+                            FontSize="24"
+                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                            Symbol="Folder24" />
+                        <TextBlock
+                            x:Name="EmptyText"
+                            Margin="{StaticResource Gap.Small}"
+                            HorizontalAlignment="Center"
+                            Style="{StaticResource Caption}"
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+
+                    <ListBox
+                        x:Name="ProjectList"
+                        MaxHeight="304"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        markup:SmoothScroll.IsEnabled="True"
+                        ScrollViewer.CanContentScroll="False"
+                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                        ScrollViewer.VerticalScrollBarVisibility="Auto"
+                        SelectionChanged="OnSelectionChanged">
+                        <ListBox.ItemContainerStyle>
+                            <Style TargetType="ListBoxItem">
+                                <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                                <Setter Property="IsEnabled" Value="{Binding IsSelectable}" />
+                                <Setter Property="Template">
+                                    <Setter.Value>
+                                        <ControlTemplate TargetType="ListBoxItem">
+                                            <Border
+                                                x:Name="Row"
+                                                Padding="12,10"
+                                                Background="Transparent"
+                                                BorderBrush="Transparent"
+                                                BorderThickness="1"
+                                                CornerRadius="{StaticResource Radius.Control}">
+                                                <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                                            </Border>
+                                            <ControlTemplate.Triggers>
+                                                <Trigger Property="IsMouseOver" Value="True">
+                                                    <Setter TargetName="Row" Property="Background" Value="{DynamicResource ControlFillColorSecondaryBrush}" />
+                                                </Trigger>
+                                                <Trigger Property="IsSelected" Value="True">
+                                                    <Setter TargetName="Row" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                                                    <Setter TargetName="Row" Property="BorderBrush" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                                </Trigger>
+                                                <Trigger Property="IsEnabled" Value="False">
+                                                    <Setter Property="Opacity" Value="0.5" />
+                                                </Trigger>
+                                            </ControlTemplate.Triggers>
+                                        </ControlTemplate>
+                                    </Setter.Value>
+                                </Setter>
+                            </Style>
+                        </ListBox.ItemContainerStyle>
+                        <ListBox.ItemTemplate>
+                            <DataTemplate>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <ui:SymbolIcon
+                                        VerticalAlignment="Center"
+                                        FontSize="{StaticResource IconSize.Inline}"
+                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                        Symbol="Folder24" />
+                                    <StackPanel Grid.Column="1" Margin="12,0,0,0">
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock FontWeight="SemiBold" Text="{Binding Name}" />
+                                            <Border
+                                                Margin="8,0,0,0"
+                                                Padding="7,2"
+                                                VerticalAlignment="Center"
+                                                Background="{DynamicResource SystemFillColorSuccessBackgroundBrush}"
+                                                CornerRadius="{StaticResource Radius.Control}"
+                                                Visibility="{Binding IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                                <StackPanel Orientation="Horizontal">
+                                                    <ui:SymbolIcon
+                                                        Margin="0,0,5,0"
+                                                        VerticalAlignment="Center"
+                                                        FontSize="{StaticResource FontSize.Caption}"
+                                                        Foreground="{DynamicResource SystemFillColorSuccessBrush}"
+                                                        Symbol="Play24" />
+                                                    <TextBlock
+                                                        FontSize="{StaticResource FontSize.Caption}"
+                                                        Foreground="{DynamicResource SystemFillColorSuccessBrush}"
+                                                        Text="{markup:Tr Resources.Picker.Running}" />
+                                                </StackPanel>
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock
+                                            Margin="0,2,0,0"
+                                            Style="{StaticResource Mono}"
+                                            Text="{Binding Path}"
+                                            TextTrimming="CharacterEllipsis" />
+                                        <TextBlock
+                                            Margin="0,2,0,0"
+                                            Style="{StaticResource Caption}"
+                                            Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                            Text="{markup:Tr Resources.Picker.Unreadable}"
+                                            Visibility="{Binding IsUsable, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                    </StackPanel>
+                                    <ui:SymbolIcon
+                                        Grid.Column="2"
+                                        Margin="12,0,0,0"
+                                        VerticalAlignment="Center"
+                                        FontSize="{StaticResource IconSize.Inline}"
+                                        Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                        Symbol="CheckmarkCircle24"
+                                        Visibility="{Binding IsSelected, RelativeSource={RelativeSource AncestorType=ListBoxItem}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ListBox.ItemTemplate>
+                    </ListBox>
+                </Grid>
+            </ui:Card>
+
+            <Border
+                Grid.Row="2"
+                Margin="0,12,0,0"
+                Padding="12"
+                Background="{DynamicResource SubtleFillColorSecondaryBrush}"
+                CornerRadius="{StaticResource Radius.Control}">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon
+                        Margin="0,1,8,0"
+                        VerticalAlignment="Top"
+                        FontSize="{StaticResource IconSize.Inline}"
+                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                        Symbol="Info24" />
+                    <TextBlock
+                        x:Name="WarningText"
+                        Style="{StaticResource Caption}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </Border>
+
+            <ui:Button
+                x:Name="ImportButton"
+                Grid.Row="3"
+                Margin="0,16,0,0"
+                HorizontalAlignment="Right"
+                IsEnabled="False"
+                Appearance="Primary"
+                Click="OnImportClick"
+                Style="{StaticResource DialogButton}" />
+        </Grid>
+    </views:DialogChrome>
+</views:DialogWindowBase>

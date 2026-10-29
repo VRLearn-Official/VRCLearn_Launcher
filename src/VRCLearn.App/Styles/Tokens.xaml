@@ -1,0 +1,36 @@
+<ResourceDictionary
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:sys="clr-namespace:System;assembly=System.Runtime">
+
+    <sys:Double x:Key="FontSize.Caption">12</sys:Double>
+    <sys:Double x:Key="FontSize.Body">13</sys:Double>
+    <sys:Double x:Key="FontSize.Subtitle">15</sys:Double>
+    <sys:Double x:Key="FontSize.Section">16</sys:Double>
+    <sys:Double x:Key="FontSize.Title">20</sys:Double>
+    <sys:Double x:Key="FontSize.Step">22</sys:Double>
+    <sys:Double x:Key="FontSize.Header">26</sys:Double>
+    <sys:Double x:Key="FontSize.Display">28</sys:Double>
+
+    <sys:Double x:Key="IconSize.Inline">16</sys:Double>
+    <sys:Double x:Key="IconSize.Nav">16</sys:Double>
+    <sys:Double x:Key="IconSize.Display">32</sys:Double>
+    <sys:Double x:Key="IconSize.Empty">40</sys:Double>
+
+    <Thickness x:Key="Gap.Tight">0,4,0,0</Thickness>
+    <Thickness x:Key="Gap.Small">0,8,0,0</Thickness>
+    <Thickness x:Key="Gap.Row">0,12,0,0</Thickness>
+    <Thickness x:Key="Gap.Field">0,16,0,0</Thickness>
+    <Thickness x:Key="Gap.Large">0,24,0,0</Thickness>
+    <Thickness x:Key="Gap.Section">0,32,0,0</Thickness>
+    <Thickness x:Key="Gap.Inline">8,0,0,0</Thickness>
+    <Thickness x:Key="Gap.Wrapped">0,0,8,8</Thickness>
+
+    <Thickness x:Key="Pad.Input">8,6</Thickness>
+    <Thickness x:Key="Pad.Card">20</Thickness>
+    <Thickness x:Key="Pad.CardRow">20,16</Thickness>
+    <Thickness x:Key="PagePadding">32,24,32,32</Thickness>
+
+    <CornerRadius x:Key="Radius.Control">4</CornerRadius>
+
+</ResourceDictionary>

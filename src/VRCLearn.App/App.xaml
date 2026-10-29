@@ -1,0 +1,68 @@
+<Application
+    x:Class="VRCLearn.App.App"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:views="clr-namespace:VRCLearn.App.Views"
+    xmlns:viewModels="clr-namespace:VRCLearn.App.ViewModels">
+    <Application.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ui:ThemesDictionary />
+                <ui:ControlsDictionary />
+                <ResourceDictionary Source="Styles/Tokens.xaml" />
+                <ResourceDictionary Source="Styles/PageLayout.xaml" />
+                <ResourceDictionary Source="Styles/DialogChromeStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+
+            <Style x:Key="{x:Static SystemParameters.FocusVisualStyleKey}" TargetType="{x:Type Control}">
+                <Setter Property="Template" Value="{x:Null}" />
+            </Style>
+
+            <DataTemplate DataType="{x:Type viewModels:PlaceholderViewModel}">
+                <views:PlaceholderPage />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type viewModels:SettingsViewModel}">
+                <views:SettingsPage />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type viewModels:RepositoriesViewModel}">
+                <views:RepositoriesPage />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type viewModels:ProjectsViewModel}">
+                <views:ProjectsPage />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type viewModels:ProjectDetailViewModel}">
+                <views:ProjectDetailPage />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type viewModels:TemplatesViewModel}">
+                <views:TemplatesPage />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type viewModels:SetupViewModel}">
+                <views:SetupPage />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type viewModels:LogsViewModel}">
+                <views:LogsPage />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type viewModels:BackupsViewModel}">
+                <views:BackupsPage />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type viewModels:ResourcesViewModel}">
+                <views:ResourcesPage />
+            </DataTemplate>
+
+            <DataTemplate DataType="{x:Type viewModels:PluginsViewModel}">
+                <views:PluginsPage />
+            </DataTemplate>
+
+        </ResourceDictionary>
+    </Application.Resources>
+</Application>

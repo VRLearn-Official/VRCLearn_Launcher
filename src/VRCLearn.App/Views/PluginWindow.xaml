@@ -1,0 +1,21 @@
+<ui:FluentWindow
+    x:Class="VRCLearn.App.Views.PluginWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:views="clr-namespace:VRCLearn.App.Views"
+    Width="720"
+    Height="540"
+    Style="{StaticResource PluginWindowStyle}"
+    WindowStartupLocation="CenterOwner">
+
+    <Grid>
+        <views:DialogChrome x:Name="Chrome" Style="{StaticResource DialogChromeStyle}" />
+
+        <Border
+            x:Name="DialogScrim"
+            Panel.ZIndex="9"
+            Background="#40000000"
+            Visibility="Collapsed" />
+    </Grid>
+</ui:FluentWindow>

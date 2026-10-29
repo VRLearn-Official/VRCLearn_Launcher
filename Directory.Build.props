@@ -1,0 +1,26 @@
+﻿<Project>
+
+  <PropertyGroup>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <InvariantGlobalization>false</InvariantGlobalization>
+
+    <!-- 产物直接落在 bin\Debug 下，不再套一层 net10.0-windows -->
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+    <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
+
+    <!-- 检查更新要拿它跟远端版本比。发版时改这里 -->
+    <Version>1.28.2</Version>
+
+    <!-- 产物保留产品名称、文件说明与备注，版本串不带 git 提交号 -->
+    <Product>VRCLearn Launcher</Product>
+    <AssemblyTitle>VRCLearn Launcher</AssemblyTitle>
+    <Description>VRChat 工程管理器</Description>
+    <GenerateAssemblyCompanyAttribute>false</GenerateAssemblyCompanyAttribute>
+    <GenerateAssemblyCopyrightAttribute>false</GenerateAssemblyCopyrightAttribute>
+    <IncludeSourceRevisionInInformationalVersion>false</IncludeSourceRevisionInInformationalVersion>
+  </PropertyGroup>
+
+</Project>

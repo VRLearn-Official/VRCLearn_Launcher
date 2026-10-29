@@ -1,0 +1,219 @@
+<UserControl
+    x:Class="VRCLearn.App.Views.ProjectsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:markup="clr-namespace:VRCLearn.App.Markup"
+    xmlns:views="clr-namespace:VRCLearn.App.Views">
+
+    <ScrollViewer Style="{StaticResource PageScroll}">
+        <StackPanel>
+
+            <Grid Margin="{StaticResource Gap.Field}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+                    <TextBlock Style="{StaticResource SettingLabel}" Text="{markup:Tr Projects.Sort}" />
+                    <ComboBox
+                        MinWidth="120"
+                        Margin="{StaticResource Gap.Inline}"
+                        DisplayMemberPath="Display"
+                        ItemsSource="{Binding SortingKeys}"
+                        SelectedValue="{Binding SortingKey}"
+                        SelectedValuePath="Value" />
+                    <ComboBox
+                        MinWidth="90"
+                        Margin="{StaticResource Gap.Inline}"
+                        DisplayMemberPath="Display"
+                        ItemsSource="{Binding SortingDirections}"
+                        SelectedValue="{Binding SortingDirection}"
+                        SelectedValuePath="Value" />
+                    <ui:ProgressRing Margin="12,0,0,0" Style="{StaticResource BusyRing}" />
+                </StackPanel>
+
+                <StackPanel
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+                    <ui:Button
+                        Style="{StaticResource ToolbarButton}"
+                        Appearance="Secondary"
+                        Command="{Binding RefreshCommand}"
+                        Content="{markup:Tr Projects.Refresh}" />
+                    <ui:Button
+                        Style="{StaticResource ToolbarButton}"
+                        Appearance="Secondary"
+                        Click="OnAddClick"
+                        Content="{markup:Tr Projects.Add}" />
+                    <ui:Button
+                        Margin="0"
+                        Style="{StaticResource ToolbarButton}"
+                        Appearance="Primary"
+                        Command="{Binding NewProjectCommand}"
+                        Content="{markup:Tr Projects.New}" />
+                </StackPanel>
+            </Grid>
+
+            <TextBlock
+                Margin="{StaticResource Gap.Field}"
+                Style="{StaticResource Caption}"
+                Text="{markup:Tr Projects.Empty}"
+                Visibility="{Binding HasProjects, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+
+            <ItemsControl
+                Margin="{StaticResource Gap.Field}"
+                ItemsSource="{Binding Projects}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ui:Card
+                            Cursor="Hand"
+                            MouseLeftButtonUp="OnRowClick"
+                            Style="{StaticResource RowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <ui:Button
+                                    Grid.Column="0"
+                                    VerticalAlignment="Center"
+                                    Appearance="Transparent"
+                                    Command="{markup:RowCommand ToggleFavoriteCommand}"
+                                    CommandParameter="{Binding}"
+                                    ToolTip="{Binding FavoriteAction}">
+                                    <ui:Button.Style>
+                                        <Style BasedOn="{StaticResource RowButton}" TargetType="ui:Button">
+                                            <Setter Property="Margin" Value="0,0,10,0" />
+                                            <Setter Property="Padding" Value="6,0" />
+                                            <Setter Property="BorderThickness" Value="0" />
+                                            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsFavorite}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource AccentTextFillColorPrimaryBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </ui:Button.Style>
+                                    <ui:SymbolIcon
+                                        Filled="{Binding IsFavorite}"
+                                        FontSize="{StaticResource IconSize.Inline}"
+                                        Symbol="Star24" />
+                                </ui:Button>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Style="{StaticResource RowTitle}" Text="{Binding Name}" />
+                                        <ui:SymbolIcon
+                                            Margin="8,0,0,0"
+                                            FontSize="{StaticResource IconSize.Inline}"
+                                            Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                            Symbol="Warning24"
+                                            ToolTip="{Binding Summary}"
+                                            Visibility="{Binding IsUnreadable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        <Border
+                                            Margin="8,0,0,0"
+                                            Padding="7,2"
+                                            VerticalAlignment="Center"
+                                            CornerRadius="{StaticResource Radius.Control}"
+                                            Visibility="{Binding IsAutoBackupActive, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{DynamicResource SystemFillColorSuccessBackgroundBrush}" />
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsAutoBackupFailed}" Value="True">
+                                                            <Setter Property="Background" Value="{DynamicResource SystemFillColorCriticalBackgroundBrush}" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
+                                            <StackPanel Orientation="Horizontal">
+                                                <ui:SymbolIcon
+                                                    x:Name="AutoBackupIcon"
+                                                    Margin="0,0,5,0"
+                                                    VerticalAlignment="Center"
+                                                    FontSize="{StaticResource FontSize.Caption}">
+                                                    <ui:SymbolIcon.Style>
+                                                        <Style TargetType="ui:SymbolIcon">
+                                                            <Setter Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}" />
+                                                            <Setter Property="Symbol" Value="ClockAlarm24" />
+                                                            <Style.Triggers>
+                                                                <DataTrigger Binding="{Binding IsAutoBackupFailed}" Value="True">
+                                                                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                                                                    <Setter Property="Symbol" Value="ErrorCircle24" />
+                                                                </DataTrigger>
+                                                            </Style.Triggers>
+                                                        </Style>
+                                                    </ui:SymbolIcon.Style>
+                                                </ui:SymbolIcon>
+                                                <TextBlock
+                                                    FontSize="{StaticResource FontSize.Caption}"
+                                                    Foreground="{Binding Foreground, ElementName=AutoBackupIcon}"
+                                                    Text="{Binding AutoBackupText}" />
+                                            </StackPanel>
+                                        </Border>
+                                    </StackPanel>
+
+                                    <StackPanel Margin="{StaticResource Gap.Tight}" Orientation="Horizontal">
+                                        <ui:SymbolIcon
+                                            Margin="0,0,6,0"
+                                            VerticalAlignment="Center"
+                                            FontSize="{StaticResource IconSize.Inline}"
+                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                            Symbol="{Binding TypeIcon}" />
+                                        <TextBlock Style="{StaticResource Caption}" Text="{Binding MetaLine}" />
+                                    </StackPanel>
+
+                                    <TextBlock
+                                        Margin="0,2,0,0"
+                                        Style="{StaticResource CaptionDim}"
+                                        Text="{Binding ProjectPath}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="2" Style="{StaticResource RowActions}">
+                                    <views:UnityActionButton
+                                        ButtonFocusable="False"
+                                        ButtonStyle="{StaticResource RowUnityButton}"
+                                        BringToFrontCommand="{markup:RowCommand BringUnityToFrontCommand}"
+                                        CommandParameter="{Binding}"
+                                        IsUnityRunning="{Binding IsUnityRunning}"
+                                        LaunchCommand="{markup:RowCommand LaunchUnityCommand}" />
+                                    <ui:Button
+                                        Style="{StaticResource RowButton}"
+                                        Appearance="Secondary"
+                                        Command="{markup:RowCommand BackupCommand}"
+                                        CommandParameter="{Binding}"
+                                        Content="{markup:Tr ProjectDetail.Backup}" />
+
+                                    <ui:Button
+                                        Style="{StaticResource RowButton}"
+                                        Appearance="Secondary"
+                                        Click="OnMoreClick"
+                                        Content="⋯"
+                                        ToolTip="{markup:Tr Projects.More}">
+                                        <ui:Button.ContextMenu>
+                                            <ContextMenu>
+                                                <MenuItem Click="OnOpenFolderClick" Header="{markup:Tr Projects.OpenFolder}" />
+                                                <MenuItem Click="OnRenameClick" Header="{markup:Tr Projects.Rename}" />
+                                                <MenuItem Click="OnRemoveClick" Header="{markup:Tr Projects.Remove}" />
+                                                <MenuItem Click="OnArchiveClick" Header="{markup:Tr Projects.Archive}" />
+                                            </ContextMenu>
+                                        </ui:Button.ContextMenu>
+                                    </ui:Button>
+                                </StackPanel>
+                            </Grid>
+                        </ui:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

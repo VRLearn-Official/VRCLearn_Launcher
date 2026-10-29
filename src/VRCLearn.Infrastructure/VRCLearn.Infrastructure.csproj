@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\VRCLearn.Core\VRCLearn.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="VRCLearn.Infrastructure.Tests" />
+  </ItemGroup>
+
+  <!-- 内置工程模板，随程序发布。README 只给仓库看，不进输出目录 -->
+  <ItemGroup>
+    <None Remove="Templates\**\*" />
+    <Content Include="Templates\**\*" Exclude="Templates\README.md" CopyToOutputDirectory="PreserveNewest" />
+    <None Include="Templates\README.md" />
+  </ItemGroup>
+
+</Project>

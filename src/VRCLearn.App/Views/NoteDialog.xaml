@@ -1,0 +1,31 @@
+<views:DialogWindowBase
+    x:Class="VRCLearn.App.Views.NoteDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:markup="clr-namespace:VRCLearn.App.Markup"
+    xmlns:views="clr-namespace:VRCLearn.App.Views"
+    Width="480"
+    WindowStartupLocation="CenterOwner"
+    Style="{StaticResource DialogWindow}">
+
+    <views:DialogChrome Style="{StaticResource DialogChromeStyle}">
+
+        <StackPanel Margin="20,0,20,16">
+            <ui:TextBox x:Name="NoteBox" MaxLength="200" />
+
+            <TextBlock
+                x:Name="HintText"
+                Margin="{StaticResource Gap.Small}"
+                Style="{StaticResource Caption}" />
+
+            <StackPanel Style="{StaticResource DialogRow}">
+                <ui:Button
+                    x:Name="ConfirmButton"
+                    Appearance="Primary"
+                    Click="OnConfirmClick"
+                    Style="{StaticResource DialogButton}" />
+            </StackPanel>
+        </StackPanel>
+    </views:DialogChrome>
+</views:DialogWindowBase>

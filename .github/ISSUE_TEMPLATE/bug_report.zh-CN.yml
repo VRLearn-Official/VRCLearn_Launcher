@@ -1,0 +1,100 @@
+name: 问题反馈（中文）
+description: 报告 VRCLearn Launcher 的问题，请使用中文填写。
+title: "[问题] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        请使用中文填写，其他语言的反馈可能被关闭。
+        提交前请先搜索已有 issue，包括已关闭的。
+  - type: textarea
+    id: description
+    attributes:
+      label: 问题描述
+      description: 用几句话说明发生了什么。
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: 复现步骤
+      placeholder: |
+        1. 打开……
+        2. 点击……
+        3. ……
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 预期结果
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际结果
+    validations:
+      required: true
+  - type: input
+    id: version
+    attributes:
+      label: 启动器版本
+      description: 可在「设置 → 关于」查看。
+      placeholder: 1.22.0
+    validations:
+      required: true
+  - type: dropdown
+    id: windows
+    attributes:
+      label: Windows 版本
+      options:
+        - Windows 10
+        - Windows 11
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: 相关模块
+      options:
+        - 项目
+        - 仓库
+        - 包
+        - Unity
+        - 资源
+        - 备份
+        - 模板
+        - 工具箱
+        - 设置
+        - 更新
+        - 其他
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志
+      description: |
+        在「日志」页点击「导出」，再把导出的文件拖到这里。
+        请先检查并删除其中的个人路径。
+      render: text
+    validations:
+      required: false
+  - type: textarea
+    id: screenshots
+    attributes:
+      label: 截图或录屏
+      description: 可直接拖入，也可在提交后追加附件。
+    validations:
+      required: false
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: 确认项
+      options:
+        - label: 我已搜索现有 issue，包括已关闭的。
+          required: true
+        - label: 我已移除日志和截图中的个人信息，例如用户目录路径。
+          required: true

@@ -1,0 +1,43 @@
+<UserControl
+    x:Class="VRCLearn.App.Views.ToastHost"
+    x:Name="Host"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+
+    <UserControl.Resources>
+        <Style x:Key="ToastCard" TargetType="Border">
+            <Setter Property="Margin" Value="0,10,0,0" />
+            <Setter Property="Padding" Value="18,14" />
+            <Setter Property="MaxWidth" Value="440" />
+            <Setter Property="HorizontalAlignment" Value="Right" />
+            <Setter Property="Background" Value="{DynamicResource SolidBackgroundFillColorTertiaryBrush}" />
+            <Setter Property="BorderBrush" Value="{DynamicResource DividerStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="{DynamicResource ControlCornerRadius}" />
+            <Setter Property="Effect">
+                <Setter.Value>
+                    <DropShadowEffect
+                        BlurRadius="16"
+                        Direction="0"
+                        Opacity="0.12"
+                        ShadowDepth="2" />
+                </Setter.Value>
+            </Setter>
+            <EventSetter Event="Loaded" Handler="OnToastLoaded" />
+        </Style>
+    </UserControl.Resources>
+
+    <ItemsControl ItemsSource="{Binding Service.Messages, ElementName=Host}">
+        <ItemsControl.ItemTemplate>
+            <DataTemplate>
+                <Border Style="{StaticResource ToastCard}">
+                    <TextBlock
+                        FontSize="{StaticResource FontSize.Subtitle}"
+                        Foreground="{DynamicResource TextFillColorPrimaryBrush}"
+                        Text="{Binding Text}"
+                        TextWrapping="Wrap" />
+                </Border>
+            </DataTemplate>
+        </ItemsControl.ItemTemplate>
+    </ItemsControl>
+</UserControl>

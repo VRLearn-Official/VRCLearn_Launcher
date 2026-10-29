@@ -1,0 +1,71 @@
+﻿<views:DialogWindowBase
+    x:Class="VRCLearn.App.Views.ImportRepositoriesDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:markup="clr-namespace:VRCLearn.App.Markup"
+    xmlns:views="clr-namespace:VRCLearn.App.Views"
+    Title="{markup:Tr Repositories.ImportTitle}"
+    Width="560"
+    WindowStartupLocation="CenterOwner"
+    Style="{StaticResource DialogWindow}">
+
+    <views:DialogChrome Style="{StaticResource DialogChromeStyle}">
+
+        <StackPanel Margin="24,4,24,20">
+            <TextBlock Style="{StaticResource Caption}" Text="{markup:Tr Repositories.ImportHint}" />
+
+            <Grid Margin="{StaticResource Gap.Field}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <RadioButton
+                    VerticalAlignment="Center"
+                    Content="{markup:Tr Repositories.ImportFromFile}"
+                    GroupName="ImportSource"
+                    IsChecked="{Binding ImportFromFile}" />
+                <TextBox
+                    Grid.Column="1"
+                    Margin="12,0,0,0"
+                    IsEnabled="{Binding ImportFromFile}"
+                    Text="{Binding ImportFilePath, UpdateSourceTrigger=PropertyChanged}"
+                    TextWrapping="Wrap" />
+                <ui:Button
+                    Grid.Column="2"
+                    Click="OnBrowseClick"
+                    Content="{markup:Tr Templates.Browse}"
+                    IsEnabled="{Binding ImportFromFile}"
+                    Style="{StaticResource BrowseButton}" />
+            </Grid>
+
+            <Grid Margin="{StaticResource Gap.Row}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                </Grid.ColumnDefinitions>
+                <RadioButton
+                    VerticalAlignment="Center"
+                    Content="{markup:Tr Repositories.ImportFromLink}"
+                    GroupName="ImportSource"
+                    IsChecked="{Binding ImportFromLink}" />
+                <TextBox
+                    Grid.Column="1"
+                    Margin="12,0,0,0"
+                    IsEnabled="{Binding ImportFromLink}"
+                    Text="{Binding ImportUrl, UpdateSourceTrigger=PropertyChanged}"
+                    TextWrapping="Wrap" />
+            </Grid>
+
+            <StackPanel Style="{StaticResource DialogRow}">
+                <ui:Button
+                    Appearance="Primary"
+                    Click="OnImportClick"
+                    Content="{markup:Tr Repositories.ImportConfirm}"
+                    Style="{StaticResource DialogButton}" />
+                <ui:ProgressRing Margin="12,0,0,0" Style="{StaticResource BusyRing}" />
+            </StackPanel>
+        </StackPanel>
+    </views:DialogChrome>
+</views:DialogWindowBase>

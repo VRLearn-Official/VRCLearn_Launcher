@@ -1,0 +1,367 @@
+<ui:FluentWindow
+    x:Class="VRCLearn.App.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:shell="clr-namespace:System.Windows.Shell;assembly=PresentationFramework"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:markup="clr-namespace:VRCLearn.App.Markup"
+    xmlns:views="clr-namespace:VRCLearn.App.Views"
+    Title="VRCLearn Launcher"
+    Icon="Assets/app.ico"
+    Width="1180"
+    Height="740"
+    MinWidth="880"
+    MinHeight="560"
+    WindowStartupLocation="CenterScreen"
+    ExtendsContentIntoTitleBar="True"
+    TextOptions.TextFormattingMode="Display"
+    WindowBackdropType="Mica">
+
+    <ui:FluentWindow.Resources>
+        <Style x:Key="ProgressTitle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="{StaticResource FontSize.Display}" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style x:Key="ProgressCount" TargetType="TextBlock">
+            <Setter Property="Margin" Value="{StaticResource Gap.Field}" />
+            <Setter Property="FontSize" Value="{StaticResource FontSize.Title}" />
+        </Style>
+
+        <Style x:Key="ProgressHint" TargetType="TextBlock">
+            <Setter Property="Margin" Value="{StaticResource Gap.Row}" />
+            <Setter Property="FontSize" Value="{StaticResource FontSize.Subtitle}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
+
+        <Style x:Key="SidebarItem" TargetType="ListBoxItem">
+            <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+            <Setter Property="Padding" Value="12,9" />
+            <Setter Property="Margin" Value="6,2" />
+            <Setter Property="MinHeight" Value="38" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorPrimaryBrush}" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ListBoxItem">
+                        <Grid>
+                            <Border
+                                x:Name="Row"
+                                HorizontalAlignment="Left"
+                                Background="Transparent"
+                                CornerRadius="{StaticResource Radius.Control}" />
+                            <ContentPresenter
+                                Margin="{TemplateBinding Padding}"
+                                HorizontalAlignment="Left"
+                                VerticalAlignment="Center" />
+                        </Grid>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Row" Property="Background" Value="{DynamicResource SubtleFillColorSecondaryBrush}" />
+                            </Trigger>
+                            <Trigger Property="IsSelected" Value="True">
+                                <Setter TargetName="Row" Property="Background" Value="{DynamicResource AccentFillColorDefaultBrush}" />
+                                <Setter Property="Foreground" Value="{DynamicResource TextOnAccentFillColorPrimaryBrush}" />
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="SidebarIcon" TargetType="ui:SymbolIcon">
+            <Setter
+                Property="Foreground"
+                Value="{Binding Foreground, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" />
+        </Style>
+
+        <Style x:Key="SidebarLabel" TargetType="TextBlock">
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+
+    </ui:FluentWindow.Resources>
+
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+
+        <Border
+            x:Name="Sidebar"
+            Grid.Column="0"
+            Width="64"
+            Panel.ZIndex="1"
+            Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}"
+            BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+            BorderThickness="0,0,1,0"
+            MouseEnter="OnSidebarMouseEnter"
+            MouseLeave="OnSidebarMouseLeave"
+            Visibility="{Binding IsNotFirstRunSetup, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <Border.Effect>
+                <DropShadowEffect
+                    BlurRadius="16"
+                    Direction="0"
+                    Opacity="0.12"
+                    ShadowDepth="2" />
+            </Border.Effect>
+            <Grid ClipToBounds="True">
+                <ListBox
+                    x:Name="Navigation"
+                    Padding="0"
+                    VerticalAlignment="Center"
+                    Background="Transparent"
+                    BorderThickness="0"
+                    ItemContainerStyle="{StaticResource SidebarItem}"
+                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                    ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                    SelectionChanged="OnNavigationSelectionChanged">
+                    <ListBoxItem Tag="projects" ToolTip="{markup:Tr Nav.Projects}">
+                        <StackPanel Orientation="Horizontal">
+                            <Grid Width="28">
+                                <ui:SymbolIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource IconSize.Nav}"
+                                    Style="{StaticResource SidebarIcon}"
+                                    Symbol="Folder24" />
+                            </Grid>
+                            <TextBlock
+                                Margin="20,0,0,0"
+                                Style="{StaticResource SidebarLabel}"
+                                Text="{markup:Tr Nav.Projects}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="resources" ToolTip="{markup:Tr Nav.Resources}">
+                        <StackPanel Orientation="Horizontal">
+                            <Grid Width="28">
+                                <ui:SymbolIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource IconSize.Nav}"
+                                    Style="{StaticResource SidebarIcon}"
+                                    Symbol="Collections24" />
+                            </Grid>
+                            <TextBlock
+                                Margin="20,0,0,0"
+                                Style="{StaticResource SidebarLabel}"
+                                Text="{markup:Tr Nav.Resources}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="backups" ToolTip="{markup:Tr Nav.Backups}">
+                        <StackPanel Orientation="Horizontal">
+                            <Grid Width="28">
+                                <ui:SymbolIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource IconSize.Nav}"
+                                    Style="{StaticResource SidebarIcon}"
+                                    Symbol="Archive24" />
+                            </Grid>
+                            <TextBlock
+                                Margin="20,0,0,0"
+                                Style="{StaticResource SidebarLabel}"
+                                Text="{markup:Tr Nav.Backups}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="repositories" ToolTip="{markup:Tr Nav.Repositories}">
+                        <StackPanel Orientation="Horizontal">
+                            <Grid Width="28">
+                                <ui:SymbolIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource IconSize.Nav}"
+                                    Style="{StaticResource SidebarIcon}"
+                                    Symbol="Library24" />
+                            </Grid>
+                            <TextBlock
+                                Margin="20,0,0,0"
+                                Style="{StaticResource SidebarLabel}"
+                                Text="{markup:Tr Nav.Repositories}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="templates" ToolTip="{markup:Tr Nav.Templates}">
+                        <StackPanel Orientation="Horizontal">
+                            <Grid Width="28">
+                                <ui:SymbolIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource IconSize.Nav}"
+                                    Style="{StaticResource SidebarIcon}"
+                                    Symbol="Document24" />
+                            </Grid>
+                            <TextBlock
+                                Margin="20,0,0,0"
+                                Style="{StaticResource SidebarLabel}"
+                                Text="{markup:Tr Nav.Templates}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="logs" ToolTip="{markup:Tr Nav.Logs}">
+                        <StackPanel Orientation="Horizontal">
+                            <Grid Width="28">
+                                <ui:SymbolIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource IconSize.Nav}"
+                                    Style="{StaticResource SidebarIcon}"
+                                    Symbol="DocumentBulletList24" />
+                            </Grid>
+                            <TextBlock
+                                Margin="20,0,0,0"
+                                Style="{StaticResource SidebarLabel}"
+                                Text="{markup:Tr Nav.Logs}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="plugins" ToolTip="{markup:Tr Nav.Plugins}">
+                        <StackPanel Orientation="Horizontal">
+                            <Grid Width="28">
+                                <ui:SymbolIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource IconSize.Nav}"
+                                    Style="{StaticResource SidebarIcon}"
+                                    Symbol="PuzzlePiece24" />
+                            </Grid>
+                            <TextBlock
+                                Margin="20,0,0,0"
+                                Style="{StaticResource SidebarLabel}"
+                                Text="{markup:Tr Nav.Plugins}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                    <ListBoxItem Tag="settings" ToolTip="{Binding SettingsNavLabel}">
+                        <StackPanel Orientation="Horizontal">
+                            <Grid Width="28">
+                                <ui:SymbolIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource IconSize.Nav}"
+                                    Style="{StaticResource SidebarIcon}"
+                                    Symbol="Settings24" />
+                            </Grid>
+                            <TextBlock
+                                Margin="20,0,0,0"
+                                Style="{StaticResource SidebarLabel}"
+                                Text="{Binding SettingsNavLabel}" />
+                        </StackPanel>
+                    </ListBoxItem>
+                </ListBox>
+            </Grid>
+        </Border>
+
+        <Grid Grid.Column="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="88" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <Grid
+                Grid.Row="0"
+                Background="Transparent"
+                MouseLeftButtonDown="OnCaptionDrag"
+                shell:WindowChrome.IsHitTestVisibleInChrome="True">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel
+                    x:Name="PageHeader"
+                    Grid.Column="0"
+                    Margin="32,26,16,0"
+                    VerticalAlignment="Top">
+                    <StackPanel.RenderTransform>
+                        <TranslateTransform />
+                    </StackPanel.RenderTransform>
+                    <TextBlock Style="{StaticResource HeaderTitle}" Text="{Binding PageTitle}" />
+                    <TextBlock Style="{StaticResource HeaderSubtitle}" Text="{Binding PageSubtitle}" />
+                </StackPanel>
+
+                <StackPanel
+                    Grid.Column="1"
+                    Margin="0,7,7,0"
+                    VerticalAlignment="Top"
+                    Orientation="Horizontal">
+                    <ui:Button
+                        AutomationProperties.Name="{markup:Tr Caption.Minimize}"
+                        Click="OnMinimizeClick"
+                        Style="{StaticResource CaptionGlyphButton}"
+                        ToolTip="{markup:Tr Caption.Minimize}">
+                        <ui:SymbolIcon Symbol="Subtract24" />
+                    </ui:Button>
+                    <ui:Button
+                        x:Name="MaximizeButton"
+                        Click="OnMaximizeClick"
+                        Style="{StaticResource CaptionGlyphButton}">
+                        <ui:SymbolIcon x:Name="MaximizeIcon" Symbol="Square24" />
+                    </ui:Button>
+                    <ui:Button
+                        AutomationProperties.Name="{markup:Tr Caption.Close}"
+                        Click="OnCloseClick"
+                        Style="{StaticResource CaptionCloseButton}"
+                        ToolTip="{markup:Tr Caption.Close}" />
+                </StackPanel>
+            </Grid>
+
+            <Grid
+                x:Name="PageHost"
+                Grid.Row="1"
+                AllowDrop="True"
+                DragEnter="OnPageDragOver"
+                DragOver="OnPageDragOver"
+                Drop="OnPageDrop" />
+        </Grid>
+
+        <Border
+            x:Name="DialogScrim"
+            Grid.ColumnSpan="2"
+            Panel.ZIndex="9"
+            Background="#40000000"
+            Visibility="Collapsed" />
+
+        <Grid
+            x:Name="ProgressOverlay"
+            Grid.ColumnSpan="2"
+            Panel.ZIndex="10"
+            Background="{DynamicResource ApplicationBackgroundBrush}"
+            Visibility="{Binding Progress.IsRunning, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel
+                Width="620"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center">
+                <StackPanel Orientation="Horizontal">
+                    <ui:SymbolIcon
+                        VerticalAlignment="Center"
+                        FontSize="{StaticResource IconSize.Display}"
+                        Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                        Symbol="Hourglass24" />
+                    <TextBlock
+                        Margin="16,0,0,0"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource ProgressTitle}"
+                        Text="{Binding Progress.Title}" />
+                </StackPanel>
+
+                <ProgressBar
+                    Height="10"
+                    Margin="{StaticResource Gap.Large}"
+                    IsIndeterminate="{Binding Progress.IsIndeterminate}"
+                    Maximum="100"
+                    Value="{Binding Progress.Percent}" />
+
+                <TextBlock Style="{StaticResource ProgressCount}" Text="{Binding Progress.CountText}" />
+
+                <TextBlock Style="{StaticResource ProgressHint}" Text="{markup:Tr Progress.Hint}" />
+            </StackPanel>
+        </Grid>
+
+        <views:ToastHost
+            Grid.ColumnSpan="2"
+            Panel.ZIndex="5"
+            Margin="0,0,24,24"
+            HorizontalAlignment="Right"
+            VerticalAlignment="Bottom"
+            IsHitTestVisible="False"
+            Service="{Binding Toasts}" />
+    </Grid>
+</ui:FluentWindow>

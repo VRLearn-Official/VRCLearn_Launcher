@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "acme.template",
+  "name": {
+    "zh-Hans": "示例插件",
+    "en": "Template plugin"
+  },
+  "description": {
+    "zh-Hans": "复制这个项目开始开发。",
+    "en": "Copy this project to start developing."
+  },
+  "version": "1.0.0",
+  "author": "https://github.com/acme/hello",
+  "apiVersion": 1,
+  "minHostVersion": "1.28.0",
+  "entry": {
+    "assembly": "VRCLearn.Plugin.Template.dll",
+    "type": "VRCLearn.Plugin.Template.TemplatePlugin"
+  },
+  "window": {
+    "width": 640,
+    "height": 480,
+    "resizable": true
+  },
+  "provides": [],
+  "requires": []
+}

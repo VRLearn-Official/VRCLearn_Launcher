@@ -1,0 +1,81 @@
+<UserControl
+    x:Class="VRCLearn.App.Views.LogsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:markup="clr-namespace:VRCLearn.App.Markup">
+
+    <Grid Margin="{StaticResource PagePadding}">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <StackPanel>
+            <StackPanel Style="{StaticResource Toolbar}">
+                <TextBlock Style="{StaticResource SettingLabel}" Text="{markup:Tr Logs.Level}" />
+                <ComboBox
+                    MinWidth="160"
+                    Margin="8,0,16,0"
+                    DisplayMemberPath="Display"
+                    ItemsSource="{Binding LevelOptions}"
+                    SelectedValue="{Binding SelectedLevel}"
+                    SelectedValuePath="Value" />
+
+                <ui:ToggleSwitch
+                    Margin="0,0,16,0"
+                    VerticalAlignment="Center"
+                    Content="{markup:Tr Logs.AutoRefresh}"
+                    IsChecked="{Binding AutoRefresh}" />
+
+                <ui:Button
+                    Style="{StaticResource ToolbarButton}"
+                    Appearance="Secondary"
+                    Command="{Binding RefreshCommand}"
+                    Content="{markup:Tr Logs.Refresh}" />
+                <ui:Button
+                    Style="{StaticResource ToolbarButton}"
+                    Appearance="Secondary"
+                    Click="OnExportClick"
+                    Content="{markup:Tr Logs.Export}" />
+                <ui:Button
+                    Style="{StaticResource ToolbarButton}"
+                    Appearance="Secondary"
+                    Command="{Binding OpenFolderCommand}"
+                    Content="{markup:Tr Logs.OpenFolder}" />
+            </StackPanel>
+
+            <TextBlock Style="{StaticResource Mono}" Text="{Binding LogFilePath}" />
+        </StackPanel>
+
+        <Border
+            Grid.Row="1"
+            Margin="{StaticResource Gap.Row}"
+            Background="{DynamicResource SolidBackgroundFillColorBaseAltBrush}"
+            BorderBrush="{DynamicResource CardStrokeColorDefaultBrush}"
+            BorderThickness="1"
+            CornerRadius="{StaticResource Radius.Control}">
+            <TextBox
+                x:Name="LogText"
+                Padding="12,10"
+                FontFamily="Consolas"
+                FontSize="{StaticResource FontSize.Caption}"
+                Style="{StaticResource InfoTextBox}"
+                Text="{Binding Text, Mode=OneWay}"
+                TextWrapping="NoWrap"
+                VerticalContentAlignment="Top"
+                VerticalScrollBarVisibility="Auto"
+                HorizontalScrollBarVisibility="Auto"
+                Visibility="{Binding HasContent, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        </Border>
+
+        <TextBlock
+            Grid.Row="1"
+            Margin="{StaticResource Gap.Large}"
+            HorizontalAlignment="Center"
+            VerticalAlignment="Top"
+            Style="{StaticResource Caption}"
+            Text="{markup:Tr Logs.Empty}"
+            Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
+    </Grid>
+</UserControl>

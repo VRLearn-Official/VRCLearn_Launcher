@@ -1,0 +1,85 @@
+﻿<views:DialogWindowBase
+    x:Class="VRCLearn.App.Views.NewProjectDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:markup="clr-namespace:VRCLearn.App.Markup"
+    xmlns:views="clr-namespace:VRCLearn.App.Views"
+    Title="{markup:Tr Projects.New}"
+    Width="560"
+    WindowStartupLocation="CenterOwner"
+    Style="{StaticResource DialogWindow}">
+
+    <views:DialogChrome Style="{StaticResource DialogChromeStyle}">
+
+        <StackPanel
+            Margin="24,4,24,20"
+            MaxWidth="1000">
+
+            <HeaderedContentControl
+                Margin="0"
+                Header="{markup:Tr Templates.Template}"
+                Style="{StaticResource FormRow}">
+                <ComboBox
+                    HorizontalAlignment="Stretch"
+                    DisplayMemberPath="Display"
+                    ItemsSource="{Binding Templates}"
+                    SelectedItem="{Binding SelectedTemplate}" />
+            </HeaderedContentControl>
+
+            <HeaderedContentControl Header="{markup:Tr Templates.UnityVersion}" Style="{StaticResource FormRow}">
+                <StackPanel>
+                    <ComboBox
+                        HorizontalAlignment="Stretch"
+                        DisplayMemberPath="Display"
+                        ItemsSource="{Binding UnityVersions}"
+                        SelectedItem="{Binding SelectedUnityVersion}" />
+                    <TextBlock
+                        Margin="0,6,0,0"
+                        Style="{StaticResource Caption}"
+                        Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                        Text="{markup:Tr Templates.UnityVersionMissing}"
+                        TextWrapping="Wrap"
+                        Visibility="{Binding HasNoUnityVersion, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                </StackPanel>
+            </HeaderedContentControl>
+
+            <HeaderedContentControl Header="{markup:Tr Templates.Name}" Style="{StaticResource FormRow}">
+                <TextBox Text="{Binding ProjectName, UpdateSourceTrigger=PropertyChanged}" />
+            </HeaderedContentControl>
+
+            <HeaderedContentControl Header="{markup:Tr Templates.Location}" Style="{StaticResource FormRow}">
+                <StackPanel>
+                    <DockPanel>
+                        <ui:Button
+                            DockPanel.Dock="Right"
+                            Click="OnBrowseClick"
+                            Content="{markup:Tr Templates.Browse}"
+                            Style="{StaticResource BrowseButton}" />
+                        <TextBox Text="{Binding ParentDirectory, UpdateSourceTrigger=PropertyChanged}" />
+                    </DockPanel>
+                    <TextBlock
+                        Margin="{StaticResource Gap.Small}"
+                        Style="{StaticResource Mono}"
+                        Text="{Binding TargetPath}"
+                        TextWrapping="Wrap" />
+                </StackPanel>
+            </HeaderedContentControl>
+
+            <TextBlock
+                Margin="{StaticResource Gap.Row}"
+                Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                Text="{Binding Status}"
+                TextWrapping="Wrap" />
+
+            <StackPanel Style="{StaticResource DialogRow}">
+                <ui:Button
+                    Appearance="Primary"
+                    Click="OnCreateClick"
+                    Content="{markup:Tr Dialog.Create}"
+                    Style="{StaticResource DialogButton}" />
+                <ui:ProgressRing Margin="12,0,0,0" Style="{StaticResource BusyRing}" />
+            </StackPanel>
+        </StackPanel>
+    </views:DialogChrome>
+</views:DialogWindowBase>

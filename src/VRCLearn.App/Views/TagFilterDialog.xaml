@@ -1,0 +1,80 @@
+<views:DialogWindowBase
+    x:Class="VRCLearn.App.Views.TagFilterDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:markup="clr-namespace:VRCLearn.App.Markup"
+    xmlns:views="clr-namespace:VRCLearn.App.Views"
+    Title="{markup:Tr Resources.Filter.Title}"
+    Width="480"
+    WindowStartupLocation="CenterOwner"
+    Style="{StaticResource DialogWindow}">
+
+    <views:DialogChrome Style="{StaticResource DialogChromeStyle}">
+        <Grid Margin="24,4,24,20">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="Auto" />
+            </Grid.RowDefinitions>
+
+            <TextBlock
+                Style="{StaticResource Caption}"
+                Text="{markup:Tr Resources.Filter.Hint}" />
+
+            <ui:Card
+                Grid.Row="1"
+                MinHeight="120"
+                Margin="0,16,0,0"
+                Padding="16">
+                <Grid>
+                    <StackPanel
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Visibility="{Binding ElementName=Tags, Path=HasItems, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                        <ui:SymbolIcon
+                            HorizontalAlignment="Center"
+                            FontSize="24"
+                            Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                            Symbol="Tag24" />
+                        <TextBlock
+                            Margin="{StaticResource Gap.Small}"
+                            HorizontalAlignment="Center"
+                            Style="{StaticResource Caption}"
+                            Text="{markup:Tr Resources.Filter.Empty}" />
+                    </StackPanel>
+                    <ItemsControl x:Name="Tags" VerticalAlignment="Center">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <WrapPanel />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <CheckBox
+                                    Content="{Binding Name}"
+                                    IsChecked="{Binding IsSelected}"
+                                    Style="{StaticResource TagToggle}" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </ui:Card>
+
+            <Grid Grid.Row="2" Margin="0,16,0,0">
+                <ui:Button
+                    HorizontalAlignment="Left"
+                    Appearance="Secondary"
+                    Click="OnClearClick"
+                    Content="{markup:Tr Resources.Filter.Clear}"
+                    Style="{StaticResource DialogButton}" />
+                <ui:Button
+                    HorizontalAlignment="Right"
+                    Appearance="Primary"
+                    Click="OnApplyClick"
+                    Content="{markup:Tr Resources.Filter.Apply}"
+                    Style="{StaticResource DialogButton}" />
+            </Grid>
+        </Grid>
+    </views:DialogChrome>
+</views:DialogWindowBase>

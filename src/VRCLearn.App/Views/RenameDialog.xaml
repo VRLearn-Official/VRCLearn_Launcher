@@ -1,0 +1,33 @@
+﻿<views:DialogWindowBase
+    x:Class="VRCLearn.App.Views.RenameDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:markup="clr-namespace:VRCLearn.App.Markup"
+    xmlns:views="clr-namespace:VRCLearn.App.Views"
+    Width="480"
+    WindowStartupLocation="CenterOwner"
+    Style="{StaticResource DialogWindow}">
+
+    <views:DialogChrome Style="{StaticResource DialogChromeStyle}">
+
+        <StackPanel Margin="20,0,20,16">
+            <ui:TextBox x:Name="NameBox" />
+
+            <TextBlock
+                x:Name="StatusText"
+                Margin="{StaticResource Gap.Small}"
+                FontSize="{StaticResource FontSize.Caption}"
+                Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                TextWrapping="Wrap" />
+
+            <StackPanel Style="{StaticResource DialogRow}">
+                <ui:Button
+                    x:Name="ConfirmButton"
+                    Appearance="Primary"
+                    Click="OnConfirmClick"
+                    Style="{StaticResource DialogButton}" />
+            </StackPanel>
+        </StackPanel>
+    </views:DialogChrome>
+</views:DialogWindowBase>

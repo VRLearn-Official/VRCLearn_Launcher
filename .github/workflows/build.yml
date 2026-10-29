@@ -1,0 +1,278 @@
+name: Build
+
+on:
+  push:
+    branches:
+      - main
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Read version
+        id: version
+        shell: pwsh
+        run: |
+          [xml]$props = Get-Content Directory.Build.props
+          $version = $props.SelectSingleNode('/Project/PropertyGroup/Version').InnerText.Trim()
+
+          if ($version -notmatch '^\d+\.\d+\.\d+$') {
+            throw "Directory.Build.props <Version> '$version' is not major.minor.patch."
+          }
+
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "SETUP_ASSET=VRCLearnLauncher-$version-win-x64-Setup.exe" >> $env:GITHUB_ENV
+
+      - name: Verify tag matches version
+        if: startsWith(github.ref, 'refs/tags/')
+        shell: pwsh
+        env:
+          TAG_NAME: ${{ github.ref_name }}
+          BUILD_VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          if ($env:TAG_NAME -notmatch '^v\d+\.\d+\.\d+$') {
+            throw "Tag '$($env:TAG_NAME)' must be v<major>.<minor>.<patch>."
+          }
+
+          if ($env:TAG_NAME.Substring(1) -ne $env:BUILD_VERSION) {
+            throw "Tag '$($env:TAG_NAME)' does not match <Version>$($env:BUILD_VERSION)</Version> in Directory.Build.props."
+          }
+
+      - name: Publish
+        shell: pwsh
+        run: |
+          dotnet publish src/VRCLearn.App/VRCLearn.App.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:Version=${{ steps.version.outputs.version }} `
+            -p:DebugType=none `
+            -p:DebugSymbols=false `
+            -o artifacts/publish
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "dotnet publish failed ($LASTEXITCODE)."
+          }
+
+      - name: Install Inno Setup
+        shell: pwsh
+        run: |
+          choco install innosetup --no-progress -y
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Inno Setup installation failed ($LASTEXITCODE)."
+          }
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $iscc = @(
+            "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe",
+            "$env:ProgramFiles\Inno Setup 6\ISCC.exe"
+          ) | Where-Object { Test-Path $_ } | Select-Object -First 1
+
+          if (-not $iscc) {
+            throw "Inno Setup not found."
+          }
+
+          & $iscc "/DMyAppVersion=${{ steps.version.outputs.version }}" "build\installer.iss"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "ISCC failed ($LASTEXITCODE)."
+          }
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: VRCLearnLauncher-${{ steps.version.outputs.version }}-win-x64
+          path: artifacts/releases/VRCLearnLauncher-${{ steps.version.outputs.version }}-win-x64-Setup.exe
+          if-no-files-found: error
+
+  release:
+    name: Draft GitHub Release
+    needs: build
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    runs-on: windows-latest
+
+    concurrency:
+      group: release-${{ github.ref }}
+      cancel-in-progress: false
+
+    permissions:
+      contents: write
+      actions: read
+
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set asset name
+        shell: pwsh
+        run: |
+          "SETUP_ASSET=VRCLearnLauncher-${{ needs.build.outputs.version }}-win-x64-Setup.exe" >> $env:GITHUB_ENV
+
+      - name: Download installer artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: VRCLearnLauncher-${{ needs.build.outputs.version }}-win-x64
+          path: release-assets
+
+      - name: Generate SHA256 checksum
+        shell: pwsh
+        run: |
+          $exe = Join-Path $env:GITHUB_WORKSPACE "release-assets/$($env:SETUP_ASSET)"
+
+          if (-not (Test-Path -LiteralPath $exe)) {
+            throw "Installer not found: $exe"
+          }
+
+          $hash = (Get-FileHash -LiteralPath $exe -Algorithm SHA256).Hash.ToLowerInvariant()
+          $shaFile = "$exe.sha256"
+
+          [System.IO.File]::WriteAllText(
+            $shaFile,
+            "$hash  $($env:SETUP_ASSET)`n",
+            [System.Text.UTF8Encoding]::new($false))
+
+          Get-Content -LiteralPath $shaFile
+
+      - name: Verify checksum format
+        shell: bash
+        working-directory: release-assets
+        run: sha256sum -c "$SETUP_ASSET.sha256"
+
+      - name: Create or update draft release
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $tag = $env:RELEASE_TAG
+          $repo = $env:GITHUB_REPOSITORY
+          $exe = Join-Path $env:GITHUB_WORKSPACE "release-assets/$($env:SETUP_ASSET)"
+          $shaFile = "$exe.sha256"
+          $notes = Join-Path $env:GITHUB_WORKSPACE ".github/release-notes.md"
+
+          $releasesJson = gh api "repos/$repo/releases?per_page=100"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "gh api releases failed ($LASTEXITCODE)."
+          }
+
+          $release = @($releasesJson | ConvertFrom-Json) |
+            Where-Object { $_.tag_name -eq $tag } |
+            Sort-Object created_at -Descending |
+            Select-Object -First 1
+
+          if (-not $release) {
+            gh release create $tag $exe $shaFile `
+              --draft `
+              --verify-tag `
+              --title "VRCLearn Launcher $tag" `
+              --notes-file $notes
+
+            if ($LASTEXITCODE -ne 0) {
+              throw "gh release create failed ($LASTEXITCODE)."
+            }
+
+            Write-Host "Created draft release $tag."
+          }
+          else {
+            if (-not $release.draft) {
+              throw "Release $tag is already published; bump the version and tag a new release instead."
+            }
+
+            foreach ($asset in @($release.assets)) {
+              if (-not $asset) {
+                continue
+              }
+
+              if ($asset.name -in @($env:SETUP_ASSET, "$($env:SETUP_ASSET).sha256")) {
+                gh api -X DELETE "repos/$repo/releases/assets/$($asset.id)"
+
+                if ($LASTEXITCODE -ne 0) {
+                  throw "Deleting asset $($asset.name) failed ($LASTEXITCODE)."
+                }
+              }
+            }
+
+            foreach ($file in @($exe, $shaFile)) {
+              $assetName = Split-Path -Leaf $file
+              $uploadUri = "https://uploads.github.com/repos/$repo/releases/$($release.id)/assets?name=$assetName"
+
+              Invoke-RestMethod -Uri $uploadUri `
+                -Method Post `
+                -Headers @{ Authorization = "Bearer $env:GH_TOKEN" } `
+                -ContentType "application/octet-stream" `
+                -InFile $file | Out-Null
+            }
+
+            if ([string]::IsNullOrWhiteSpace($release.body)) {
+              $bodyText = [System.IO.File]::ReadAllText($notes)
+              $payload = @{ tag_name = $tag; body = $bodyText } | ConvertTo-Json -Compress
+              $payload | gh api -X PATCH "repos/$repo/releases/$($release.id)" --input -
+
+              if ($LASTEXITCODE -ne 0) {
+                throw "gh api release update failed ($LASTEXITCODE)."
+              }
+            }
+
+            Write-Host "Draft release $tag updated."
+          }
+
+      - name: Verify draft release assets
+        shell: pwsh
+        env:
+          RELEASE_TAG: ${{ github.ref_name }}
+        run: |
+          $tag = $env:RELEASE_TAG
+          $repo = $env:GITHUB_REPOSITORY
+
+          $releasesJson = gh api "repos/$repo/releases?per_page=100"
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "gh api releases failed ($LASTEXITCODE)."
+          }
+
+          $release = @($releasesJson | ConvertFrom-Json) |
+            Where-Object { $_.tag_name -eq $tag } |
+            Sort-Object created_at -Descending |
+            Select-Object -First 1
+
+          if (-not $release) {
+            throw "Release $tag was not found."
+          }
+
+          if (-not $release.draft) {
+            throw "Release $tag is no longer a draft."
+          }
+
+          $names = @($release.assets | ForEach-Object { $_.name })
+
+          foreach ($expected in @($env:SETUP_ASSET, "$($env:SETUP_ASSET).sha256")) {
+            if ($names -notcontains $expected) {
+              throw "Release $tag is missing asset $expected. Found: $($names -join ', ')"
+            }
+          }
+
+          "### Draft release ready`n`n$($release.html_url)" >> $env:GITHUB_STEP_SUMMARY

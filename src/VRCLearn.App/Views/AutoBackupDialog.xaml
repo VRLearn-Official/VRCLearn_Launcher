@@ -1,0 +1,96 @@
+<views:DialogWindowBase
+    x:Class="VRCLearn.App.Views.AutoBackupDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:markup="clr-namespace:VRCLearn.App.Markup"
+    xmlns:views="clr-namespace:VRCLearn.App.Views"
+    Width="520"
+    Title="{markup:Tr AutoBackup.Title}"
+    WindowStartupLocation="CenterOwner"
+    Style="{StaticResource DialogWindow}">
+
+    <views:DialogChrome Style="{StaticResource DialogChromeStyle}">
+
+        <StackPanel Margin="20,0,20,16">
+            <TextBlock
+                Margin="{StaticResource Gap.Field}"
+                Style="{StaticResource Caption}"
+                Text="{markup:Tr AutoBackup.Description}" />
+
+            <HeaderedContentControl Style="{StaticResource FieldRow}">
+                <HeaderedContentControl.Header>
+                    <StackPanel>
+                        <TextBlock Text="{markup:Tr AutoBackup.Enable}" />
+                        <TextBlock
+                            Margin="{StaticResource Gap.Tight}"
+                            Style="{StaticResource Caption}"
+                            Text="{markup:Tr AutoBackup.EnableHint}" />
+                    </StackPanel>
+                </HeaderedContentControl.Header>
+                <ui:ToggleSwitch x:Name="EnabledSwitch" />
+            </HeaderedContentControl>
+
+            <HeaderedContentControl Style="{StaticResource FieldRow}">
+                <HeaderedContentControl.Header>
+                    <StackPanel>
+                        <TextBlock Text="{markup:Tr AutoBackup.Interval}" />
+                        <TextBlock
+                            Margin="{StaticResource Gap.Tight}"
+                            Style="{StaticResource Caption}"
+                            Text="{markup:Tr AutoBackup.IntervalHint}" />
+                    </StackPanel>
+                </HeaderedContentControl.Header>
+                <StackPanel Orientation="Horizontal">
+                    <ui:TextBox
+                        x:Name="MinuteBox"
+                        Width="72"
+                        MaxLength="4"
+                        TextAlignment="Center" />
+                    <TextBlock
+                        Margin="{StaticResource Gap.Inline}"
+                        VerticalAlignment="Center"
+                        Text="{markup:Tr AutoBackup.MinutesUnit}" />
+                </StackPanel>
+            </HeaderedContentControl>
+
+            <HeaderedContentControl Style="{StaticResource FieldRow}">
+                <HeaderedContentControl.Header>
+                    <StackPanel>
+                        <TextBlock Text="{markup:Tr AutoBackup.Retention}" />
+                        <TextBlock
+                            Margin="{StaticResource Gap.Tight}"
+                            Style="{StaticResource Caption}"
+                            Text="{markup:Tr AutoBackup.RetentionHint}" />
+                    </StackPanel>
+                </HeaderedContentControl.Header>
+                <StackPanel Orientation="Horizontal">
+                    <ui:TextBox
+                        x:Name="RetentionBox"
+                        Width="72"
+                        MaxLength="3"
+                        TextAlignment="Center" />
+                    <TextBlock
+                        Margin="{StaticResource Gap.Inline}"
+                        VerticalAlignment="Center"
+                        Text="{markup:Tr AutoBackup.CopiesUnit}" />
+                </StackPanel>
+            </HeaderedContentControl>
+
+            <TextBlock
+                x:Name="StatusText"
+                Margin="{StaticResource Gap.Small}"
+                FontSize="{StaticResource FontSize.Caption}"
+                Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                TextWrapping="Wrap" />
+
+            <StackPanel Style="{StaticResource DialogRow}">
+                <ui:Button
+                    Appearance="Primary"
+                    Click="OnSaveClick"
+                    Content="{markup:Tr AutoBackup.Save}"
+                    Style="{StaticResource DialogButton}" />
+            </StackPanel>
+        </StackPanel>
+    </views:DialogChrome>
+</views:DialogWindowBase>
