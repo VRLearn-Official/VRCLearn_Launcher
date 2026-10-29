@@ -16,6 +16,11 @@ public static partial class PluginManifestValidator
     [GeneratedRegex("^[a-z][a-z0-9.-]{0,63}$", RegexOptions.CultureInvariant)]
     private static partial Regex CapabilityPattern();
 
+    public static bool IsValidId(string id) =>
+        IdPattern().IsMatch(id)
+        && PathUtil.IsSafePathSegment(id)
+        && id.Length <= 64;
+
     public static void Validate(PluginManifest manifest)
     {
         if (manifest.SchemaVersion != 1)
@@ -23,9 +28,7 @@ public static partial class PluginManifestValidator
             throw new PluginManifestException($"unsupported schemaVersion: {manifest.SchemaVersion}");
         }
 
-        if (!IdPattern().IsMatch(manifest.Id)
-            || !PathUtil.IsSafePathSegment(manifest.Id)
-            || manifest.Id.Length > 64)
+        if (!IsValidId(manifest.Id))
         {
             throw new PluginManifestException($"invalid plugin id: {manifest.Id}");
         }
@@ -38,6 +41,13 @@ public static partial class PluginManifestValidator
         if (manifest.Author.Length > 128)
         {
             throw new PluginManifestException("author must be at most 128 characters");
+        }
+
+        if (manifest.Extensions?.Hub is { Length: > 0 } hub
+            && !Hub.PluginHubEndpoint.TryNormalize(hub, out _))
+        {
+            throw new PluginManifestException(
+                "extensions.hub must be an absolute https url without query or fragment");
         }
 
         if (manifest.ApiVersion <= 0)

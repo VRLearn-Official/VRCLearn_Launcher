@@ -5,6 +5,8 @@ using CommunityToolkit.Mvvm.Input;
 using VRCLearn.App.Plugins;
 using VRCLearn.App.Services;
 using VRCLearn.Core.Plugins;
+using VRCLearn.Core.Plugins.Hub;
+using VRCLearn.Core.Versioning;
 using VRCLearn.Infrastructure.Shell;
 
 namespace VRCLearn.App.ViewModels;
@@ -19,6 +21,7 @@ public sealed partial class PluginItemViewModel : ObservableObject
     private readonly Action<PluginItemViewModel> _openData;
     private readonly Func<string, string> _describeMissing;
     private bool _suppressToggle;
+    private PluginHubUpdateCandidate? _update;
 
     public PluginItemViewModel(
         PluginSnapshot snapshot,
@@ -27,7 +30,8 @@ public sealed partial class PluginItemViewModel : ObservableObject
         Action<PluginItemViewModel> open,
         Action<PluginItemViewModel> uninstall,
         Action<PluginItemViewModel> openData,
-        Func<string, string> describeMissing)
+        Func<string, string> describeMissing,
+        Func<PluginItemViewModel, Task> update)
     {
         _snapshot = snapshot;
         _localization = localization;
@@ -63,6 +67,7 @@ public sealed partial class PluginItemViewModel : ObservableObject
         UninstallCommand = new RelayCommand(() => _uninstall(this));
         OpenDataCommand = new RelayCommand(() => _openData(this));
         OpenSourceCommand = new RelayCommand(OpenSource);
+        UpdateCommand = new AsyncRelayCommand(() => update(this), () => CanUpdate);
     }
 
     public string Id { get; }
@@ -120,6 +125,24 @@ public sealed partial class PluginItemViewModel : ObservableObject
 
     public bool CanOpenData => !IsBusy;
 
+    public PackageVersion? InstalledVersion => _snapshot.Manifest?.Version;
+
+    public string? Hub => _snapshot.Manifest?.Extensions?.Hub;
+
+    public bool PendingInstall => _snapshot.PendingInstall;
+
+    public bool IsLoaded => _snapshot.IsLoaded;
+
+    public PluginHubUpdateCandidate? Update => _update;
+
+    public bool HasUpdate => _update is not null;
+
+    public bool CanUpdate => _update is not null && !IsBusy;
+
+    public string UpdateToolTip => _update is null
+        ? ""
+        : _localization.Format("Plugins.UpdateTo", _update.Version.ToString());
+
     public IRelayCommand OpenCommand { get; }
 
     public IRelayCommand UninstallCommand { get; }
@@ -127,6 +150,20 @@ public sealed partial class PluginItemViewModel : ObservableObject
     public IRelayCommand OpenDataCommand { get; }
 
     public IRelayCommand OpenSourceCommand { get; }
+
+    public IAsyncRelayCommand UpdateCommand { get; }
+
+    public void SetUpdate(PluginHubUpdateCandidate? update)
+    {
+        _update = update;
+
+        OnPropertyChanged(nameof(Update));
+        OnPropertyChanged(nameof(HasUpdate));
+        OnPropertyChanged(nameof(CanUpdate));
+        OnPropertyChanged(nameof(UpdateToolTip));
+
+        UpdateCommand.NotifyCanExecuteChanged();
+    }
 
     [ObservableProperty]
     private bool _isEnabled;
@@ -140,6 +177,9 @@ public sealed partial class PluginItemViewModel : ObservableObject
         OnPropertyChanged(nameof(CanToggle));
         OnPropertyChanged(nameof(CanUninstall));
         OnPropertyChanged(nameof(CanOpenData));
+        OnPropertyChanged(nameof(CanUpdate));
+
+        UpdateCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnIsEnabledChanged(bool value)

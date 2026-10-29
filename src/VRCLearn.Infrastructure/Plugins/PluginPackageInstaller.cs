@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using VRCLearn.Core.Archives;
 using VRCLearn.Core.Configuration;
+using VRCLearn.Core.IO;
 using VRCLearn.Core.Plugins;
 using VRCLearn.Infrastructure.IO;
 
@@ -35,7 +36,7 @@ public sealed class PluginPackageInstaller(
 {
     public const string Extension = ".vclplugin";
 
-    private const long MaxPackageBytes = 512L * 1024 * 1024;
+    public const long MaxPackageBytes = 512L * 1024 * 1024;
 
     public async Task<(PluginManifest Manifest, string Sha256)> InspectAsync(
         string packagePath,
@@ -120,7 +121,7 @@ public sealed class PluginPackageInstaller(
         }
         catch
         {
-            TryDeleteDirectory(staging);
+            DirectoryCleanup.TryDelete(staging);
             throw;
         }
 
@@ -170,7 +171,7 @@ public sealed class PluginPackageInstaller(
 
         if (states.Current.PendingInstalls.Remove(id, out var pending))
         {
-            TryDeleteDirectory(pending);
+            DirectoryCleanup.TryDelete(pending);
         }
 
         if (Directory.Exists(target))
@@ -182,7 +183,7 @@ public sealed class PluginPackageInstaller(
             try
             {
                 Directory.Move(target, removed);
-                TryDeleteDirectory(removed);
+                DirectoryCleanup.TryDelete(removed);
             }
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
             {
@@ -210,7 +211,7 @@ public sealed class PluginPackageInstaller(
 
             if (Directory.Exists(data))
             {
-                dataRemoved = TryDeleteDirectory(data);
+                dataRemoved = DirectoryCleanup.TryDelete(data);
             }
         }
 
@@ -235,7 +236,7 @@ public sealed class PluginPackageInstaller(
 
             var target = Path.Combine(paths.PluginsDirectory, id);
 
-            if (TryDeleteDirectory(target))
+            if (DirectoryCleanup.TryDelete(target))
             {
                 states.Current.PendingRemovals.RemoveAll(x => string.Equals(x, id, StringComparison.Ordinal));
                 states.Current.Enabled.RemoveAll(x => string.Equals(x, id, StringComparison.Ordinal));
@@ -264,7 +265,7 @@ public sealed class PluginPackageInstaller(
                 }
 
                 Directory.Move(pending, target);
-                TryDeleteDirectory(old);
+                DirectoryCleanup.TryDelete(old);
                 states.Current.PendingInstalls.Remove(id);
             }
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
@@ -298,7 +299,7 @@ public sealed class PluginPackageInstaller(
                         directory,
                         StringComparer.OrdinalIgnoreCase)))
             {
-                TryDeleteDirectory(directory);
+                DirectoryCleanup.TryDelete(directory);
             }
         }
 
@@ -324,7 +325,7 @@ public sealed class PluginPackageInstaller(
 
         if (states.Current.PendingInstalls.Remove(manifest.Id, out var previous))
         {
-            TryDeleteDirectory(previous);
+            DirectoryCleanup.TryDelete(previous);
         }
 
         states.Current.PendingInstalls[manifest.Id] = pending;
@@ -341,7 +342,7 @@ public sealed class PluginPackageInstaller(
     {
         if (states.Current.PendingInstalls.Remove(id, out var pending))
         {
-            TryDeleteDirectory(pending);
+            DirectoryCleanup.TryDelete(pending);
         }
     }
 
@@ -361,23 +362,7 @@ public sealed class PluginPackageInstaller(
             throw;
         }
 
-        TryDeleteDirectory(old);
+        DirectoryCleanup.TryDelete(old);
     }
 
-    private static bool TryDeleteDirectory(string path)
-    {
-        try
-        {
-            if (Directory.Exists(path))
-            {
-                Directory.Delete(path, recursive: true);
-            }
-
-            return true;
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        {
-            return false;
-        }
-    }
 }

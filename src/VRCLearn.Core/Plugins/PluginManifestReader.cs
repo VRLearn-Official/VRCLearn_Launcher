@@ -39,6 +39,9 @@ public static class PluginManifestReader
             Description = dto.Description ?? PluginLocalizedText.Empty,
             Version = PluginManifestValidator.ParseVersion(dto.Version ?? "", "version"),
             Author = dto.Author ?? "",
+            Extensions = dto.Extensions?.Hub?.Trim() is { Length: > 0 } hub
+                ? new PluginExtensions(hub)
+                : null,
             ApiVersion = dto.ApiVersion,
             MinHostVersion = dto.MinHostVersion is { Length: > 0 } minHost
                 ? PluginManifestValidator.ParseVersion(minHost, "minHostVersion")
@@ -91,6 +94,8 @@ public static class PluginManifestReader
 
         public string? Author { get; set; }
 
+        public ExtensionsDto? Extensions { get; set; }
+
         public int ApiVersion { get; set; }
 
         public string? MinHostVersion { get; set; }
@@ -104,6 +109,11 @@ public static class PluginManifestReader
         public List<CapabilityDto>? Provides { get; set; }
 
         public List<RequirementDto>? Requires { get; set; }
+    }
+
+    private sealed class ExtensionsDto
+    {
+        public string? Hub { get; set; }
     }
 
     private sealed class EntryDto

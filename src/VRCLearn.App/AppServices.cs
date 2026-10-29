@@ -70,6 +70,8 @@ public static class AppServices
             .AddSingleton<ProjectPickerHostService>()
             .AddSingleton<RepositoryHostService>()
             .AddSingleton<PluginStateStore>()
+            .AddSingleton<PluginHubStateStore>()
+            .AddSingleton<PluginHubService>()
             .AddSingleton<PluginDirectoryScanner>()
             .AddSingleton<PluginPackageInstaller>()
             .AddSingleton<PluginWindowService>()

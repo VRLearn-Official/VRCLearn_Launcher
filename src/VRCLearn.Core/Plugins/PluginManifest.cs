@@ -16,6 +16,8 @@ public sealed class PluginManifest
 
     public string Author { get; init; } = "";
 
+    public PluginExtensions? Extensions { get; init; }
+
     public int ApiVersion { get; init; }
 
     public PackageVersion? MinHostVersion { get; init; }

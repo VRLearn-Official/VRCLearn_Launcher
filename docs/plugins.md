@@ -26,6 +26,7 @@ VRCLearn Launcher 的【插件】页由本地 `.vclplugin` 包扩展。每个插
   },
   "version": "1.0.0",
   "author": "https://github.com/acme/hello",
+  "extensions": { "hub": "https://vclplugin.gamemode1.top/" },
   "apiVersion": 1,
   "minHostVersion": "1.28.0",
   "entry": {
@@ -46,6 +47,7 @@ VRCLearn Launcher 的【插件】页由本地 `.vclplugin` 包扩展。每个插
 | `name` / `description` | 字符串或 `{ "语言代码": "文本" }`；缺当前语言时先回退中性语言，再回退 `en`，最后取第一个值 |
 | `version` | `major.minor.patch`，用于展示和替换 |
 | `author` | 插件来源的 GitHub 链接，最长 128；缺失或无法解析时界面显示「未知」 |
+| `extensions.hub` | 可选；插件市场地址，必须是 https 绝对地址，最长 2048。写在 `extensions` 对象里，未知键忽略。缺失时不检查更新 |
 | `apiVersion` | 必须等于宿主 `PluginApi.Version`（当前 `1`）；目标框架升级不影响这个值 |
 | `minHostVersion` | 可选；宿主版本低于它的包会被拒绝。以 `net10.0-windows` 构建的插件至少填 `1.28.0` |
 | `entry.assembly` | 包内相对路径，必须是 `.dll` |
@@ -297,12 +299,31 @@ powershell -NoProfile -ExecutionPolicy Bypass -File build/pack-plugin.ps1 `
 
 ## 安装与卸载
 
-- 插件安装到 `<数据目录>\plugins\<id>\`，一个 id 只保留一份，安装即替换；不做版本并存、自动选版本或自动更新。
+- 插件安装到 `<数据目录>\plugins\<id>\`，一个 id 只保留一份，安装即替换；不做版本并存或自动选版本。带 `extensions.hub` 的插件可以在插件页检查更新，规则见下节。
 - 所有新安装的插件默认停用，必须在插件页手动开启；开启时宿主会提示插件拥有与程序相同的权限。
-- 插件正在运行（DLL 已加载）时安装新版本，会显示“重启后生效”，下次启动先替换再加载。
+- 从插件页更新（检查更新）时，若插件正在运行，宿主会先关闭其窗口并卸载程序集再替换，通常无需重启；文件仍被占用时退化为“重启后生效”。从本地文件安装不做这一步卸载，运行中仍是“重启后生效”。
 - 插件启用时不能卸载；点击卸载会提示先停用。
 - 卸载会同时删除插件文件与 `DataDirectory`。
 - 卸载时先把插件目录移出扫描范围，再尝试删除；文件被占用时留到下次启动清理。
+
+## 市场与更新
+
+`plugin.json` 声明市场地址后，宿主在插件页检查更新：
+
+```json
+{
+  "id": "acme.plugin",
+  "extensions": { "hub": "https://vclplugin.gamemode1.top/" }
+}
+```
+
+- 索引地址固定为 `<hub>/index.json`，结构与市场页一致：每个插件含 `id`、`apiVersion`、`minHostVersion` 与 `versions[]`；每个版本含 `version`、`size`、`sha256`、`url`。
+- 包地址必须与 hub 同 scheme、同主机、同端口，且位于 hub 路径下；相对地址按索引地址解析。
+- 进入插件页时检查，同一 hub 24 小时内不重复请求，失败同样冷却；工具栏可以手动强制检查。
+- 只提示并安装更高版本；`apiVersion` 必须与宿主一致，`minHostVersion` 高于宿主时不提示。
+- 用户确认后才下载。下载文件校验 `sha256`（旧记录没有该字段时改为校验包内清单的 `id` 与 `version`），安装仍走完整的包结构、兼容性与原子替换流程。
+- 插件正在运行时更新会先关闭其窗口并卸载程序集，替换成功后无需重启；卸载不干净（例如被其他已加载插件引用）时仍会退化为“重启后生效”。
+- 包与索引都不做重定向跨站信任：下载层只允许 HTTPS，索引层只允许同 hub 地址。
 
 ## 示例
 

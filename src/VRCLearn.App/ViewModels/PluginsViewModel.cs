@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Net.Http;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
@@ -9,27 +10,36 @@ using VRCLearn.App.Plugins;
 using VRCLearn.App.Services;
 using VRCLearn.App.Views;
 using VRCLearn.Core.Configuration;
+using VRCLearn.Core.IO;
 using VRCLearn.Core.Plugins;
+using VRCLearn.Core.Plugins.Hub;
 using VRCLearn.Infrastructure.Plugins;
 using VRCLearn.Infrastructure.Shell;
 using VRCLearn.Infrastructure.Storage;
+using VRCLearn.Plugin.Sdk;
 
 namespace VRCLearn.App.ViewModels;
 
 public sealed partial class PluginsViewModel : PageViewModelBase
 {
     private readonly PluginManager _manager;
+    private readonly PluginHubService _hub;
+    private readonly HostDownloadService _download;
     private readonly DialogService _dialogs;
     private readonly LocalizationService _localization;
     private readonly AppPaths _paths;
     private readonly GuiConfigStore _configs;
     private readonly ILogger<PluginsViewModel> _logger;
     private readonly IReadOnlyList<Option> _sortOptions;
+    private readonly Dictionary<string, PluginHubUpdateCandidate> _updates = new(StringComparer.Ordinal);
+    private readonly SemaphoreSlim _updateGate = new(1, 1);
     private IReadOnlyDictionary<string, string> _providerNames =
         new Dictionary<string, string>(StringComparer.Ordinal);
 
     public PluginsViewModel(
         PluginManager manager,
+        PluginHubService hub,
+        HostDownloadService download,
         DialogService dialogs,
         LocalizationService localization,
         AppPaths paths,
@@ -39,6 +49,8 @@ public sealed partial class PluginsViewModel : PageViewModelBase
         : base(toasts)
     {
         _manager = manager;
+        _hub = hub;
+        _download = download;
         _dialogs = dialogs;
         _localization = localization;
         _paths = paths;
@@ -86,6 +98,30 @@ public sealed partial class PluginsViewModel : PageViewModelBase
     public bool IsEmpty => !HasPlugins;
 
     public bool IsSearchEmpty => HasPlugins && FilteredPlugins.IsEmpty;
+
+    public bool IsWorking => IsBusy || IsCheckingUpdates;
+
+    public bool CanCheckUpdates => !IsCheckingUpdates && !IsBusy;
+
+    [ObservableProperty]
+    private bool _isCheckingUpdates;
+
+    partial void OnIsCheckingUpdatesChanged(bool value)
+    {
+        OnPropertyChanged(nameof(IsWorking));
+        OnPropertyChanged(nameof(CanCheckUpdates));
+    }
+
+    protected override void OnPropertyChanged(PropertyChangedEventArgs e)
+    {
+        base.OnPropertyChanged(e);
+
+        if (e.PropertyName == nameof(IsBusy))
+        {
+            OnPropertyChanged(nameof(IsWorking));
+            OnPropertyChanged(nameof(CanCheckUpdates));
+        }
+    }
 
     [ObservableProperty]
     private string _searchText = "";
@@ -145,11 +181,11 @@ public sealed partial class PluginsViewModel : PageViewModelBase
             || plugin.SourceText.Contains(query, StringComparison.OrdinalIgnoreCase);
     }
 
-    public Task ReloadAsync()
+    public async Task ReloadAsync()
     {
         if (IsBusy)
         {
-            return Task.CompletedTask;
+            return;
         }
 
         IsBusy = true;
@@ -169,7 +205,228 @@ public sealed partial class PluginsViewModel : PageViewModelBase
             IsBusy = false;
         }
 
-        return Task.CompletedTask;
+        await CheckForUpdatesAsync(force: false);
+    }
+
+    [RelayCommand]
+    private Task CheckUpdates() => CheckForUpdatesAsync(force: true);
+
+    private async Task CheckForUpdatesAsync(bool force)
+    {
+        if (IsCheckingUpdates)
+        {
+            return;
+        }
+
+        var targets = Plugins
+            .Where(x => x.InstalledVersion is { } && x.Hub is { Length: > 0 })
+            .Select(x => new PluginHubTarget(x.Id, x.InstalledVersion!, x.Hub!))
+            .ToList();
+
+        if (targets.Count == 0)
+        {
+            _updates.Clear();
+            ApplyUpdates();
+
+            if (force)
+            {
+                Status = _localization["Plugins.UpdateCheckNone"];
+            }
+
+            return;
+        }
+
+        IsCheckingUpdates = true;
+
+        try
+        {
+            var result = await _hub.CheckAsync(targets, force, CancellationToken.None);
+
+            foreach (var failure in result.Failures)
+            {
+                _logger.LogWarning("插件更新检查失败：{Failure}", failure);
+            }
+
+            _updates.Clear();
+
+            foreach (var update in result.Updates)
+            {
+                _updates[update.PluginId] = update;
+            }
+
+            ApplyUpdates();
+
+            if (force)
+            {
+                if (result.Updates.Count > 0)
+                {
+                    Status = _localization.Format("Plugins.UpdateCheckFound", result.Updates.Count);
+                }
+                else if (result.Failures.Count > 0)
+                {
+                    Status = _localization.Format(
+                        "Plugins.UpdateCheckFailed",
+                        string.Join("; ", result.Failures.Take(2)));
+                }
+                else
+                {
+                    Status = _localization["Plugins.UpdateCheckUpToDate"];
+                }
+            }
+        }
+        catch (Exception exception) when (
+            exception is HttpRequestException or IOException or InvalidOperationException
+                or UnauthorizedAccessException)
+        {
+            _logger.LogWarning(exception, "检查插件更新失败");
+
+            if (force)
+            {
+                Status = _localization.Format("Plugins.UpdateCheckFailed", exception.Message);
+            }
+        }
+        finally
+        {
+            IsCheckingUpdates = false;
+        }
+    }
+
+    private void ApplyUpdates()
+    {
+        foreach (var item in Plugins)
+        {
+            item.SetUpdate(CandidateFor(item));
+        }
+    }
+
+    private PluginHubUpdateCandidate? CandidateFor(PluginItemViewModel item)
+    {
+        if (item.PendingInstall
+            || item.InstalledVersion is not { } installed
+            || !_updates.TryGetValue(item.Id, out var candidate)
+            || candidate.Version <= installed
+            || !PluginHubEndpoint.TryNormalize(item.Hub, out var hub)
+            || !string.Equals(hub, candidate.Hub, StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        return candidate;
+    }
+
+    private async Task UpdatePluginAsync(PluginItemViewModel item)
+    {
+        if (item.Update is not { } candidate)
+        {
+            return;
+        }
+
+        var current = item.InstalledVersion?.ToString() ?? "";
+
+        var messageKey = item.IsLoaded
+            ? "Plugins.UpdateMessageRunning"
+            : "Plugins.UpdateMessage";
+
+        var confirmed = _dialogs.ShowConfirm(
+            _localization["Plugins.UpdateTitle"],
+            _localization.Format(messageKey, item.Name, current, candidate.Version.ToString()),
+            _localization["Plugins.UpdateConfirm"]);
+
+        if (!confirmed)
+        {
+            return;
+        }
+
+        if (candidate.Size > PluginPackageInstaller.MaxPackageBytes)
+        {
+            Status = _localization.Format("Plugins.UpdateFailed", _localization["Plugins.UpdateTooLarge"]);
+            return;
+        }
+
+        await _updateGate.WaitAsync();
+
+        try
+        {
+            item.IsBusy = true;
+            IsBusy = true;
+
+            var directory = Path.Combine(_paths.PluginUpdateTempDirectory, Guid.NewGuid().ToString("N"));
+
+            try
+            {
+                Directory.CreateDirectory(directory);
+
+                var path = Path.Combine(directory, $"{item.Id}-{candidate.Version}.vclplugin");
+
+                if (candidate.Sha256 is null)
+                {
+                    _logger.LogWarning(
+                        "插件市场记录缺少 sha256：{Id} {Version}",
+                        item.Id,
+                        candidate.Version);
+                }
+
+                await _download.DownloadAsync(
+                    new DownloadRequest(candidate.PackageUri, path, candidate.Sha256),
+                    progress: null,
+                    CancellationToken.None);
+
+                var (manifest, actualSha256) = await _manager
+                    .InspectPackageAsync(path, CancellationToken.None);
+
+                if (!string.Equals(manifest.Id, item.Id, StringComparison.Ordinal)
+                    || manifest.Version != candidate.Version)
+                {
+                    Status = _localization["Plugins.UpdatePackageMismatch"];
+                    return;
+                }
+
+                var compatibility = PluginCompatibility.Check(
+                    manifest,
+                    PluginHostInfo.Version,
+                    PluginHostInfo.ApiVersion);
+
+                if (compatibility.Count > 0)
+                {
+                    Status = _localization.Format(
+                        "Plugins.UpdateFailed",
+                        string.Join("; ", compatibility));
+                    return;
+                }
+
+                var result = await _manager.UpdateAsync(
+                    item.Id,
+                    path,
+                    candidate.Sha256 ?? actualSha256,
+                    CancellationToken.None);
+
+                Status = result.Outcome == PluginInstallOutcome.PendingRestart
+                    ? _localization.Format("Plugins.UpdatePending", item.Name)
+                    : _localization.Format("Plugins.UpdateDone", item.Name, candidate.Version.ToString());
+
+                _updates.Remove(item.Id);
+            }
+            catch (Exception exception) when (
+                exception is PluginPackageException or PluginManifestException
+                    or InvalidDataException or IOException or UnauthorizedAccessException
+                    or HttpRequestException or InvalidOperationException)
+            {
+                _logger.LogWarning(exception, "更新插件失败：{Id}", item.Id);
+
+                Status = _localization.Format("Plugins.UpdateFailed", exception.Message);
+            }
+            finally
+            {
+                DirectoryCleanup.TryDelete(directory);
+                item.IsBusy = false;
+                IsBusy = false;
+            }
+        }
+        finally
+        {
+            _updateGate.Release();
+            Rebuild();
+        }
     }
 
     [RelayCommand]
@@ -288,9 +545,11 @@ public sealed partial class PluginsViewModel : PageViewModelBase
                 OpenPlugin,
                 UninstallPlugin,
                 OpenPluginData,
-                DescribeMissing));
+                DescribeMissing,
+                UpdatePluginAsync));
         }
 
+        ApplyUpdates();
         FilteredPlugins.Refresh();
 
         OnPropertyChanged(nameof(HasPlugins));

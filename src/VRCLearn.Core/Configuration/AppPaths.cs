@@ -59,4 +59,8 @@ public sealed record AppPaths(string Root)
     public string PluginDataDirectory => Path.Combine(PrivateDirectory, "plugin-data");
 
     public string PluginStateFile => Path.Combine(PrivateDirectory, "plugin-state.json");
+
+    public string PluginHubStateFile => Path.Combine(PrivateDirectory, "plugin-hub-state.json");
+
+    public string PluginUpdateTempDirectory => Path.Combine(PrivateDirectory, "plugin-updates");
 }

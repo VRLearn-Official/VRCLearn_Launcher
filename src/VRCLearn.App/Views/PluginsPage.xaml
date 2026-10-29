@@ -15,6 +15,7 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <ui:TextBox
@@ -35,19 +36,26 @@
                     Grid.Column="2"
                     Margin="{StaticResource Gap.Inline}"
                     Appearance="Secondary"
+                    Command="{Binding CheckUpdatesCommand}"
+                    Content="{markup:Tr Plugins.CheckUpdates}"
+                    IsEnabled="{Binding CanCheckUpdates}" />
+                <ui:Button
+                    Grid.Column="3"
+                    Margin="{StaticResource Gap.Inline}"
+                    Appearance="Secondary"
                     Command="{Binding OpenPluginDirectoryCommand}"
                     Content="{markup:Tr Plugins.OpenDirectory}" />
                 <ui:Button
-                    Grid.Column="3"
+                    Grid.Column="4"
                     Margin="{StaticResource Gap.Inline}"
                     Appearance="Primary"
                     Command="{Binding InstallFromFileCommand}"
                     Content="{markup:Tr Plugins.Install}" />
                 <ui:ProgressRing
-                    Grid.Column="4"
+                    Grid.Column="5"
                     Margin="{StaticResource Gap.Inline}"
                     Style="{StaticResource BusyRing}"
-                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    Visibility="{Binding IsWorking, Converter={StaticResource BooleanToVisibilityConverter}}" />
             </Grid>
 
             <TextBlock

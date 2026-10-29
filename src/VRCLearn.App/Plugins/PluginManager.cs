@@ -138,17 +138,7 @@ public sealed class PluginManager : IDisposable
             return new PluginActionFailure([], dependents);
         }
 
-        _windows.Close(id);
-
-        if (_runtimes.Remove(id, out var runtime))
-        {
-            await runtime.DisposeAsync(_logger);
-            _services.RemoveOwner(id);
-        }
-
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
+        await UnloadRuntimeAsync(id);
 
         _states.SetEnabled(id, false);
 
@@ -234,6 +224,44 @@ public sealed class PluginManager : IDisposable
         return result;
     }
 
+    public async Task<PluginInstallResult> UpdateAsync(
+        string id,
+        string path,
+        string expectedSha256,
+        CancellationToken cancellationToken)
+    {
+        if (IsLoaded(id))
+        {
+            await UnloadRuntimeAsync(id);
+        }
+
+        var result = await _installer
+            .InstallAsync(
+                path,
+                isLoaded: false,
+                cancellationToken,
+                expectedSha256);
+
+        GetSnapshots();
+
+        return result;
+    }
+
+    private async Task UnloadRuntimeAsync(string id)
+    {
+        _windows.Close(id);
+
+        if (_runtimes.Remove(id, out var runtime))
+        {
+            await runtime.DisposeAsync(_logger);
+            _services.RemoveOwner(id);
+        }
+
+        GC.Collect();
+        GC.WaitForPendingFinalizers();
+        GC.Collect();
+    }
+
     public string GetDataDirectory(string id)
     {
         var directory = Path.Combine(_paths.PluginDataDirectory, id);
@@ -250,17 +278,7 @@ public sealed class PluginManager : IDisposable
             throw new InvalidOperationException("plugin is enabled");
         }
 
-        _windows.Close(id);
-
-        if (_runtimes.Remove(id, out var runtime))
-        {
-            await runtime.DisposeAsync(_logger);
-            _services.RemoveOwner(id);
-        }
-
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
+        await UnloadRuntimeAsync(id);
 
         return _installer.Uninstall(id, deleteData);
     }
