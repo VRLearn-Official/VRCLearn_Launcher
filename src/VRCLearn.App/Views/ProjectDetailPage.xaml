@@ -124,17 +124,14 @@
                 </StackPanel>
             </ui:Card>
 
-            <ui:Card
-                Margin="{StaticResource Gap.Field}"
-                Padding="{StaticResource Pad.CardRow}"
-                Visibility="{Binding HasBackups, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <StackPanel>
-                    <TextBlock FontWeight="SemiBold" Text="{markup:Tr ProjectDetail.Backups.Title}" />
+            <StackPanel Visibility="{Binding HasBackups, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Backups.Title}" />
 
-                    <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding Backups}">
+                    <ItemsControl Margin="{StaticResource Gap.Row}" ItemsSource="{Binding Backups}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="0,4" Opacity="{Binding RowOpacity}">
+                                <ui:Card Opacity="{Binding RowOpacity}" Style="{StaticResource RowCard}">
+                                <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
@@ -173,6 +170,7 @@
                                         Content="{markup:Tr ProjectDetail.Restore}"
                                         Visibility="{Binding IsAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 </Grid>
+                                </ui:Card>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
@@ -197,19 +195,15 @@
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
-            </ui:Card>
 
-            <ui:Card
-                Margin="{StaticResource Gap.Field}"
-                Padding="{StaticResource Pad.CardRow}"
-                Visibility="{Binding HasPendingChanges, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <StackPanel>
-                    <TextBlock FontWeight="SemiBold" Text="{markup:Tr ProjectDetail.Review}" />
+            <StackPanel Visibility="{Binding HasPendingChanges, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Review}" />
 
-                    <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding PendingChanges}">
+                    <ItemsControl Margin="{StaticResource Gap.Row}" ItemsSource="{Binding PendingChanges}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="0,2">
+                                <ui:Card Style="{StaticResource RowCard}">
+                                <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
@@ -230,15 +224,16 @@
                                         Content="{markup:Tr ProjectDetail.Remove}"
                                         Visibility="{Binding CanRemove, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 </Grid>
+                                </ui:Card>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
 
-                    <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding PendingConflicts}">
+                    <ItemsControl Margin="{StaticResource Gap.Small}" ItemsSource="{Binding PendingConflicts}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <TextBlock
-                                    Margin="0,2"
+                                    Margin="{StaticResource Gap.Tight}"
                                     FontSize="{StaticResource FontSize.Caption}"
                                     Foreground="{DynamicResource SystemFillColorCautionBrush}"
                                     Text="{Binding}"
@@ -259,7 +254,6 @@
                             Content="{markup:Tr ProjectDetail.Discard}" />
                     </StackPanel>
                 </StackPanel>
-            </ui:Card>
 
             <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Available}" />
 
@@ -274,10 +268,10 @@
                 Text="{markup:Tr ProjectDetail.SearchHint}"
                 Visibility="{Binding IsSearchEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-            <ItemsControl Margin="0,10,0,0" ItemsSource="{Binding Available}">
+            <ItemsControl Margin="{StaticResource Gap.Row}" ItemsSource="{Binding Available}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
-                        <ui:Card Margin="0,0,0,8" Padding="20,12">
+                        <ui:Card Style="{StaticResource RowCard}">
                             <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="*" />
@@ -342,11 +336,11 @@
                 </StackPanel>
             </ui:Card>
 
-            <ui:Card Margin="0,10,0,0" Padding="0">
-                <ItemsControl ItemsSource="{Binding Installed}">
+            <ItemsControl Margin="{StaticResource Gap.Small}" ItemsSource="{Binding Installed}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
-                            <Grid Margin="20,12">
+                            <ui:Card Style="{StaticResource RowCard}">
+                            <Grid>
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="Auto" />
                                     <ColumnDefinition Width="*" />
@@ -422,10 +416,10 @@
                                         IsEnabled="{Binding CanRemove}" />
                                 </StackPanel>
                             </Grid>
+                            </ui:Card>
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
-            </ui:Card>
 
             <Expander Margin="{StaticResource Gap.Large}" Header="{markup:Tr ProjectDetail.UnityArguments}">
                 <StackPanel Margin="{StaticResource Gap.Small}">

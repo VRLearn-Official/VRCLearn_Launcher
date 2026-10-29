@@ -181,6 +181,9 @@ public partial class RepositoriesPage : UserControl
     private static FrameworkElement? ContentOf(FrameworkElement row) =>
         row.FindName("RowContent") as FrameworkElement;
 
+    private static FrameworkElement? SurfaceOf(FrameworkElement row) =>
+        row.FindName("RowSurface") as FrameworkElement;
+
     private static bool IsBelow(FrameworkElement row, DragEventArgs e) =>
         ContentOf(row) is { } content && e.GetPosition(content).Y > content.ActualHeight / 2;
 
@@ -203,7 +206,7 @@ public partial class RepositoriesPage : UserControl
         _slot = slot;
         _slotIndex = index;
 
-        var open = content.ActualHeight;
+        var open = (SurfaceOf(row) ?? content).ActualHeight;
 
         slot.BeginAnimation(HeightProperty, null);
         slot.BeginAnimation(OpacityProperty, null);

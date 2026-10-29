@@ -23,22 +23,19 @@
                     Content="{markup:Tr Templates.New}" />
             </StackPanel>
 
-            <ui:Card
-                Margin="{StaticResource Gap.Field}"
-                Padding="0">
-                <ui:Card.Style>
-                    <Style BasedOn="{StaticResource {x:Type ui:Card}}" TargetType="ui:Card">
+            <StackPanel>
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
                         <Style.Triggers>
                             <DataTrigger Binding="{Binding IsEditing}" Value="True">
                                 <Setter Property="Visibility" Value="Collapsed" />
                             </DataTrigger>
                         </Style.Triggers>
                     </Style>
-                </ui:Card.Style>
+                </StackPanel.Style>
 
-                <StackPanel>
                     <Border
-                        Margin="20,16,20,0"
+                        Margin="{StaticResource Gap.Field}"
                         Padding="12"
                         Background="{DynamicResource ControlFillColorSecondaryBrush}"
                         CornerRadius="{StaticResource Radius.Control}"
@@ -70,10 +67,11 @@
                         </StackPanel>
                     </Border>
 
-                    <ItemsControl ItemsSource="{Binding Templates}">
+                    <ItemsControl Margin="{StaticResource Gap.Row}" ItemsSource="{Binding Templates}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="20,12">
+                                <ui:Card Style="{StaticResource RowCard}">
+                                <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
                                         <ColumnDefinition Width="Auto" />
@@ -126,11 +124,11 @@
                                             Visibility="{Binding IsOwn, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                     </StackPanel>
                                 </Grid>
+                                </ui:Card>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
                 </StackPanel>
-            </ui:Card>
 
             <ui:Card
                 Margin="{StaticResource Gap.Field}"

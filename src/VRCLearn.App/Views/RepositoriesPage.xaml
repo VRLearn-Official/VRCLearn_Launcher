@@ -44,19 +44,18 @@
 
             <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr Repositories.List}" />
 
-            <ui:Card Margin="{StaticResource Gap.Row}" Padding="0">
-                <StackPanel>
-                    <TextBlock
-                        Margin="20,16"
-                        Style="{StaticResource Caption}"
-                        Text="{markup:Tr Repositories.Empty}"
-                        Visibility="{Binding HasRepositories, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+            <TextBlock
+                Margin="{StaticResource Gap.Row}"
+                Style="{StaticResource Caption}"
+                Text="{markup:Tr Repositories.Empty}"
+                Visibility="{Binding HasRepositories, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
 
-                    <ItemsControl ItemsSource="{Binding Repositories}">
+            <ItemsControl Margin="{StaticResource Gap.Row}" ItemsSource="{Binding Repositories}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel
                                     AllowDrop="True"
+                                    Background="Transparent"
                                     DragOver="OnRowDragOver"
                                     Drop="OnRowDrop"
                                     MouseLeftButtonUp="OnRowMouseUp"
@@ -67,12 +66,9 @@
                                         Background="{DynamicResource AccentFillColorDefaultBrush}"
                                         Opacity="0" />
 
-                                    <Grid
-                                        x:Name="RowContent"
-                                        Margin="20,12"
-                                        Background="Transparent">
-                                        <Grid.Style>
-                                            <Style TargetType="Grid">
+                                    <ui:Card x:Name="RowSurface">
+                                        <ui:Card.Style>
+                                            <Style BasedOn="{StaticResource RowCard}" TargetType="ui:Card">
                                                 <Style.Triggers>
                                                     <DataTrigger Binding="{Binding IsHidden}" Value="True">
                                                         <Setter Property="Opacity" Value="0.45" />
@@ -82,8 +78,11 @@
                                                     </DataTrigger>
                                                 </Style.Triggers>
                                             </Style>
-                                        </Grid.Style>
+                                        </ui:Card.Style>
 
+                                    <Grid
+                                        x:Name="RowContent"
+                                        Background="Transparent">
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="Auto" />
                                             <ColumnDefinition Width="*" />
@@ -148,6 +147,7 @@
                                                 Content="{markup:Tr Repositories.Remove}" />
                                         </StackPanel>
                                     </Grid>
+                                    </ui:Card>
 
                                     <Border
                                         x:Name="SlotBelow"
@@ -158,78 +158,74 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-                </StackPanel>
-            </ui:Card>
 
             <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr Packages.User.Title}" />
 
-            <ui:Card Margin="{StaticResource Gap.Row}" Padding="{StaticResource Pad.CardRow}">
-                <StackPanel>
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock Style="{StaticResource Caption}" Text="{markup:Tr Packages.User.Hint}" />
-                        <StackPanel
-                            Grid.Column="1"
-                            VerticalAlignment="Center"
-                            Orientation="Horizontal">
-                            <CheckBox
-                                VerticalAlignment="Center"
-                                Content="{markup:Tr Packages.User.Hide}"
-                                IsChecked="{Binding UserPackages.HideUserPackages}" />
-                            <ui:Button
-                                Margin="12,0,0,0"
-                                Appearance="Secondary"
-                                Click="OnAddUserPackageClick"
-                                Content="{markup:Tr Packages.User.Add}" />
-                        </StackPanel>
-                    </Grid>
-
-                    <TextBlock
-                        Margin="{StaticResource Gap.Row}"
-                        Style="{StaticResource Caption}"
-                        Text="{markup:Tr Packages.User.None}"
-                        Visibility="{Binding UserPackages.HasNoFolders, Converter={StaticResource BooleanToVisibilityConverter}}" />
-
-                    <ItemsControl Margin="{StaticResource Gap.Small}" ItemsSource="{Binding UserPackages.Folders}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Grid Margin="0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="Auto" />
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <ui:SymbolIcon
-                                        VerticalAlignment="Center"
-                                        FontSize="{StaticResource IconSize.Inline}"
-                                        Foreground="{DynamicResource SystemFillColorCautionBrush}"
-                                        Symbol="Warning24"
-                                        Visibility="{Binding IsUnreadable, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    <StackPanel Grid.Column="1" Margin="{StaticResource Gap.Inline}">
-                                        <TextBlock FontSize="{StaticResource FontSize.Caption}" Text="{Binding DisplayName}" TextWrapping="Wrap" />
-                                        <TextBlock
-                                            FontFamily="Consolas"
-                                            FontSize="{StaticResource FontSize.Caption}"
-                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                            Text="{Binding Path}"
-                                            TextTrimming="CharacterEllipsis" />
-                                    </StackPanel>
-                                    <ui:Button
-                                        Grid.Column="2"
-                                        Style="{StaticResource RowButton}"
-                                        Appearance="Secondary"
-                                        Command="{markup:RowCommand UserPackages.RemoveCommand}"
-                                        CommandParameter="{Binding}"
-                                        Content="{markup:Tr Repositories.Remove}" />
-                                </Grid>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+            <Grid Margin="{StaticResource Gap.Row}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBlock Style="{StaticResource Caption}" Text="{markup:Tr Packages.User.Hint}" />
+                <StackPanel
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal">
+                    <CheckBox
+                        VerticalAlignment="Center"
+                        Content="{markup:Tr Packages.User.Hide}"
+                        IsChecked="{Binding UserPackages.HideUserPackages}" />
+                    <ui:Button
+                        Margin="12,0,0,0"
+                        Appearance="Secondary"
+                        Click="OnAddUserPackageClick"
+                        Content="{markup:Tr Packages.User.Add}" />
                 </StackPanel>
-            </ui:Card>
+            </Grid>
+
+            <TextBlock
+                Margin="{StaticResource Gap.Small}"
+                Style="{StaticResource Caption}"
+                Text="{markup:Tr Packages.User.None}"
+                Visibility="{Binding UserPackages.HasNoFolders, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+            <ItemsControl Margin="{StaticResource Gap.Row}" ItemsSource="{Binding UserPackages.Folders}">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ui:Card Style="{StaticResource RowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <ui:SymbolIcon
+                                    VerticalAlignment="Center"
+                                    FontSize="{StaticResource IconSize.Inline}"
+                                    Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                    Symbol="Warning24"
+                                    Visibility="{Binding IsUnreadable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <StackPanel Grid.Column="1" Margin="{StaticResource Gap.Inline}">
+                                    <TextBlock FontSize="{StaticResource FontSize.Caption}" Text="{Binding DisplayName}" TextWrapping="Wrap" />
+                                    <TextBlock
+                                        FontFamily="Consolas"
+                                        FontSize="{StaticResource FontSize.Caption}"
+                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                        Text="{Binding Path}"
+                                        TextTrimming="CharacterEllipsis" />
+                                </StackPanel>
+                                <ui:Button
+                                    Grid.Column="2"
+                                    Style="{StaticResource RowButton}"
+                                    Appearance="Secondary"
+                                    Command="{markup:RowCommand UserPackages.RemoveCommand}"
+                                    CommandParameter="{Binding}"
+                                    Content="{markup:Tr Repositories.Remove}" />
+                            </Grid>
+                        </ui:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
         </StackPanel>
     </ScrollViewer>
 </UserControl>
