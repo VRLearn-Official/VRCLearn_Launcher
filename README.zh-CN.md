@@ -15,6 +15,9 @@
 
 VRCLearn Launcher 把 VPM 仓库、包与 Unity 项目集中在一处管理，是独立的 C#/WPF 应用，与 VRChat Inc.、Unity Technologies 无隶属关系。
 
+> [!WARNING]
+> 若您已积累了大量旧项目，不建议使用本工具，请继续使用官方 VCC 或 ALCOM 等工具。
+
 ## 截图
 
 <p align="center">

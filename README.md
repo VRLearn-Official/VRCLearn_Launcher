@@ -15,6 +15,9 @@
 
 VRCLearn Launcher manages VPM repositories, packages and Unity projects in one place. It is an independent C#/WPF application, not affiliated with VRChat Inc. or Unity Technologies.
 
+> [!WARNING]
+> If you have already built up a large number of existing projects, we do not recommend switching to this tool. Please keep using the official VCC, ALCOM or similar tools.
+
 ## Screenshots
 
 <p align="center">
