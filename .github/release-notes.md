@@ -18,7 +18,9 @@ Get-FileHash .\VRCLearnLauncher-<版本>-win-x64-Setup.exe -Algorithm SHA256
 
 ## 本次更新
 
-- 插件支持检查更新
+- 窗口拖拽改用系统标题栏
+- 启动项目后自动刷新项目列表
+- Unity 运行中的按钮改为中性样式
 
 安装包暂未签名，首次运行时 Windows SmartScreen 可能提示；选择「更多信息」→「仍要运行」。
 
@@ -50,6 +52,8 @@ sha256sum -c VRCLearnLauncher-<version>-win-x64-Setup.exe.sha256
 
 ## What's new
 
-- Plugins can check for updates
+- Window dragging now uses the system title bar
+- The project list refreshes after a project is launched
+- The Unity button uses a neutral style while Unity is running
 
 The installer is not code-signed yet, so Windows SmartScreen may warn on first run. Choose "More info" and then "Run anyway".

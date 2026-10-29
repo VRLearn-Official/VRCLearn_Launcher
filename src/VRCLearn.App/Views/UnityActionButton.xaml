@@ -19,7 +19,7 @@
             Visibility="{Binding IsUnityRunning, ElementName=Root, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
 
         <ui:Button
-            Appearance="Primary"
+            Appearance="Secondary"
             Command="{Binding BringToFrontCommand, ElementName=Root}"
             CommandParameter="{Binding CommandParameter, ElementName=Root}"
             Content="{markup:Tr Projects.BringToFront}"

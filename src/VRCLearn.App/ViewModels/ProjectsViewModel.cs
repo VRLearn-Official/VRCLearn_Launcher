@@ -30,6 +30,7 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
     private readonly IReadOnlyList<Option> _sortingKeys;
     private readonly IReadOnlyList<Option> _sortingDirections;
     private readonly HashSet<string> _runningProjects = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<string> _refreshedAfterLaunch = new(StringComparer.OrdinalIgnoreCase);
 
     public ProjectsViewModel(
         ProjectService service,
@@ -141,6 +142,8 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
 
     public void RefreshUnityStates()
     {
+        var changed = new List<string>();
+
         foreach (var project in Projects)
         {
             var running = _opener.Status(project.ProjectPath) != UnityProjectStatus.Closed;
@@ -152,11 +155,28 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
                 {
                     _autoBackups.ProjectStarted();
                 }
+
+                if (!_refreshedAfterLaunch.Contains(project.ProjectPath)
+                    && Directory.GetLastWriteTimeUtc(project.ProjectPath) != project.LastModified)
+                {
+                    changed.Add(project.ProjectPath);
+                }
             }
             else
             {
                 _runningProjects.Remove(project.ProjectPath);
+                _refreshedAfterLaunch.Remove(project.ProjectPath);
             }
+        }
+
+        if (changed.Count > 0 && !IsBusy)
+        {
+            foreach (var path in changed)
+            {
+                _refreshedAfterLaunch.Add(path);
+            }
+
+            _ = ReloadAsync();
         }
 
         var remaining = _autoBackups.TimeUntilNextBackup();
