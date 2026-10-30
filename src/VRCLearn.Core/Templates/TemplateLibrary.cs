@@ -131,7 +131,10 @@ public sealed class TemplateLibrary
         var dependencies = new Dictionary<string, DependencyRange>();
         var packages = new List<string>();
 
-        Resolve(id, dependencies, packages);
+        if (!Resolve(id, dependencies, packages))
+        {
+            return null;
+        }
 
         return new TemplatePlan(SourceOf(template), dependencies, packages);
     }
@@ -155,21 +158,27 @@ public sealed class TemplateLibrary
         return _fileIo.For(path);
     }
 
-    private void Resolve(
+    private bool Resolve(
         string id,
         Dictionary<string, DependencyRange> dependencies,
         List<string> packages)
     {
         if (id == TemplateFormat.BlankId || !_alcom.TryGetValue(id, out var alcom))
         {
-            return;
+            return true;
         }
 
-        Resolve(alcom.Base, dependencies, packages);
+        if (!Resolve(alcom.Base, dependencies, packages))
+        {
+            return false;
+        }
 
         foreach (var (name, text) in alcom.VpmDependencies)
         {
-            var range = DependencyRange.Parse(text);
+            if (!DependencyRange.TryParse(text, out var range))
+            {
+                return false;
+            }
 
             dependencies[name] = dependencies.TryGetValue(name, out var existing)
                 ? range.Intersect(existing)
@@ -177,5 +186,7 @@ public sealed class TemplateLibrary
         }
 
         packages.AddRange(alcom.UnityPackages);
+
+        return true;
     }
 }

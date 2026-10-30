@@ -9,7 +9,10 @@
     WindowStartupLocation="CenterOwner"
     Style="{StaticResource DialogWindow}">
 
-    <views:DialogChrome Style="{StaticResource DialogChromeStyle}" ShowTitle="False">
+    <views:DialogChrome
+        ShowClose="False"
+        ShowTitle="False"
+        Style="{StaticResource DialogChromeStyle}">
         <StackPanel Margin="20,0,20,44">
             <StackPanel Orientation="Horizontal">
                 <ui:ProgressRing

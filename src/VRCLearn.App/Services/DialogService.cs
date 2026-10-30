@@ -93,6 +93,9 @@ public sealed class DialogService
         Prepare(dialog);
 
         ExceptionDispatchInfo? failure = null;
+        var allowClose = false;
+
+        dialog.Closing += (_, args) => args.Cancel = !allowClose;
 
         dialog.Loaded += async (_, _) =>
         {
@@ -106,6 +109,8 @@ public sealed class DialogService
             }
             finally
             {
+                allowClose = true;
+
                 if (dialog.IsVisible)
                 {
                     dialog.Close();

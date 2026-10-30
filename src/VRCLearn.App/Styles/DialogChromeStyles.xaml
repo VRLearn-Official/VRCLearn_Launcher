@@ -31,7 +31,10 @@
                                 FontWeight="SemiBold"
                                 Text="{Binding Title, RelativeSource={RelativeSource AncestorType=Window}}"
                                 Visibility="{Binding ShowTitle, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                            <ui:Button Click="OnCloseClick" Style="{StaticResource DialogCloseButton}" />
+                            <ui:Button
+                                Click="OnCloseClick"
+                                Style="{StaticResource DialogCloseButton}"
+                                Visibility="{Binding ShowClose, RelativeSource={RelativeSource TemplatedParent}, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         </Grid>
 
                         <ContentPresenter Grid.Row="1" />

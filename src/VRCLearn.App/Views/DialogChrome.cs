@@ -11,9 +11,21 @@ public sealed class DialogChrome : ContentControl
         typeof(DialogChrome),
         new PropertyMetadata(true));
 
+    public static readonly DependencyProperty ShowCloseProperty = DependencyProperty.Register(
+        nameof(ShowClose),
+        typeof(bool),
+        typeof(DialogChrome),
+        new PropertyMetadata(true));
+
     public bool ShowTitle
     {
         get => (bool)GetValue(ShowTitleProperty);
         set => SetValue(ShowTitleProperty, value);
+    }
+
+    public bool ShowClose
+    {
+        get => (bool)GetValue(ShowCloseProperty);
+        set => SetValue(ShowCloseProperty, value);
     }
 }

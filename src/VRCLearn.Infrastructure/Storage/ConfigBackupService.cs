@@ -2,6 +2,7 @@ using System.IO.Compression;
 using System.Text.Json;
 using VRCLearn.Core.Archives;
 using VRCLearn.Core.Configuration;
+using VRCLearn.Core.Projects;
 using VRCLearn.Core.Resources;
 using VRCLearn.Core.Vpm;
 using VRCLearn.Infrastructure.IO;
@@ -43,14 +44,6 @@ public sealed class ConfigBackupService(
 
     private static readonly string[] TemplateExtensions = [".vrclearn-template", ".alcomtemplate"];
 
-    private static readonly HashSet<string> SkippedProjectDirectories = new(StringComparer.OrdinalIgnoreCase)
-    {
-        "Library",
-        "Temp",
-        "Logs",
-        "obj",
-    };
-
     public bool IsFullBackup(string sourcePath)
     {
         using var archive = ZipFile.OpenRead(sourcePath);
@@ -65,11 +58,12 @@ public sealed class ConfigBackupService(
 
         try
         {
-            var entries = Collect(scope, manifest, staging?.Files ?? [])
+            var directories = new List<string>();
+            var entries = Collect(scope, manifest, staging?.Files ?? [], directories)
                 .Where(x => File.Exists(x.FullPath))
                 .ToList();
 
-            if (entries.Count == 0)
+            if (entries.Count == 0 && directories.Count == 0)
             {
                 return new ConfigBackupResult(0, 0);
             }
@@ -89,6 +83,11 @@ public sealed class ConfigBackupService(
             {
                 using (var archive = ZipFile.Open(temporary, ZipArchiveMode.Create))
                 {
+                    foreach (var projectDirectory in directories)
+                    {
+                        archive.CreateEntry($"{projectDirectory}/");
+                    }
+
                     foreach (var (relative, fullPath) in entries)
                     {
                         archive.CreateEntryFromFile(fullPath, relative, CompressionLevel.Optimal);
@@ -130,20 +129,33 @@ public sealed class ConfigBackupService(
         var plan = BuildPlan(manifest, managedRoot);
 
         var targets = new List<(ZipArchiveEntry Entry, string Target)>();
+        var directoryTargets = new List<string>();
         var rootBytes = 0L;
         var managedBytes = 0L;
 
         foreach (var entry in archive.Entries)
         {
-            if (entry.FullName.EndsWith('/') || entry.FullName.EndsWith('\\'))
-            {
-                continue;
-            }
+            var isDirectory = entry.FullName.EndsWith('/') || entry.FullName.EndsWith('\\');
 
             try
             {
-                if (ZipEntryPath.Normalize(entry.FullName) is not { } relative
-                    || !TryResolve(relative, manifest, plan, out var target))
+                if (ZipEntryPath.Normalize(entry.FullName) is not { } relative)
+                {
+                    continue;
+                }
+
+                if (isDirectory)
+                {
+                    if (relative.StartsWith(ProjectsEntryPrefix, StringComparison.OrdinalIgnoreCase)
+                        && TryResolve(relative, manifest, plan, out var directoryTarget))
+                    {
+                        directoryTargets.Add(directoryTarget);
+                    }
+
+                    continue;
+                }
+
+                if (!TryResolve(relative, manifest, plan, out var target))
                 {
                     continue;
                 }
@@ -177,6 +189,17 @@ public sealed class ConfigBackupService(
 
         try
         {
+            foreach (var projectDirectory in directoryTargets)
+            {
+                try
+                {
+                    System.IO.Directory.CreateDirectory(projectDirectory);
+                }
+                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+                {
+                }
+            }
+
             foreach (var (entry, target) in targets)
             {
                 try
@@ -220,7 +243,8 @@ public sealed class ConfigBackupService(
     private IEnumerable<(string Relative, string FullPath)> Collect(
         BackupScope scope,
         BackupManifest manifest,
-        IReadOnlyList<(string Relative, string FullPath)> staged)
+        IReadOnlyList<(string Relative, string FullPath)> staged,
+        List<string> directories)
     {
         if (File.Exists(paths.SettingsFile))
         {
@@ -290,11 +314,22 @@ public sealed class ConfigBackupService(
 
             manifest.Projects.Add(project);
 
-            foreach (var file in FilesInTree(project, skipProjectCaches: true))
+            var content = ProjectFiles.Collect(
+                new PhysicalFileIo(project),
+                ProjectFileFilter.ForBackup());
+
+            foreach (var directory in content.Directories)
             {
+                directories.Add($"{ProjectsEntryPrefix}{index}/{directory}");
+            }
+
+            foreach (var relative in content.Files)
+            {
+                var file = Path.Combine(project, relative.Replace('/', Path.DirectorySeparatorChar));
+
                 if (added.Add(file))
                 {
-                    yield return ($"{ProjectsEntryPrefix}{index}/{Relative(file, project)}", file);
+                    yield return ($"{ProjectsEntryPrefix}{index}/{relative}", file);
                 }
             }
         }
@@ -740,7 +775,7 @@ public sealed class ConfigBackupService(
         }
     }
 
-    private static IEnumerable<string> FilesInTree(string directory, bool skipProjectCaches = false)
+    private static IEnumerable<string> FilesInTree(string directory)
     {
         if (!System.IO.Directory.Exists(directory))
         {
@@ -756,13 +791,6 @@ public sealed class ConfigBackupService(
 
         foreach (var file in System.IO.Directory.EnumerateFiles(directory, "*", options))
         {
-            if (skipProjectCaches
-                && Relative(file, directory).Split('/') is var segments
-                && segments.Take(segments.Length - 1).Any(SkippedProjectDirectories.Contains))
-            {
-                continue;
-            }
-
             yield return file;
         }
     }

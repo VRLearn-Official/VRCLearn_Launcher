@@ -151,6 +151,7 @@ public sealed class PluginPackageInstaller(
         }
 
         RemovePendingInstall(manifest.Id);
+        states.Current.PendingRemovals.RemoveAll(x => string.Equals(x, manifest.Id, StringComparison.Ordinal));
 
         if (!replaced)
         {

@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+
 namespace VRCLearn.Core.Versioning;
 
 public sealed class DependencyRange : IEquatable<DependencyRange>
@@ -10,6 +12,18 @@ public sealed class DependencyRange : IEquatable<DependencyRange>
         new(VersionRange.Star(version));
 
     public static DependencyRange Parse(string text) => new(VersionRange.Parse(text));
+
+    public static bool TryParse(string? text, [NotNullWhen(true)] out DependencyRange? range)
+    {
+        if (VersionRange.TryParse(text, out var parsed))
+        {
+            range = new DependencyRange(parsed);
+            return true;
+        }
+
+        range = null;
+        return false;
+    }
 
     public PackageVersion? AsSingleVersion()
     {
