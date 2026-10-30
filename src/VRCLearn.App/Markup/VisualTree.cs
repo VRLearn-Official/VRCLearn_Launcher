@@ -23,4 +23,20 @@ internal static class VisualTree
 
         return null;
     }
+
+    public static T? FindAncestor<T>(DependencyObject? node)
+        where T : DependencyObject
+    {
+        while (node is not null)
+        {
+            if (node is T match)
+            {
+                return match;
+            }
+
+            node = node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
+        }
+
+        return null;
+    }
 }

@@ -1,8 +1,6 @@
-using CommunityToolkit.Mvvm.ComponentModel;
-
 namespace VRCLearn.App.ViewModels;
 
-public sealed partial class RepositoryItemViewModel : ObservableObject
+public sealed class RepositoryItemViewModel
 {
     public RepositoryItemViewModel(
         int index,
@@ -37,7 +35,4 @@ public sealed partial class RepositoryItemViewModel : ObservableObject
     public string HideAction { get; }
 
     public string Details => Id is null ? Url ?? "" : $"{Id}  ·  {Url}";
-
-    [ObservableProperty]
-    private bool _isDragging;
 }

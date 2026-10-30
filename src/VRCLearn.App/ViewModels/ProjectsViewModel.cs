@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
+using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -77,6 +79,9 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
 
         _selectedSorting = ProjectSorting.Normalize(_configStore.Current.ProjectSorting);
 
+        FilteredProjects = CollectionViewSource.GetDefaultView(Projects);
+        FilteredProjects.Filter = item => item is ProjectItemViewModel project && Matches(project);
+
         _localization.PropertyChanged += (_, _) =>
         {
             LocalizedOptions.Refresh(_sortingKeys);
@@ -124,7 +129,28 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
 
     public ObservableCollection<ProjectItemViewModel> Projects { get; } = [];
 
+    public ICollectionView FilteredProjects { get; }
+
     public bool HasProjects => Projects.Count > 0;
+
+    public bool IsSearchEmpty => HasProjects && FilteredProjects.IsEmpty;
+
+    [ObservableProperty]
+    private string _searchText = "";
+
+    partial void OnSearchTextChanged(string value)
+    {
+        FilteredProjects.Refresh();
+        OnPropertyChanged(nameof(IsSearchEmpty));
+    }
+
+    private bool Matches(ProjectItemViewModel project)
+    {
+        var query = SearchText.Trim();
+
+        return query.Length == 0
+            || project.Name.Contains(query, StringComparison.OrdinalIgnoreCase);
+    }
 
     private void ShowStatus(string? text) => Status = text;
 
@@ -136,8 +162,10 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
         }
 
         Projects.Clear();
+        SearchText = "";
 
         OnPropertyChanged(nameof(HasProjects));
+        OnPropertyChanged(nameof(IsSearchEmpty));
     }
 
     public void RefreshUnityStates()
@@ -571,5 +599,6 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
         });
 
         OnPropertyChanged(nameof(HasProjects));
+        OnPropertyChanged(nameof(IsSearchEmpty));
     }
 }

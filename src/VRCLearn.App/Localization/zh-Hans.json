@@ -256,6 +256,8 @@
   "Repositories.LinkAlreadyMessage": "「{0}」已在仓库列表里。",
 
   "Projects.Add": "导入项目",
+  "Projects.Search": "搜索项目名",
+  "Projects.SearchEmpty": "没有匹配的项目。",
   "Projects.Sort": "排序",
   "Projects.Sort.Key.Name": "名称",
   "Projects.Sort.Key.Type": "类型",

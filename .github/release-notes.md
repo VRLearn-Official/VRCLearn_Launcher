@@ -18,7 +18,8 @@ Get-FileHash .\VRCLearnLauncher-<版本>-win-x64-Setup.exe -Algorithm SHA256
 
 ## 本次更新
 
-- 列表统一为逐行卡片，悬停时高亮当前行
+- 优化拖动仓库列表时的视觉效果和操作逻辑
+- 项目页支持项目名搜索
 
 安装包暂未签名，首次运行时 Windows SmartScreen 可能提示；选择「更多信息」→「仍要运行」。
 
@@ -50,6 +51,7 @@ sha256sum -c VRCLearnLauncher-<version>-win-x64-Setup.exe.sha256
 
 ## What's new
 
-- Lists now use one card per row, with the hovered row highlighted
+- Improved the visuals and interaction when reordering repositories
+- Projects can now be searched by name
 
 The installer is not code-signed yet, so Windows SmartScreen may warn on first run. Choose "More info" and then "Run anyway".

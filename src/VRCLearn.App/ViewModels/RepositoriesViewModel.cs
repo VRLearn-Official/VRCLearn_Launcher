@@ -10,7 +10,7 @@ using VRCLearn.Infrastructure.Storage;
 
 namespace VRCLearn.App.ViewModels;
 
-public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageViewModel
+public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageViewModel, IReorderableList
 {
     private static readonly IReadOnlyDictionary<string, string> NoHeaders = new Dictionary<string, string>();
 
@@ -120,6 +120,9 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
 
         Reload();
     }
+
+    void IReorderableList.Move(object item, int insertBefore) =>
+        Move((RepositoryItemViewModel)item, insertBefore);
 
     [RelayCommand]
     private void ToggleHidden(RepositoryItemViewModel repository)

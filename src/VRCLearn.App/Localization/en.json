@@ -256,6 +256,8 @@
   "Repositories.LinkAlreadyMessage": "\"{0}\" is already in the repo list.",
 
   "Projects.Add": "Import project",
+  "Projects.Search": "Search projects",
+  "Projects.SearchEmpty": "No matching projects.",
   "Projects.Sort": "Sort",
   "Projects.Sort.Key.Name": "Name",
   "Projects.Sort.Key.Type": "Type",

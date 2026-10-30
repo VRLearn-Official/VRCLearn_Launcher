@@ -5,10 +5,7 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:markup="clr-namespace:VRCLearn.App.Markup">
 
-    <ScrollViewer
-        Style="{StaticResource PageScroll}"
-        AllowDrop="True"
-        DragOver="OnPageDragOver">
+    <ScrollViewer Style="{StaticResource PageScroll}">
         <StackPanel>
 
             <DockPanel Margin="{StaticResource Gap.Field}">
@@ -50,114 +47,88 @@
                 Text="{markup:Tr Repositories.Empty}"
                 Visibility="{Binding HasRepositories, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
 
-            <ItemsControl Margin="{StaticResource Gap.Row}" ItemsSource="{Binding Repositories}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
+            <ItemsControl
+                Margin="{StaticResource Gap.Row}"
+                ItemsSource="{Binding Repositories}"
+                markup:ListReorder.IsEnabled="True">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ui:Card>
+                            <ui:Card.Style>
+                                <Style BasedOn="{StaticResource RowCard}" TargetType="ui:Card">
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding IsHidden}" Value="True">
+                                            <Setter Property="Opacity" Value="0.45" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ui:Card.Style>
+
+                            <Grid Background="Transparent">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border
+                                    Grid.Column="0"
+                                    Style="{StaticResource DragHandle}"
+                                    markup:ListReorder.Handle="True">
+                                    <TextBlock
+                                        FontSize="16"
+                                        IsHitTestVisible="False"
+                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                        Text="≡" />
+                                </Border>
+
                                 <StackPanel
-                                    AllowDrop="True"
-                                    Background="Transparent"
-                                    DragOver="OnRowDragOver"
-                                    Drop="OnRowDrop"
-                                    MouseLeftButtonUp="OnRowMouseUp"
-                                    MouseMove="OnRowMouseMove">
-                                    <Border
-                                        x:Name="SlotAbove"
-                                        Height="2"
-                                        Background="{DynamicResource AccentFillColorDefaultBrush}"
-                                        Opacity="0" />
-
-                                    <ui:Card x:Name="RowSurface">
-                                        <ui:Card.Style>
-                                            <Style BasedOn="{StaticResource RowCard}" TargetType="ui:Card">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsHidden}" Value="True">
-                                                        <Setter Property="Opacity" Value="0.45" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding IsDragging}" Value="True">
-                                                        <Setter Property="Opacity" Value="0.4" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </ui:Card.Style>
-
-                                    <Grid
-                                        x:Name="RowContent"
-                                        Background="Transparent">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                            <ColumnDefinition Width="Auto" />
-                                        </Grid.ColumnDefinitions>
-
+                                    Grid.Column="1"
+                                    VerticalAlignment="Center"
+                                    IsHitTestVisible="False">
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Style="{StaticResource RowTitle}" Text="{Binding Title}" />
                                         <Border
-                                            Grid.Column="0"
-                                            Margin="0,0,12,0"
-                                            Padding="6,2"
+                                            Margin="{StaticResource Gap.Inline}"
+                                            Padding="6,1"
                                             VerticalAlignment="Center"
-                                            Background="Transparent"
-                                            Cursor="SizeAll"
-                                            MouseLeftButtonDown="OnHandleMouseDown">
+                                            Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                                            CornerRadius="{StaticResource Radius.Control}"
+                                            Visibility="{Binding IsHidden, Converter={StaticResource BooleanToVisibilityConverter}}">
                                             <TextBlock
-                                                FontSize="16"
-                                                IsHitTestVisible="False"
+                                                FontSize="{StaticResource FontSize.Caption}"
                                                 Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                                Text="≡" />
+                                                Text="{markup:Tr Repositories.Hidden}" />
                                         </Border>
+                                    </StackPanel>
 
-                                        <StackPanel
-                                            Grid.Column="1"
-                                            VerticalAlignment="Center"
-                                            IsHitTestVisible="False">
-                                            <StackPanel Orientation="Horizontal">
-                                                <TextBlock Style="{StaticResource RowTitle}" Text="{Binding Title}" />
-                                                <Border
-                                                    Margin="{StaticResource Gap.Inline}"
-                                                    Padding="6,1"
-                                                    VerticalAlignment="Center"
-                                                    Background="{DynamicResource ControlFillColorSecondaryBrush}"
-                                                    CornerRadius="{StaticResource Radius.Control}"
-                                                    Visibility="{Binding IsHidden, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                                    <TextBlock
-                                                        FontSize="{StaticResource FontSize.Caption}"
-                                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                                        Text="{markup:Tr Repositories.Hidden}" />
-                                                </Border>
-                                            </StackPanel>
-
-                                            <TextBlock
-                                                Margin="{StaticResource Gap.Tight}"
-                                                Style="{StaticResource Caption}"
-                                                Text="{Binding Details}" />
-                                            <TextBlock Style="{StaticResource Caption}" Text="{Binding Summary}" />
-                                        </StackPanel>
-
-                                        <StackPanel Grid.Column="2" Style="{StaticResource RowActions}">
-                                            <ui:Button
-                                                Style="{StaticResource RowButton}"
-                                                Margin="0,0,0,0"
-                                                Appearance="Secondary"
-                                                Command="{markup:RowCommand ToggleHiddenCommand}"
-                                                CommandParameter="{Binding}"
-                                                Content="{Binding HideAction}" />
-                                            <ui:Button
-                                                Style="{StaticResource RowButton}"
-                                                Appearance="Secondary"
-                                                Command="{markup:RowCommand RemoveCommand}"
-                                                CommandParameter="{Binding}"
-                                                Content="{markup:Tr Repositories.Remove}" />
-                                        </StackPanel>
-                                    </Grid>
-                                    </ui:Card>
-
-                                    <Border
-                                        x:Name="SlotBelow"
-                                        Height="2"
-                                        Background="{DynamicResource AccentFillColorDefaultBrush}"
-                                        Opacity="0" />
+                                    <TextBlock
+                                        Margin="{StaticResource Gap.Tight}"
+                                        Style="{StaticResource Caption}"
+                                        Text="{Binding Details}" />
+                                    <TextBlock Style="{StaticResource Caption}" Text="{Binding Summary}" />
                                 </StackPanel>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+
+                                <StackPanel Grid.Column="2" Style="{StaticResource RowActions}">
+                                    <ui:Button
+                                        Style="{StaticResource RowButton}"
+                                        Margin="0,0,0,0"
+                                        Appearance="Secondary"
+                                        Command="{markup:RowCommand ToggleHiddenCommand}"
+                                        CommandParameter="{Binding}"
+                                        Content="{Binding HideAction}" />
+                                    <ui:Button
+                                        Style="{StaticResource RowButton}"
+                                        Appearance="Secondary"
+                                        Command="{markup:RowCommand RemoveCommand}"
+                                        CommandParameter="{Binding}"
+                                        Content="{markup:Tr Repositories.Remove}" />
+                                </StackPanel>
+                            </Grid>
+                        </ui:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
             <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr Packages.User.Title}" />
 
