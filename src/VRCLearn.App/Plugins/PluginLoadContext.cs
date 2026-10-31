@@ -22,6 +22,11 @@ internal sealed class PluginLoadContext : AssemblyLoadContext
 
     protected override Assembly? Load(AssemblyName assemblyName)
     {
+        if (assemblyName.Name == "VRCLearn.Plugin.Sdk")
+        {
+            return typeof(VRCLearn.Plugin.Sdk.IVclPlugin).Assembly;
+        }
+
         if (assemblyName.Name is not { } name || IsHostAssembly(name))
         {
             return null;
@@ -45,8 +50,7 @@ internal sealed class PluginLoadContext : AssemblyLoadContext
     }
 
     private static bool IsHostAssembly(string name) =>
-        name is "VRCLearn.Plugin.Sdk"
-            or "VRCLearn.Core"
+        name is "VRCLearn.Core"
             or "VRCLearn.Infrastructure"
             or "VRCLearnLauncher"
             or "PresentationFramework"

@@ -359,7 +359,7 @@ public sealed class DialogService
     }
 
     private static bool? Run(CommonDialog dialog, Window? owner) =>
-        dialog.ShowDialog(owner ?? Application.Current.MainWindow);
+        dialog.ShowDialog(owner ?? TopmostWindow());
 
     private bool Show(Window dialog)
     {
@@ -370,7 +370,7 @@ public sealed class DialogService
 
     private void Prepare(Window dialog, Window? owner = null)
     {
-        var target = owner ?? Application.Current.MainWindow;
+        var target = owner ?? TopmostWindow();
 
         dialog.Owner = target;
         _scrimDepth++;
@@ -393,6 +393,46 @@ public sealed class DialogService
                 UIElement.OpacityProperty,
                 new DoubleAnimation(0, 1, AnimationService.Quick) { EasingFunction = AnimationService.Ease });
         }
+    }
+
+    private static Window? TopmostWindow()
+    {
+        if (Application.Current is not { } application)
+        {
+            return null;
+        }
+
+        var windows = application.Windows
+            .OfType<Window>()
+            .Where(x => x.IsVisible)
+            .ToList();
+
+        if (windows.Count == 0)
+        {
+            return application.MainWindow;
+        }
+
+        var candidates = windows
+            .Where(x => x.WindowState != WindowState.Minimized)
+            .ToList();
+
+        if (candidates.Count == 0)
+        {
+            candidates = windows;
+        }
+
+        var owners = candidates
+            .Select(x => x.Owner)
+            .OfType<Window>()
+            .ToHashSet();
+
+        var topmost = candidates
+            .Where(x => !owners.Contains(x))
+            .ToList();
+
+        return topmost.FirstOrDefault(x => x.IsActive)
+            ?? topmost.LastOrDefault()
+            ?? application.MainWindow;
     }
 
     private void Scrim(bool visible)
