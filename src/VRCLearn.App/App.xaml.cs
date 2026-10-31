@@ -48,6 +48,7 @@ public partial class App : Application
                 : null);
         if (_singleInstance is null)
         {
+            WindowActivation.AllowForeground();
             SingleInstance.Handoff(e.Args);
             Shutdown();
             return;
@@ -289,16 +290,9 @@ public partial class App : Application
 
     private void ActivateMainWindow() => Dispatcher.Invoke(() =>
     {
-        if (MainWindow is null)
+        if (MainWindow is { } window)
         {
-            return;
+            WindowActivation.BringToFront(window);
         }
-
-        if (MainWindow.WindowState == WindowState.Minimized)
-        {
-            MainWindow.WindowState = WindowState.Normal;
-        }
-
-        MainWindow.Activate();
     });
 }

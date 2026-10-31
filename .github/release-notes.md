@@ -18,7 +18,7 @@ Get-FileHash .\VRCLearnLauncher-<版本>-win-x64-Setup.exe -Algorithm SHA256
 
 ## 本次更新
 
-- 修复插件部分窗口无法关闭的问题
+- 深链拉起启动器时自动将应用置于前台
 
 安装包暂未签名，首次运行时 Windows SmartScreen 可能提示；选择「更多信息」→「仍要运行」。
 
@@ -50,6 +50,6 @@ sha256sum -c VRCLearnLauncher-<version>-win-x64-Setup.exe.sha256
 
 ## What's new
 
-- Fixed some plugin windows not being closable
+- The launcher now comes to the foreground when opened through a deep link
 
 The installer is not code-signed yet, so Windows SmartScreen may warn on first run. Choose "More info" and then "Run anyway".
