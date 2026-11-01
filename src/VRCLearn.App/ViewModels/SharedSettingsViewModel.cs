@@ -50,6 +50,7 @@ public sealed partial class SharedSettingsViewModel : ObservableObject
         {
             LocalizedOptions.Refresh(_languages);
             LocalizedOptions.Refresh(_themes);
+            OnPropertyChanged(nameof(ActualUnityHubPath));
         };
 
         var config = configs.Current;

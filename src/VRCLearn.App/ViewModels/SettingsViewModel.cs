@@ -133,6 +133,7 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             LocalizedOptions.Refresh(_buttonColors);
             LocalizedOptions.Refresh(_backupFormats);
+            LocalizedOptions.Refresh(_backupScopes);
             LocalizedOptions.Refresh(_hubAccessMethods);
         };
     }

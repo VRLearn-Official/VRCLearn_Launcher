@@ -52,7 +52,11 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
         _userPackages = userPackages;
         _localization = localization;
 
-        _localization.PropertyChanged += (_, _) => _ = ReloadAsync();
+        _localization.PropertyChanged += (_, _) =>
+        {
+            RefreshPendingImports();
+            _ = ReloadAsync();
+        };
         _dialogs = dialogs;
 
         _library = TemplateLibrary.Build([], [], _fileIo);
@@ -354,6 +358,23 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
     }
 
     public ObservableCollection<TemplateImportViewModel> PendingImport { get; } = [];
+
+    private void RefreshPendingImports()
+    {
+        if (PendingImport.Count == 0)
+        {
+            return;
+        }
+
+        var duplicates = PendingImport.Select(x => x.Duplicate).ToList();
+
+        PendingImport.Clear();
+
+        foreach (var duplicate in duplicates)
+        {
+            PendingImport.Add(new TemplateImportViewModel(duplicate, _localization));
+        }
+    }
 
     public bool HasPendingImport => PendingImport.Count > 0;
 

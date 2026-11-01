@@ -54,6 +54,7 @@ public sealed partial class ResourcesViewModel : PageViewModelBase, IPageViewMod
         _progress = progress;
         _logger = logger;
         _search = new TransientAction(TimeSpan.FromMilliseconds(SearchDelayMilliseconds), ApplyFilter);
+        _localization.PropertyChanged += (_, _) => OnPropertyChanged(nameof(EmptyText));
     }
 
     protected override ILogger Logger => _logger;

@@ -27,6 +27,7 @@ public sealed partial class SetupViewModel : ObservableObject
         _navigation = navigation;
         _proxy = proxy;
         Shared = shared;
+        _localization.PropertyChanged += (_, _) => OnPropertyChanged(nameof(StepCaption));
     }
 
     public SharedSettingsViewModel Shared { get; }

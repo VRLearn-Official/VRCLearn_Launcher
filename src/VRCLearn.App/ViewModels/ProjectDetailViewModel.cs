@@ -397,6 +397,9 @@ public sealed partial class ProjectDetailViewModel(
 
     public async Task LoadAsync()
     {
+        OnPropertyChanged(nameof(EditorCaption));
+        OnPropertyChanged(nameof(RestorePrompt));
+
         IsBusy = true;
 
         try
