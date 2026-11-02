@@ -26,6 +26,27 @@ public static class ProxyAddress
             rest = text[(separator + 3)..];
         }
 
+        if (rest.StartsWith('['))
+        {
+            var close = rest.IndexOf(']');
+
+            if (close < 0)
+            {
+                return (scheme, rest.TrimEnd(':'), "");
+            }
+
+            var host = rest[..(close + 1)];
+            var after = rest[(close + 1)..];
+            var bracketPort = after.StartsWith(':') ? after[1..] : "";
+
+            return IsPort(bracketPort) ? (scheme, host, bracketPort) : (scheme, host, "");
+        }
+
+        if (rest.Count(x => x == ':') > 1)
+        {
+            return (scheme, rest.TrimEnd(':'), "");
+        }
+
         var colon = rest.LastIndexOf(':');
 
         if (colon < 0)

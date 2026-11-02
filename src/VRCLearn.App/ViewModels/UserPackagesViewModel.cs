@@ -53,13 +53,20 @@ public sealed partial class UserPackagesViewModel : PageViewModelBase
 
     public async Task ReloadAsync()
     {
-        var folders = await _userPackages.LoadAsync(CancellationToken.None);
-
-        Folders.Clear();
-
-        foreach (var folder in folders)
+        try
         {
-            Folders.Add(new UserPackageFolderViewModel(folder, _localization));
+            var folders = await _userPackages.LoadAsync(CancellationToken.None);
+
+            Folders.Clear();
+
+            foreach (var folder in folders)
+            {
+                Folders.Add(new UserPackageFolderViewModel(folder, _localization));
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Report(exception);
         }
 
         OnPropertyChanged(nameof(HasNoFolders));

@@ -215,6 +215,7 @@
                                         Style="{StaticResource RowButton}"
                                         Appearance="Secondary"
                                         Click="OnMoreClick"
+                                        ContextMenuOpening="OnMoreMenuOpening"
                                         Content="⋯"
                                         ToolTip="{markup:Tr Projects.More}">
                                         <ui:Button.ContextMenu>

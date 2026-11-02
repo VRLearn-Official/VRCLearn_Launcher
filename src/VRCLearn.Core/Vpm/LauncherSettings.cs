@@ -57,12 +57,19 @@ public sealed class LauncherSettings : IJsonOnDeserialized
         string.IsNullOrWhiteSpace(DefaultProjectPath) ? FallbackProjectPath : DefaultProjectPath;
 
     public bool ContainsRepo(Uri url, string? id) =>
-        UserRepos.Any(x => x.Url == url) || (id is not null && UserRepos.Any(x => x.Id == id));
+        UserRepos.Any(x => x.Url == url)
+        || (id is not null && UserRepos.Any(x => string.Equals(x.Id, id, StringComparison.OrdinalIgnoreCase)));
 
     /// <summary>合法 JSON 里把某一项写成 <c>null</c> 是允许的，落到对象上不能留 null。</summary>
     void IJsonOnDeserialized.OnDeserialized()
     {
-        UserRepos ??= [];
+        UserRepos = [.. (UserRepos ?? []).Where(x => x is not null)];
+
+        foreach (var repo in UserRepos)
+        {
+            repo.Headers ??= [];
+        }
+
         UserProjects ??= [];
         UnityEditors ??= [];
         PreferredUnityEditors ??= [];

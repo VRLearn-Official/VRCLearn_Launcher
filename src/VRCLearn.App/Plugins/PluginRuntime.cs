@@ -31,16 +31,21 @@ internal sealed class PluginRuntime(InstalledPlugin installed)
         Instance = null;
         Context = null;
 
-        if (instance is null)
-        {
-            return;
-        }
+        var unload = true;
 
         try
         {
             if (instance is IAsyncDisposable asyncDisposable)
             {
-                await asyncDisposable.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+                try
+                {
+                    await asyncDisposable.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+                }
+                catch (TimeoutException)
+                {
+                    unload = false;
+                    logger.LogWarning("释放插件超时，跳过卸载：{Id}", Installed.Id);
+                }
             }
             else if (instance is IDisposable disposable)
             {
@@ -53,7 +58,10 @@ internal sealed class PluginRuntime(InstalledPlugin installed)
         }
         finally
         {
-            LoadContext?.Unload();
+            if (unload)
+            {
+                LoadContext?.Unload();
+            }
         }
     }
 }

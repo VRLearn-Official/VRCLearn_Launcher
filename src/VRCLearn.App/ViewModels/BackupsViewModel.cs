@@ -434,7 +434,17 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
             return;
         }
 
-        _store.Delete(item.FilePath);
+        try
+        {
+            _store.Delete(item.FilePath);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogWarning(exception, "删除备份失败：{Path}", item.FilePath);
+
+            Status = _localization.Format("Backups.Status.DeleteFailed", exception.Message);
+            return;
+        }
 
         Status = _localization.Format("Backups.Status.Deleted", item.FileName);
 

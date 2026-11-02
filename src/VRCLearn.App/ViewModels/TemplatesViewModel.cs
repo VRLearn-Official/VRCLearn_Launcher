@@ -72,23 +72,30 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
 
     public async Task ReloadAsync()
     {
-        var user = await _userTemplates.LoadAsync(CancellationToken.None);
-
-        _library = TemplateLibrary.Build(
-            user.AlcomTemplates,
-            [.. _editors
-                .FindEditors()
-                .Select(x => x.Version)
-                .Where(x => UnityReleaseCatalog.SupportedVersions.Contains(x))],
-            _fileIo);
-
-        var favorites = _configStore.Current.FavoriteTemplates;
-
-        Templates.Clear();
-
-        foreach (var template in _library.Templates.OrderByDescending(x => favorites.Contains(x.Id)))
+        try
         {
-            Templates.Add(new TemplateOption(template, favorites.Contains(template.Id), _localization));
+            var user = await _userTemplates.LoadAsync(CancellationToken.None);
+
+            _library = TemplateLibrary.Build(
+                user.AlcomTemplates,
+                [.. _editors
+                    .FindEditors()
+                    .Select(x => x.Version)
+                    .Where(x => UnityReleaseCatalog.SupportedVersions.Contains(x))],
+                _fileIo);
+
+            var favorites = _configStore.Current.FavoriteTemplates;
+
+            Templates.Clear();
+
+            foreach (var template in _library.Templates.OrderByDescending(x => favorites.Contains(x.Id)))
+            {
+                Templates.Add(new TemplateOption(template, favorites.Contains(template.Id), _localization));
+            }
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Report(exception);
         }
     }
 

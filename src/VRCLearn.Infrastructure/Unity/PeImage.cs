@@ -70,13 +70,22 @@ internal static class PeImage
     {
         value = null;
 
-        if (!VerQueryValue(info, field, out var pointer, out var length) || pointer == nint.Zero || length == 0)
-        {
-            return false;
-        }
+        var pinned = GCHandle.Alloc(info, GCHandleType.Pinned);
 
-        value = Marshal.PtrToStringUni(pointer, (int)length).TrimEnd('\0');
-        return true;
+        try
+        {
+            if (!VerQueryValue(info, field, out var pointer, out var length) || pointer == nint.Zero || length == 0)
+            {
+                return false;
+            }
+
+            value = Marshal.PtrToStringUni(pointer, (int)length).TrimEnd('\0');
+            return true;
+        }
+        finally
+        {
+            pinned.Free();
+        }
     }
 
     [DllImport("version.dll", EntryPoint = "GetFileVersionInfoSizeW", CharSet = CharSet.Unicode, SetLastError = true)]

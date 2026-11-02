@@ -16,13 +16,15 @@ public static class RepositoriesFileWriter
                 continue;
             }
 
+            var target = url.GetLeftPart(UriPartial.Query);
+
             if (repository.Headers.Count == 0)
             {
-                builder.Append(url.AbsoluteUri).Append('\n');
+                builder.Append(target).Append('\n');
                 continue;
             }
 
-            builder.Append("vcc://vpm/addRepo?url=").Append(Uri.EscapeDataString(url.AbsoluteUri));
+            builder.Append("vcc://vpm/addRepo?url=").Append(Uri.EscapeDataString(target));
 
             foreach (var (name, value) in repository.Headers)
             {

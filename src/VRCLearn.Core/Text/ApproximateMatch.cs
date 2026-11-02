@@ -44,6 +44,11 @@ public static class ApproximateMatch
     /// <summary>Damerau-Levenshtein，相邻两个字母对调算一次。</summary>
     public static int Distance(string left, string right)
     {
+        if ((long)(left.Length + 1) * (right.Length + 1) > 4_000_000)
+        {
+            return int.MaxValue;
+        }
+
         var a = left.ToLowerInvariant();
         var b = right.ToLowerInvariant();
         var d = new int[a.Length + 1, b.Length + 1];

@@ -100,12 +100,20 @@ internal static class PackageCacheMigrator
     {
         try
         {
-            if (Directory.EnumerateFileSystemEntries(directory).Any())
+            if (!Directory.Exists(directory))
             {
                 return;
             }
 
-            Directory.Delete(directory);
+            foreach (var child in Directory.EnumerateDirectories(directory))
+            {
+                RemoveIfEmpty(child);
+            }
+
+            if (!Directory.EnumerateFileSystemEntries(directory).Any())
+            {
+                Directory.Delete(directory);
+            }
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {

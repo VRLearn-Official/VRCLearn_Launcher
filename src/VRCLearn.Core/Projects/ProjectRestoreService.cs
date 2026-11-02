@@ -120,8 +120,8 @@ public sealed class ProjectRestoreService(
                 cancellationToken)
             .ConfigureAwait(false);
 
-        var staging = $"{name}.restoring-{stamp}";
-        var replaced = $"{name}.replaced-{stamp}";
+        var staging = FreeName(parent, $"{name}.restoring-{stamp}");
+        var replaced = FreeName(parent, $"{name}.replaced-{stamp}");
 
         DiskSpace.Ensure(parentPath, required);
 
@@ -146,7 +146,17 @@ public sealed class ProjectRestoreService(
         }
         catch
         {
-            parent.MoveDirectory(replaced, name);
+            try
+            {
+                parent.MoveDirectory(replaced, name);
+            }
+            catch (Exception rollbackException)
+            {
+                throw new IOException(
+                    $"恢复失败，原项目目录也无法移回，已保留在：{Path.Combine(parentPath, replaced)}",
+                    rollbackException);
+            }
+
             throw;
         }
 

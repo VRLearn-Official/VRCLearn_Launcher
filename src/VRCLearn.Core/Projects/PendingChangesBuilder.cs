@@ -175,6 +175,14 @@ public sealed class PendingChangesBuilder
             }
         }
 
+        foreach (var locked in project.LockedPackages)
+        {
+            if (!removable.Contains(locked.Name))
+            {
+                roots.Add(locked.Name);
+            }
+        }
+
         roots.AddRange(_packageChanges
             .Where(x => x.Value is Install)
             .Select(x => x.Key));

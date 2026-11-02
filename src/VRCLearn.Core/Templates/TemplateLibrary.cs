@@ -56,6 +56,11 @@ public sealed class TemplateLibrary
         {
             var id = file.Template.Id ?? TemplateFormat.NewAnonymousId();
 
+            if (byId.ContainsKey(id))
+            {
+                continue;
+            }
+
             alcomById[id] = file.Template;
 
             byId[id] = new ProjectTemplate(

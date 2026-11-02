@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Logging;
 using VRCLearn.Core.Configuration;
 using VRCLearn.Core.Templates;
+using VRCLearn.Infrastructure.IO;
 
 namespace VRCLearn.Infrastructure.ProjectTemplates;
 
@@ -19,7 +20,7 @@ public sealed class FileSystemUserTemplateStore(
     {
         var path = FindPathById(template.Id) ?? PathForNew(template.DisplayName);
 
-        await File.WriteAllTextAsync(path, template.ToJson(), cancellationToken).ConfigureAwait(false);
+        await Task.Run(() => AtomicTextFile.Write(path, template.ToJson()), cancellationToken).ConfigureAwait(false);
     }
 
     public bool Remove(string path)
@@ -67,9 +68,9 @@ public sealed class FileSystemUserTemplateStore(
 
             if (clash is null)
             {
-                await File
-                    .WriteAllTextAsync(PathForNew(template.DisplayName), content, cancellationToken)
-                    .ConfigureAwait(false);
+                var target = PathForNew(template.DisplayName);
+
+                await Task.Run(() => AtomicTextFile.Write(target, content), cancellationToken).ConfigureAwait(false);
 
                 imported++;
                 continue;
@@ -96,8 +97,10 @@ public sealed class FileSystemUserTemplateStore(
         {
             try
             {
-                await File
-                    .WriteAllTextAsync(duplicate.ExistingPath, duplicate.Content, cancellationToken)
+                await Task
+                    .Run(
+                        () => AtomicTextFile.Write(duplicate.ExistingPath, duplicate.Content),
+                        cancellationToken)
                     .ConfigureAwait(false);
 
                 written++;

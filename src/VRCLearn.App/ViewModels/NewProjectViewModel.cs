@@ -160,6 +160,18 @@ public sealed partial class NewProjectViewModel(
         {
             logger.LogWarning(exception, "创建项目失败：{Target}", target);
 
+            try
+            {
+                if (Directory.Exists(target))
+                {
+                    Directory.Delete(target, recursive: true);
+                }
+            }
+            catch (Exception cleanupException) when (cleanupException is IOException or UnauthorizedAccessException)
+            {
+                logger.LogWarning(cleanupException, "清理未完成的项目目录失败：{Target}", target);
+            }
+
             Status = localization.Format("Templates.Status.Failed", exception.Message, target);
             return false;
         }

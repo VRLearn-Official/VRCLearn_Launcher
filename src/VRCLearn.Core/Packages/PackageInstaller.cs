@@ -72,7 +72,7 @@ public sealed class PackageInstaller(IFileIo environment, IVpmHttpClient? http) 
     {
         var fileName = $"vrc-get-{package.Name}-{package.Version}.zip";
         var zipPath = $"{package.Name}/{fileName}";
-        var declared = ParseSha256(package.Manifest.ZipSha256);
+        var declared = ParseDeclaredSha256(package.Manifest.ZipSha256);
 
         if (!await IsCachedAsync(zipPath, declared, cancellationToken).ConfigureAwait(false))
         {
@@ -175,6 +175,28 @@ public sealed class PackageInstaller(IFileIo environment, IVpmHttpClient? http) 
     private static string Sidecar(byte[] hash, string fileName) =>
         $"{Sha256Hex.FromDigest(hash)} {fileName}\n";
 
+    private static byte[]? ParseDeclaredSha256(string? hex)
+    {
+        if (string.IsNullOrEmpty(hex))
+        {
+            return null;
+        }
+
+        if (hex.Length != Sha256HexLength)
+        {
+            throw new InvalidDataException($"zipSHA256 必须是 {Sha256HexLength} 位十六进制字符串，实际是：{hex}");
+        }
+
+        try
+        {
+            return Convert.FromHexString(hex);
+        }
+        catch (FormatException exception)
+        {
+            throw new InvalidDataException($"zipSHA256 不是合法的十六进制字符串：{hex}", exception);
+        }
+    }
+
     private static byte[]? ParseSha256(string? hex)
     {
         if (hex is not { Length: Sha256HexLength })
@@ -215,19 +237,34 @@ public sealed class PackageInstaller(IFileIo environment, IVpmHttpClient? http) 
         var source = package.LocalPath!;
         project.CreateDirectory(destination);
 
-        foreach (var directory in Directory.EnumerateDirectories(source, "*", SearchOption.AllDirectories))
+        try
         {
-            project.CreateDirectory($"{destination}/{Relative(source, directory)}");
+            foreach (var directory in Directory.EnumerateDirectories(source, "*", SearchOption.AllDirectories))
+            {
+                project.CreateDirectory($"{destination}/{Relative(source, directory)}");
+            }
+
+            foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
+            {
+                await using var input = File.OpenRead(file);
+                await using var output = await project
+                    .CreateAsync($"{destination}/{Relative(source, file)}", cancellationToken)
+                    .ConfigureAwait(false);
+
+                await input.CopyToAsync(output, cancellationToken).ConfigureAwait(false);
+            }
         }
-
-        foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
+        catch
         {
-            await using var input = File.OpenRead(file);
-            await using var output = await project
-                .CreateAsync($"{destination}/{Relative(source, file)}", cancellationToken)
-                .ConfigureAwait(false);
+            try
+            {
+                project.DeleteDirectory(destination);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+            }
 
-            await input.CopyToAsync(output, cancellationToken).ConfigureAwait(false);
+            throw;
         }
     }
 

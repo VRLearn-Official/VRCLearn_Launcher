@@ -133,7 +133,10 @@ internal sealed class PackageResolver
         var info = Info(locked.Name);
         info.SetUsingInfo(locked.Version, locked.Dependencies.Keys);
 
-        if (_catalog.Find(locked.Name, VersionSelector.ForSpecificVersion(locked.Version)) is { } package)
+        var package = _catalog.Find(locked.Name, VersionSelector.ForSpecificVersion(locked.Version))
+            ?? _catalog.GetVersions(locked.Name).MaxBy(x => x.Version);
+
+        if (package is not null)
         {
             info.Supersedes = [.. package.Manifest.LegacyPackages];
 
@@ -340,21 +343,20 @@ internal sealed class PackageResolver
     {
         private readonly List<PackageInfo> _pending = [.. packages];
 
-        private int _forceCount = packages.Count;
+        private readonly HashSet<string> _requested = [.. packages.Select(x => x.Name)];
 
         public bool TryDequeue(out PackageInfo package, out bool force)
         {
-            force = _forceCount > 0;
-            _forceCount = Math.Max(0, _forceCount - 1);
-
             if (_pending.Count == 0)
             {
                 package = null!;
+                force = false;
                 return false;
             }
 
             package = _pending[^1];
             _pending.RemoveAt(_pending.Count - 1);
+            force = _requested.Remove(package.Name);
             return true;
         }
 

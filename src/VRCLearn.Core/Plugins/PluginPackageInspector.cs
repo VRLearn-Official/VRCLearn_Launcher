@@ -79,14 +79,14 @@ public static class PluginPackageInspector
 
             entries.Add(normalized);
 
-            if (normalized.Equals(PluginManifestReader.FileName, StringComparison.OrdinalIgnoreCase))
-            {
-                manifests.Add(entry);
-            }
-
             if (entry.FullName.EndsWith('/') || entry.FullName.EndsWith('\\'))
             {
                 continue;
+            }
+
+            if (normalized.Equals(PluginManifestReader.FileName, StringComparison.OrdinalIgnoreCase))
+            {
+                manifests.Add(entry);
             }
 
             totalUncompressed += entry.Length;

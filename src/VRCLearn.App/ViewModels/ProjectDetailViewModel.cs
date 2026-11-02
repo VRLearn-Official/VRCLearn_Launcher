@@ -56,6 +56,10 @@ public sealed partial class ProjectDetailViewModel(
 
     private bool _resolveAfterLoad;
 
+    private int _loadGeneration;
+
+    private bool _switchingVersion;
+
     private PackageCatalog? _catalog;
     private PackageCatalog? _offeredCatalog;
     private TransientAction? _search;
@@ -331,6 +335,8 @@ public sealed partial class ProjectDetailViewModel(
 
     public void Release()
     {
+        _loadGeneration++;
+
         if (IsBusy)
         {
             return;
@@ -342,6 +348,9 @@ public sealed partial class ProjectDetailViewModel(
         _customPackages.Clear();
         ForgetCatalogs();
 
+        CopyDestination = null;
+        UnityHubInstallLink = null;
+        PendingRestore = null;
         Installed.Clear();
         Available.Clear();
         PendingChanges.Clear();
@@ -370,10 +379,9 @@ public sealed partial class ProjectDetailViewModel(
     /// <param name="resolveAfterLoad">刚建出来的项目，装载完接着把清单里的依赖装上。</param>
     public void Open(string projectPath, bool resolveAfterLoad = false)
     {
+        _loadGeneration++;
         ProjectPath = projectPath;
         _project = null;
-        _pending = null;
-        _pendingFingerprint = "";
         _resolveAfterLoad = resolveAfterLoad;
         _customPackages.Clear();
         ForgetCatalogs();
@@ -384,6 +392,8 @@ public sealed partial class ProjectDetailViewModel(
         InstalledEditors.Clear();
         SelectedEditor = null;
         PendingRestore = null;
+        CopyDestination = null;
+        UnityHubInstallLink = null;
         ClearPending();
         Status = null;
         SearchText = "";
@@ -397,6 +407,9 @@ public sealed partial class ProjectDetailViewModel(
 
     public async Task LoadAsync()
     {
+        var generation = ++_loadGeneration;
+        var path = ProjectPath;
+
         OnPropertyChanged(nameof(EditorCaption));
         OnPropertyChanged(nameof(RestorePrompt));
 
@@ -404,8 +417,16 @@ public sealed partial class ProjectDetailViewModel(
 
         try
         {
-            _project = await projects.OpenAsync(ProjectPath, CancellationToken.None);
-            _userPackages = await userPackages.LoadPackagesAsync(CancellationToken.None);
+            var project = await projects.OpenAsync(path, CancellationToken.None);
+            var loadedUserPackages = await userPackages.LoadPackagesAsync(CancellationToken.None);
+
+            if (generation != _loadGeneration)
+            {
+                return;
+            }
+
+            _project = project;
+            _userPackages = loadedUserPackages;
             ForgetCatalogs();
             _allowPrerelease = settings.Current.ShowPrereleasePackages;
             ReloadUnityArguments();
@@ -421,16 +442,32 @@ public sealed partial class ProjectDetailViewModel(
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
-            logger.LogWarning(exception, "读取项目失败：{Project}", ProjectPath);
+            if (generation != _loadGeneration)
+            {
+                return;
+            }
+
+            logger.LogWarning(exception, "读取项目失败：{Project}", path);
 
             _project = null;
             _customPackages.Clear();
+            SelectedEditor = null;
+            ProjectType = ProjectType.Unknown;
+            ClearPending();
+            Installed.Clear();
+            Available.Clear();
+            Backups.Clear();
+            InstalledEditors.Clear();
+            OnPropertyChanged(nameof(HasBackups));
             OnPropertyChanged(nameof(HeaderSubtitle));
             Status = localization.Format("ProjectDetail.Unreadable", exception.Message);
         }
         finally
         {
-            IsBusy = false;
+            if (generation == _loadGeneration)
+            {
+                IsBusy = false;
+            }
         }
 
         OnPropertyChanged(nameof(NeedsResolve));
@@ -537,7 +574,7 @@ public sealed partial class ProjectDetailViewModel(
     [RelayCommand]
     private async Task Backup()
     {
-        if (_project is null)
+        if (_project is null || IsBusy)
         {
             return;
         }
@@ -607,7 +644,7 @@ public sealed partial class ProjectDetailViewModel(
     [RelayCommand]
     private async Task ConfirmRestore()
     {
-        if (_project is null || PendingRestore is not { } entry)
+        if (_project is null || PendingRestore is not { } entry || IsBusy)
         {
             return;
         }
@@ -755,7 +792,7 @@ public sealed partial class ProjectDetailViewModel(
     [RelayCommand]
     private async Task Resolve()
     {
-        if (_project is null)
+        if (_project is null || IsBusy)
         {
             return;
         }
@@ -790,7 +827,7 @@ public sealed partial class ProjectDetailViewModel(
     [RelayCommand]
     private async Task InstallPackage(AvailablePackageViewModel candidate)
     {
-        if (_project is null)
+        if (_project is null || IsBusy)
         {
             return;
         }
@@ -880,7 +917,7 @@ public sealed partial class ProjectDetailViewModel(
 
     private async Task<bool> RemovePackagesAsync(IReadOnlyList<string> names)
     {
-        if (_project is null)
+        if (_project is null || IsBusy)
         {
             return false;
         }
@@ -1021,7 +1058,7 @@ public sealed partial class ProjectDetailViewModel(
 
     private async Task ReinstallPackagesAsync(IReadOnlyList<string> names)
     {
-        if (_project is null)
+        if (_project is null || IsBusy)
         {
             return;
         }
@@ -1097,7 +1134,7 @@ public sealed partial class ProjectDetailViewModel(
     [RelayCommand]
     private async Task Apply()
     {
-        if (_project is null || _pending is not { } changes)
+        if (_project is null || _pending is not { } changes || IsBusy)
         {
             return;
         }
@@ -1422,7 +1459,7 @@ public sealed partial class ProjectDetailViewModel(
 
     private async Task SwitchVersionAsync(string name, string version)
     {
-        if (_project is null)
+        if (_project is null || _switchingVersion)
         {
             return;
         }
@@ -1432,36 +1469,51 @@ public sealed partial class ProjectDetailViewModel(
             return;
         }
 
-        Status = null;
+        _switchingVersion = true;
 
-        var outcome = await PackageOperations.SwitchVersionAsync(
-            _project,
-            Catalog(),
-            name,
-            parsed,
-            _allowPrerelease,
-            CancellationToken.None);
-
-        if (outcome.Status == AddPackageStatus.VersionNotFound)
+        try
         {
-            logger.LogWarning("指定的包版本不存在：{Project} {Package} {Version}", ProjectPath, name, version);
+            Status = null;
 
-            Status = localization.Format("ProjectDetail.VersionUnavailable", name, version);
-            return;
-        }
-
-        if (outcome.Status != AddPackageStatus.Success)
-        {
-            logger.LogWarning(
-                "切换包版本失败：{Project} {Package} {Version} 缺少 {Missing}",
-                ProjectPath,
+            var outcome = await PackageOperations.SwitchVersionAsync(
+                _project,
+                Catalog(),
                 name,
-                version,
-                ReportMissingDependencies(outcome.MissingDependencies));
-            return;
-        }
+                parsed,
+                _allowPrerelease,
+                CancellationToken.None);
 
-        await SetPendingAsync(outcome.Changes!);
+            if (outcome.Status == AddPackageStatus.VersionNotFound)
+            {
+                logger.LogWarning("指定的包版本不存在：{Project} {Package} {Version}", ProjectPath, name, version);
+
+                Status = localization.Format("ProjectDetail.VersionUnavailable", name, version);
+                return;
+            }
+
+            if (outcome.Status != AddPackageStatus.Success)
+            {
+                logger.LogWarning(
+                    "切换包版本失败：{Project} {Package} {Version} 缺少 {Missing}",
+                    ProjectPath,
+                    name,
+                    version,
+                    ReportMissingDependencies(outcome.MissingDependencies));
+                return;
+            }
+
+            await SetPendingAsync(outcome.Changes!);
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogWarning(exception, "切换包版本失败：{Project} {Package} {Version}", ProjectPath, name, version);
+
+            Status = localization.Format("ProjectDetail.VersionSwitchFailed", exception.Message);
+        }
+        finally
+        {
+            _switchingVersion = false;
+        }
     }
 
     private VersionSelector OfferedVersionSelector() =>

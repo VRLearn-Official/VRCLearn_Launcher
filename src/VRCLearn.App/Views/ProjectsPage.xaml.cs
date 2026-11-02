@@ -97,6 +97,9 @@ public partial class ProjectsPage : UserControl
         menu.IsOpen = true;
     }
 
+    private void OnMoreMenuOpening(object sender, ContextMenuEventArgs e) =>
+        _menuProject = (sender as FrameworkElement)?.DataContext as ProjectItemViewModel;
+
     private void OnOpenFolderClick(object sender, RoutedEventArgs e) => Execute(viewModel => viewModel.OpenFolderCommand);
 
     private void OnRenameClick(object sender, RoutedEventArgs e) => Execute(viewModel => viewModel.RenameCommand);

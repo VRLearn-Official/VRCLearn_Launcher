@@ -26,7 +26,15 @@ internal static class HttpRequests
             .SendAsync(request, HttpCompletionOption.ResponseHeadersRead, cancellationToken)
             .ConfigureAwait(false);
 
-        response.EnsureSuccessStatusCode();
+        try
+        {
+            response.EnsureSuccessStatusCode();
+        }
+        catch
+        {
+            response.Dispose();
+            throw;
+        }
 
         return response;
     }

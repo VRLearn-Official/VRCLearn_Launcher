@@ -12,6 +12,6 @@ powershell -NoProfile -ExecutionPolicy Bypass -File build/pack-plugin.ps1 `
   -Project plugin-template/VRCLearn.Plugin.Template/VRCLearn.Plugin.Template.csproj
 ```
 
-得到 `artifacts/plugins/示例插件-1.0.0.vclplugin`（文件名取自 `plugin.json` 的 `name`），在启动器的【插件】页用「从文件安装」选择它。
+得到 `artifacts/plugins/acme.template-1.0.0.vclplugin`（文件名取自 `plugin.json` 的 `id`），在启动器的【插件】页用「从文件安装」选择它。
 
 完整规范见 [`docs/plugins.md`](../docs/plugins.md)。

@@ -17,6 +17,9 @@ public sealed class LocalCachedRepository
 
     public IReadOnlyDictionary<string, string> Headers { get; }
 
+    private readonly JsonObject _extra = [];
+    private readonly JsonObject _vrcGetExtra = [];
+
     public string? ETag { get; private set; }
 
     public Uri? Url => Repository.Url;
@@ -46,9 +49,30 @@ public sealed class LocalCachedRepository
 
         var cached = new LocalCachedRepository(RemoteRepository.Parse(repoNode), headers);
 
-        if (json["vrc-get"] is JsonObject meta && JsonText.Of(meta["etag"]) is { } etag)
+        foreach (var (key, value) in json)
         {
-            cached.SetETag(etag);
+            if (key is not ("repo" or "headers" or "vrc-get"))
+            {
+                cached._extra[key] = value?.DeepClone();
+            }
+        }
+
+        if (json["vrc-get"] is JsonObject meta)
+        {
+            foreach (var (key, value) in meta)
+            {
+                if (key == "etag")
+                {
+                    if (JsonText.Of(value) is { } etag)
+                    {
+                        cached.SetETag(etag);
+                    }
+                }
+                else
+                {
+                    cached._vrcGetExtra[key] = value?.DeepClone();
+                }
+            }
         }
 
         return cached;
@@ -58,14 +82,31 @@ public sealed class LocalCachedRepository
     {
         var json = new JsonObject { ["repo"] = Repository.ToRawJson() };
 
+        foreach (var (key, value) in _extra)
+        {
+            json[key] = value?.DeepClone();
+        }
+
         if (Headers.Count > 0)
         {
             json["headers"] = new JsonObject(Headers.Select(x => KeyValuePair.Create<string, JsonNode?>(x.Key, x.Value)));
         }
 
+        var vrcGet = new JsonObject();
+
+        foreach (var (key, value) in _vrcGetExtra)
+        {
+            vrcGet[key] = value?.DeepClone();
+        }
+
         if (ETag is not null)
         {
-            json["vrc-get"] = new JsonObject { ["etag"] = ETag };
+            vrcGet["etag"] = ETag;
+        }
+
+        if (vrcGet.Count > 0)
+        {
+            json["vrc-get"] = vrcGet;
         }
 
         return json;

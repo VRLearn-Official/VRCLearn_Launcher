@@ -27,6 +27,10 @@ public abstract partial class PageViewModelBase(ToastService toasts) : Observabl
         {
             await work();
         }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            Report(exception);
+        }
         finally
         {
             IsBusy = false;
@@ -45,6 +49,13 @@ public abstract partial class PageViewModelBase(ToastService toasts) : Observabl
         {
             IsBusy = false;
         }
+    }
+
+    protected void Report(Exception exception)
+    {
+        Logger.LogWarning(exception, "页面操作失败");
+
+        Status = Localization.Format("Page.OperationFailed", exception.Message);
     }
 
     protected Task RunBusyAsync(

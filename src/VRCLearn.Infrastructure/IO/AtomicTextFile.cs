@@ -11,11 +11,21 @@ internal static class AtomicTextFile
             Directory.CreateDirectory(directory);
         }
 
-        var temporary = path + ".tmp";
+        var temporary = $"{path}.tmp-{Guid.NewGuid():N}";
 
         try
         {
-            File.WriteAllText(temporary, contents, new UTF8Encoding(false));
+            using (var stream = new FileStream(temporary, FileMode.Create, FileAccess.Write, FileShare.None))
+            {
+                using (var writer = new StreamWriter(stream, new UTF8Encoding(false), 1024, leaveOpen: true))
+                {
+                    writer.Write(contents);
+                    writer.Flush();
+                }
+
+                stream.Flush(flushToDisk: true);
+            }
+
             File.Move(temporary, path, overwrite: true);
         }
         catch

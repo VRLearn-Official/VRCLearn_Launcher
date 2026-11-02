@@ -83,12 +83,21 @@ public static class RepositoriesFileParser
 
                 case "headers[]":
                     var separator = value.IndexOf(':');
-                    if (separator < 0)
+
+                    if (separator <= 0)
                     {
                         return null;
                     }
 
-                    headers[value[..separator]] = value[(separator + 1)..];
+                    var name = value[..separator];
+                    var headerValue = value[(separator + 1)..];
+
+                    if (name.Any(char.IsControl) || headerValue.Any(char.IsControl))
+                    {
+                        return null;
+                    }
+
+                    headers[name] = headerValue;
                     break;
             }
         }
@@ -112,5 +121,5 @@ public static class RepositoriesFileParser
         }
     }
 
-    private static string Decode(string value) => Uri.UnescapeDataString(value.Replace('+', ' '));
+    private static string Decode(string value) => Uri.UnescapeDataString(value);
 }

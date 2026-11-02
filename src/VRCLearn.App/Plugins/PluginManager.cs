@@ -67,9 +67,7 @@ public sealed class PluginManager : IDisposable
 
         foreach (var id in _runtimes.Keys.Where(id => installed.All(x => x.Id != id)).ToList())
         {
-            _windows.Close(id);
-            _services.RemoveOwner(id);
-            _runtimes.Remove(id);
+            _ = UnloadRuntimeAsync(id);
         }
 
         var nodes = installed

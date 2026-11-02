@@ -1,13 +1,14 @@
 using System.Formats.Tar;
 using System.IO.Compression;
 using System.Text;
+using VRCLearn.Core.Configuration;
 using VRCLearn.Core.IO;
 
 namespace VRCLearn.Core.Templates;
 
 public static class UnityPackageImporter
 {
-    private static readonly char[] BannedCharacters = ['<', '>', ':', '"', '|', '?', '*', '\0'];
+    private const long MaxTotalBytes = 2L * 1024 * 1024 * 1024;
 
     public static async Task ImportAsync(
         IFileIo destination,
@@ -42,10 +43,11 @@ public static class UnityPackageImporter
     {
         var entries = new Dictionary<string, Entry>(StringComparer.Ordinal);
         var reader = new TarReader(new GZipStream(package, CompressionMode.Decompress), leaveOpen: false);
+        var total = 0L;
 
         await using (reader.ConfigureAwait(false))
         {
-            while (reader.GetNextEntry(copyData: true) is { } tarEntry)
+            while (reader.GetNextEntry(copyData: false) is { } tarEntry)
             {
                 if (!IsAssetEntry(tarEntry.Name, out var guid, out var kind))
                 {
@@ -53,6 +55,13 @@ public static class UnityPackageImporter
                 }
 
                 cancellationToken.ThrowIfCancellationRequested();
+
+                total += tarEntry.Length;
+
+                if (total > MaxTotalBytes)
+                {
+                    throw new InvalidDataException("unitypackage 解压后的内容过大");
+                }
 
                 if (!entries.TryGetValue(guid, out var entry))
                 {
@@ -123,13 +132,11 @@ public static class UnityPackageImporter
     private static string ParsePathname(byte[] bytes, string guid)
     {
         var pathname = Encoding.UTF8.GetString(bytes).Replace('\\', '/');
+        var newline = pathname.LastIndexOf('\n');
 
-        if (pathname.IndexOfAny(BannedCharacters) >= 0)
-        {
-            throw new InvalidDataException($"unitypackage 里 {guid} 的目标路径含有不能用在文件名里的字符：{pathname}");
-        }
+        pathname = (newline < 0 ? pathname : pathname[..newline]).TrimEnd('\r');
 
-        if (pathname.Split('/').Any(x => x is "" or "." or ".."))
+        if (pathname.Split('/').Any(x => !PathUtil.IsSafePathSegment(x)))
         {
             throw new InvalidDataException($"unitypackage 里 {guid} 的目标路径不合法：{pathname}");
         }
@@ -140,9 +147,7 @@ public static class UnityPackageImporter
             throw new InvalidDataException($"unitypackage 里 {guid} 的目标路径不在 Assets/ 或 Packages/ 下：{pathname}");
         }
 
-        var newline = pathname.LastIndexOf('\n');
-
-        return newline < 0 ? pathname : pathname[..newline];
+        return pathname;
     }
 
     private static void Validate(Dictionary<string, Entry> entries)

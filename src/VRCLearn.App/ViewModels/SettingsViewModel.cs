@@ -42,6 +42,8 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly IReadOnlyList<Option> _backupScopes;
     private readonly IReadOnlyList<Option> _hubAccessMethods;
 
+    private bool _configBusy;
+
     public SettingsViewModel(
         AppPaths paths,
         GuiConfigStore store,
@@ -402,6 +404,14 @@ public sealed partial class SettingsViewModel : ObservableObject
             return;
         }
 
+        if (_configBusy)
+        {
+            _toasts.Show(_localization["Settings.ConfigBusy"]);
+            return;
+        }
+
+        _configBusy = true;
+
         try
         {
             var result = await Task.Run(() => _configBackup.Backup(path, scope));
@@ -425,6 +435,10 @@ public sealed partial class SettingsViewModel : ObservableObject
             _logger.LogWarning(exception, "备份配置失败");
 
             _toasts.Show(_localization.Format("Settings.ConfigBackup.Failed", exception.Message));
+        }
+        finally
+        {
+            _configBusy = false;
         }
     }
 
@@ -453,6 +467,14 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             return;
         }
+
+        if (_configBusy)
+        {
+            _toasts.Show(_localization["Settings.ConfigBusy"]);
+            return;
+        }
+
+        _configBusy = true;
 
         try
         {
@@ -513,6 +535,10 @@ public sealed partial class SettingsViewModel : ObservableObject
             _logger.LogWarning(exception, "恢复配置失败");
 
             _toasts.Show(_localization.Format("Settings.ConfigRestore.Failed", exception.Message));
+        }
+        finally
+        {
+            _configBusy = false;
         }
     }
 

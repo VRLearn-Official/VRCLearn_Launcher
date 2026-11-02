@@ -80,10 +80,29 @@ public sealed class RepositoryCacheStore(AppPaths paths, GuiConfigStore configs,
         {
             foreach (var file in Directory.EnumerateFiles(directory, "vrc-get-*.zip*", SearchOption.AllDirectories))
             {
-                File.Delete(file);
+                TryDeleteFile(file);
             }
 
-            DeleteEmptyDirectories(directory);
+            try
+            {
+                DeleteEmptyDirectories(directory);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                logger.LogWarning(exception, "清理包缓存目录失败：{Path}", directory);
+            }
+        }
+    }
+
+    private void TryDeleteFile(string path)
+    {
+        try
+        {
+            File.Delete(path);
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            logger.LogWarning(exception, "删除包缓存文件失败：{Path}", path);
         }
     }
 

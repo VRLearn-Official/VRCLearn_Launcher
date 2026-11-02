@@ -293,7 +293,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File build/pack-plugin.ps1 `
 1. `dotnet publish` 插件；
 2. 复制 `plugin.json`、`localization/`、入口程序集与私有依赖；
 3. 排除宿主程序集与 PDB；
-4. 生成 `artifacts/plugins/<名称>-<version>.vclplugin`。名称优先取 `plugin.json` 的 `name.zh-Hans`，缺失时回退 `en`。
+4. 生成 `artifacts/plugins/<id>-<version>.vclplugin`。`id` 取自 `plugin.json` 的 `id`。
 
 插件不随程序安装包分发。用户通过「从文件安装」或拖入 `.vclplugin` 手动安装。
 

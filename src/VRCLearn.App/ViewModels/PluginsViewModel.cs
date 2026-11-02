@@ -592,19 +592,19 @@ public sealed partial class PluginsViewModel : PageViewModelBase
         try
         {
             failure = await _manager.SetEnabledAsync(item.Id, enabled);
+
+            if (failure is null)
+            {
+                Rebuild();
+                return true;
+            }
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception) when (exception is not OperationCanceledException)
         {
             _logger.LogWarning(exception, "切换插件开关失败：{Id}", item.Id);
 
             Status = _localization["Plugins.EnableFailed"];
             return false;
-        }
-
-        if (failure is null)
-        {
-            Rebuild();
-            return true;
         }
 
         Status = failure.Dependents.Count > 0

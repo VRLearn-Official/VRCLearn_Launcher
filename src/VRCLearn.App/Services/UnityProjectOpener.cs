@@ -20,6 +20,8 @@ public sealed class UnityProjectOpener(
 
     private static readonly TimeSpan OverallTimeout = TimeSpan.FromSeconds(10);
 
+    private readonly HashSet<string> _opening = new(StringComparer.OrdinalIgnoreCase);
+
     public UnityProjectStatus Status(string projectPath) => launcher.Status(projectPath);
 
     public bool IsBusy(string projectPath) =>
@@ -51,7 +53,27 @@ public sealed class UnityProjectOpener(
         IReadOnlyList<string> arguments,
         CancellationToken cancellationToken)
     {
+        lock (_opening)
+        {
+            if (!_opening.Add(projectPath))
+            {
+                logger.LogInformation("Unity 正在启动，忽略重复请求：{Project}", projectPath);
+
+                return new UnityOpenOutcome(UnityOpenResult.AlreadyOpen, UnityHubStartResult.AlreadyRunning, null);
+            }
+        }
+
         var opening = OpenCoreAsync(projectPath, editor, arguments, cancellationToken);
+
+        _ = opening.ContinueWith(
+            _ =>
+            {
+                lock (_opening)
+                {
+                    _opening.Remove(projectPath);
+                }
+            },
+            TaskScheduler.Default);
 
         if (await Task.WhenAny(opening, Task.Delay(OverallTimeout, cancellationToken)) == opening)
         {

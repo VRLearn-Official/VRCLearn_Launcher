@@ -281,15 +281,11 @@ public sealed class PhysicalBackupStore(
                 lock (_gate)
                 {
                     record.FilePath = destination;
+                    configs.Save();
                 }
 
                 moved++;
                 progress?.Report(new FileProgress(records.Count, moved));
-            }
-
-            lock (_gate)
-            {
-                configs.Save();
             }
 
             return new BackupMigrationResult(BackupMigrationStatus.Migrated, bytes, moved);

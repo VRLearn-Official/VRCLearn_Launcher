@@ -130,8 +130,14 @@ public static class ProjectChangesApplier
                 rollbackError);
         }
 
-        await project.ReloadManifestsAsync(cancellationToken).ConfigureAwait(false);
-        project.Io.DeleteDirectory(TempBase);
+        try
+        {
+            await project.ReloadManifestsAsync(cancellationToken).ConfigureAwait(false);
+            project.Io.DeleteDirectory(TempBase);
+        }
+        catch
+        {
+        }
     }
 
     private static async Task ExtractAsync(

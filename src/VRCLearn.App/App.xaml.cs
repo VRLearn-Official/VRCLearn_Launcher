@@ -95,6 +95,8 @@ public partial class App : Application
 
         MainWindow.Show();
 
+        _services.GetRequiredService<ThemeService>().Apply(config.Theme);
+
         _services.GetRequiredService<AutoBackupService>().Start();
 
         _ = _services.GetRequiredService<IUnityEditorLocator>().RefreshFromHubAsync(CancellationToken.None);
@@ -282,7 +284,6 @@ public partial class App : Application
     {
         _services?.GetService<ILogger<App>>()?.LogInformation("VRCLearn Launcher exiting");
 
-        _services?.GetService<PluginManager>()?.Shutdown();
         _singleInstance?.Dispose();
         _services?.Dispose();
         base.OnExit(e);

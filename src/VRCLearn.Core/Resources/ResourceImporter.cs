@@ -46,7 +46,8 @@ public static class ResourceImporter
                 {
                     throw;
                 }
-                catch (Exception exception) when (exception is IOException or InvalidDataException or UnauthorizedAccessException)
+                catch (Exception exception) when (
+                    exception is not OperationCanceledException and not OutOfMemoryException)
                 {
                     failed.Add(path);
                 }

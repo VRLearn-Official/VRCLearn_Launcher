@@ -42,6 +42,18 @@ public sealed class PluginPackageInstaller(
         string packagePath,
         CancellationToken cancellationToken)
     {
+        var file = new FileInfo(packagePath);
+
+        if (!file.Exists)
+        {
+            throw new FileNotFoundException("plugin package not found", packagePath);
+        }
+
+        if (file.Length > MaxPackageBytes)
+        {
+            throw new PluginPackageException($"plugin package is too large: {file.Length} bytes");
+        }
+
         await using var stream = File.OpenRead(packagePath);
         var inspection = PluginPackageInspector.Inspect(stream);
         var sha256 = await PluginPackageInspector
@@ -165,6 +177,11 @@ public sealed class PluginPackageInstaller(
 
     public PluginUninstallResult Uninstall(string id, bool deleteData)
     {
+        if (!PathUtil.IsSafePathSegment(id))
+        {
+            throw new InvalidOperationException($"unsafe plugin id: {id}");
+        }
+
         var target = Path.Combine(paths.PluginsDirectory, id);
         var restart = false;
 
@@ -347,7 +364,7 @@ public sealed class PluginPackageInstaller(
         }
     }
 
-    private static void ReplaceDirectory(string target, string staging, string id)
+    private void ReplaceDirectory(string target, string staging, string id)
     {
         var old = Path.Combine(Path.GetDirectoryName(target)!, $".old-{id}-{Guid.NewGuid():N}");
 
@@ -359,7 +376,18 @@ public sealed class PluginPackageInstaller(
         }
         catch
         {
-            Directory.Move(old, target);
+            try
+            {
+                Directory.Move(old, target);
+            }
+            catch (Exception rollbackException) when (
+                rollbackException is IOException or UnauthorizedAccessException)
+            {
+                logger.LogWarning(rollbackException, "恢复旧插件目录失败：{Id}", id);
+
+                throw new IOException($"插件目录无法还原，旧版本保留在：{old}", rollbackException);
+            }
+
             throw;
         }
 

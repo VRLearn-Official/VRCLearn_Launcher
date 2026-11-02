@@ -6,5 +6,5 @@ public static class LogFiles
     public const string Pattern = "vrl-*.log";
 
     public static string Name(DateTimeOffset startedAt) =>
-        $"vrl-{startedAt:yyyyMMdd-HHmmss}.log";
+        $"vrl-{startedAt:yyyyMMdd-HHmmss-fff}.log";
 }

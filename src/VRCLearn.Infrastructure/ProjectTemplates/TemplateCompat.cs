@@ -1,6 +1,8 @@
+using System.Text.Json;
 using System.Text.Json.Nodes;
 using VRCLearn.Core.Configuration;
 using VRCLearn.Core.Templates;
+using VRCLearn.Infrastructure.IO;
 
 namespace VRCLearn.Infrastructure.ProjectTemplates;
 
@@ -27,11 +29,13 @@ public static class TemplateCompat
                     continue;
                 }
 
-                File.WriteAllText(target, UpgradeContent(File.ReadAllText(file)));
+                AtomicTextFile.Write(target, UpgradeContent(File.ReadAllText(file)));
 
                 upgraded.Add(Path.GetFileName(target));
             }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            catch (Exception exception) when (exception is IOException
+                or UnauthorizedAccessException
+                or JsonException)
             {
             }
         }

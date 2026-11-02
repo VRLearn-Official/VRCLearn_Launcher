@@ -64,7 +64,7 @@ internal sealed record PartialVersion(
             if (buffer.First == '+')
             {
                 buffer.Skip();
-                build = BuildMetadata.Parse(IdentifierParser.Parse(buffer, allowLeadingZero: false));
+                build = BuildMetadata.Parse(IdentifierParser.Parse(buffer, allowLeadingZero: true));
             }
         }
 

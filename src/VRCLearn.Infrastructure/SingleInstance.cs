@@ -11,6 +11,8 @@ public sealed class SingleInstance : IDisposable
 
     private static readonly TimeSpan HandoffTimeout = TimeSpan.FromSeconds(5);
 
+    private const int MaxHandoffBytes = 64 * 1024;
+
     private readonly Mutex _mutex;
     private readonly string _name;
     private readonly CancellationTokenSource _cancellation = new();
@@ -104,8 +106,24 @@ public sealed class SingleInstance : IDisposable
     private static async Task<IReadOnlyList<string>?> ReadAsync(Stream stream, CancellationToken cancellationToken)
     {
         using var buffer = new MemoryStream();
+        var chunk = new byte[4096];
 
-        await stream.CopyToAsync(buffer, cancellationToken).ConfigureAwait(false);
+        while (true)
+        {
+            var read = await stream.ReadAsync(chunk, cancellationToken).ConfigureAwait(false);
+
+            if (read == 0)
+            {
+                break;
+            }
+
+            if (buffer.Length + read > MaxHandoffBytes)
+            {
+                throw new IOException("交接参数超过大小上限");
+            }
+
+            buffer.Write(chunk, 0, read);
+        }
 
         return JsonSerializer.Deserialize<string[]>(buffer.ToArray());
     }

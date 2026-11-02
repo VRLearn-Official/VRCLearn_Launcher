@@ -38,6 +38,11 @@ internal static class LegacyAssetFinder
                 continue;
             }
 
+            if (IsForeignPackagePath(candidate.Package, path))
+            {
+                continue;
+            }
+
             if (Exists(io, path, candidate.IsFile) &&
                 await GuidMatchesAsync(io, path, candidate.Guid, cancellationToken).ConfigureAwait(false))
             {
@@ -92,6 +97,21 @@ internal static class LegacyAssetFinder
         }
 
         return segments.Any(x => x is "" or "." or "..") ? null : string.Join('/', segments);
+    }
+
+    private static bool IsForeignPackagePath(string package, string path)
+    {
+        var prefix = $"{UnityProject.PackagesDirectory}/";
+
+        if (!path.StartsWith(prefix, StringComparison.Ordinal))
+        {
+            return false;
+        }
+
+        var owner = $"{prefix}{package}";
+
+        return !string.Equals(path, owner, StringComparison.Ordinal)
+            && !path.StartsWith($"{owner}/", StringComparison.Ordinal);
     }
 
     private static bool Exists(IFileIo io, string path, bool isFile) =>

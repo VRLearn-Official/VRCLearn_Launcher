@@ -6,8 +6,8 @@ namespace VRCLearn.Core.Packages;
 /// <summary>按名字归并，同一个「包@版本」保留先遇到的。</summary>
 public sealed class PackageCatalog
 {
-    private readonly Dictionary<string, List<PackageInfo>> _byName = [];
-    private readonly HashSet<(string Name, PackageVersion Version)> _seen = [];
+    private readonly Dictionary<string, List<PackageInfo>> _byName = new(StringComparer.OrdinalIgnoreCase);
+    private readonly HashSet<(string Name, PackageVersion Version)> _seen = new(SeenComparer.Instance);
 
     private IReadOnlyList<PackageInfo>? _all;
 
@@ -40,7 +40,7 @@ public sealed class PackageCatalog
 
     public IEnumerable<string> PackageNames => _byName.Keys;
 
-    public bool HasName(string name) => _byName.Keys.Contains(name, StringComparer.OrdinalIgnoreCase);
+    public bool HasName(string name) => _byName.ContainsKey(name);
 
     public IReadOnlyList<PackageInfo> GetVersions(string name) =>
         _byName.TryGetValue(name, out var versions) ? versions : [];
@@ -66,6 +66,19 @@ public sealed class PackageCatalog
         GetVersions(name)
             .Where(x => !x.Manifest.IsYanked)
             .MaxBy(x => x.Version);
+
+    private sealed class SeenComparer : IEqualityComparer<(string Name, PackageVersion Version)>
+    {
+        public static readonly SeenComparer Instance = new();
+
+        public bool Equals(
+            (string Name, PackageVersion Version) x,
+            (string Name, PackageVersion Version) y) =>
+            string.Equals(x.Name, y.Name, StringComparison.OrdinalIgnoreCase) && x.Version == y.Version;
+
+        public int GetHashCode((string Name, PackageVersion Version) obj) =>
+            HashCode.Combine(StringComparer.OrdinalIgnoreCase.GetHashCode(obj.Name), obj.Version);
+    }
 
     private void Add(PackageInfo package)
     {
