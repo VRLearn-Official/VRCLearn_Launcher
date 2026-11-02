@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using VRCLearn.App.Services;
 using VRCLearn.Infrastructure.Storage;
@@ -49,6 +50,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         _logger = logger;
         _guiConfig = guiConfig;
         _localization = localization;
+        _sidebarLocked = guiConfig.Current.SidebarLocked;
         Update = update;
         _settings = settings;
         _repositories = repositories;
@@ -70,6 +72,23 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public string SettingsNavLabel =>
         Update.HasNotice ? _localization["Nav.UpdateAvailable"] : _localization["Nav.Settings"];
+
+    public string SidebarLockTip =>
+        _localization[SidebarLocked ? "Nav.UnlockSidebar" : "Nav.LockSidebar"];
+
+    [ObservableProperty]
+    private bool _sidebarLocked;
+
+    partial void OnSidebarLockedChanged(bool value)
+    {
+        _guiConfig.Current.SidebarLocked = value;
+        _guiConfig.Save();
+
+        OnPropertyChanged(nameof(SidebarLockTip));
+    }
+
+    [RelayCommand]
+    private void ToggleSidebarLock() => SidebarLocked = !SidebarLocked;
 
     private void OnUpdateChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -95,6 +114,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(PageTitle));
         OnPropertyChanged(nameof(PageSubtitle));
         OnPropertyChanged(nameof(SettingsNavLabel));
+        OnPropertyChanged(nameof(SidebarLockTip));
     }
 
     private static readonly Dictionary<string, (string Title, string Subtitle)> Headers = new()

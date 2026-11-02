@@ -142,6 +142,13 @@
                                         Content="{markup:Tr Backups.Note}"
                                         Style="{StaticResource RowButton}"
                                         Visibility="{Binding CanEditNote, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    <ui:Button
+                                        Appearance="Secondary"
+                                        Command="{markup:RowCommand ExportCommand}"
+                                        CommandParameter="{Binding}"
+                                        Content="{markup:Tr Backups.Export}"
+                                        Style="{StaticResource RowButton}"
+                                        Visibility="{Binding IsAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                 </StackPanel>
                             </Grid>
                         </ui:Card>

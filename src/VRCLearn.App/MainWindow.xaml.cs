@@ -46,6 +46,8 @@ public partial class MainWindow : FluentWindow
 
         InitializeComponent();
 
+        ApplySidebarLock(_viewModel.SidebarLocked);
+
         Sidebar.SizeChanged += (_, _) => UpdateSidebarClips();
         UpdateMaximizeButton();
         LocalizationService.Instance.PropertyChanged += (_, _) => UpdateMaximizeButton();
@@ -116,6 +118,11 @@ public partial class MainWindow : FluentWindow
         if (e.PropertyName == nameof(MainWindowViewModel.CurrentKey))
         {
             SyncNavigationSelection();
+        }
+
+        if (e.PropertyName == nameof(MainWindowViewModel.SidebarLocked))
+        {
+            ApplySidebarLock(_viewModel.SidebarLocked);
         }
     }
 
@@ -213,9 +220,37 @@ public partial class MainWindow : FluentWindow
         }
     }
 
-    private void OnSidebarMouseEnter(object sender, MouseEventArgs e) => AnimateSidebar(SidebarExpandedWidth);
+    private void OnSidebarMouseEnter(object sender, MouseEventArgs e)
+    {
+        if (!_viewModel.SidebarLocked)
+        {
+            AnimateSidebar(SidebarExpandedWidth);
+        }
+    }
 
-    private void OnSidebarMouseLeave(object sender, MouseEventArgs e) => AnimateSidebar(SidebarCollapsedWidth);
+    private void OnSidebarMouseLeave(object sender, MouseEventArgs e)
+    {
+        if (!_viewModel.SidebarLocked)
+        {
+            AnimateSidebar(SidebarCollapsedWidth);
+        }
+    }
+
+    private void ApplySidebarLock(bool locked)
+    {
+        if (locked)
+        {
+            Sidebar.BeginAnimation(WidthProperty, null);
+            Sidebar.Width = SidebarExpandedWidth;
+        }
+        else if (!Sidebar.IsMouseOver)
+        {
+            Sidebar.BeginAnimation(WidthProperty, null);
+            Sidebar.Width = SidebarCollapsedWidth;
+        }
+
+        UpdateSidebarClips();
+    }
 
     private void AnimateSidebar(double width)
     {

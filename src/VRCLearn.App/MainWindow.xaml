@@ -106,16 +106,35 @@
                     ShadowDepth="2" />
             </Border.Effect>
             <Grid ClipToBounds="True">
-                <ListBox
-                    x:Name="Navigation"
-                    Padding="0"
-                    VerticalAlignment="Center"
-                    Background="Transparent"
-                    BorderThickness="0"
-                    ItemContainerStyle="{StaticResource SidebarItem}"
-                    ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-                    ScrollViewer.VerticalScrollBarVisibility="Disabled"
-                    SelectionChanged="OnNavigationSelectionChanged">
+                <StackPanel VerticalAlignment="Center">
+                    <ui:Button
+                        AutomationProperties.Name="{Binding SidebarLockTip}"
+                        Command="{Binding ToggleSidebarLockCommand}"
+                        HorizontalAlignment="Center"
+                        Margin="0,0,0,8"
+                        Style="{StaticResource CaptionGlyphButton}"
+                        ToolTip="{Binding SidebarLockTip}">
+                        <Grid Width="16" Height="16">
+                            <ui:SymbolIcon
+                                FontSize="{StaticResource IconSize.Nav}"
+                                Symbol="LockOpen24"
+                                Visibility="{Binding SidebarLocked, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                            <ui:SymbolIcon
+                                FontSize="{StaticResource IconSize.Nav}"
+                                Symbol="LockClosed24"
+                                Visibility="{Binding SidebarLocked, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </Grid>
+                    </ui:Button>
+
+                    <ListBox
+                        x:Name="Navigation"
+                        Padding="0"
+                        Background="Transparent"
+                        BorderThickness="0"
+                        ItemContainerStyle="{StaticResource SidebarItem}"
+                        ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                        ScrollViewer.VerticalScrollBarVisibility="Disabled"
+                        SelectionChanged="OnNavigationSelectionChanged">
                     <ListBoxItem Tag="projects" ToolTip="{markup:Tr Nav.Projects}">
                         <StackPanel Orientation="Horizontal">
                             <Grid Width="28">
@@ -245,6 +264,7 @@
                         </StackPanel>
                     </ListBoxItem>
                 </ListBox>
+                </StackPanel>
             </Grid>
         </Border>
 

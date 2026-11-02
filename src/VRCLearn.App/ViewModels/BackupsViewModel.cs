@@ -345,6 +345,61 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
     }
 
     [RelayCommand]
+    private async Task Export(BackupItemViewModel item)
+    {
+        if (IsBusy || item.IsMissing)
+        {
+            return;
+        }
+
+        if (!File.Exists(item.FilePath))
+        {
+            Status = _localization["Backups.FileMoved"];
+            Reload();
+            return;
+        }
+
+        var folder = _dialogs.PickFolder(
+            _localization["Backups.Export.PickTitle"],
+            Environment.GetFolderPath(Environment.SpecialFolder.DesktopDirectory));
+
+        if (folder is null)
+        {
+            return;
+        }
+
+        var target = Path.Combine(folder, item.FileName);
+
+        if (PathUtil.SamePath(item.FilePath, target))
+        {
+            Status = _localization["Backups.Status.ExportSameFolder"];
+            return;
+        }
+
+        if (File.Exists(target)
+            && !_dialogs.ShowConfirm(
+                _localization["Backups.Export.OverwriteTitle"],
+                _localization.Format("Backups.Export.OverwriteMessage", item.FileName),
+                _localization["Backups.Export.OverwriteButton"]))
+        {
+            return;
+        }
+
+        await RunBusyAsync(
+            "导出备份失败：{Backup}",
+            item.FileName,
+            async () =>
+            {
+                DiskSpace.Ensure(folder, new FileInfo(item.FilePath).Length);
+
+                await Task.Run(() => File.Copy(item.FilePath, target, overwrite: true));
+
+                Status = _localization.Format("Backups.Status.Exported", target);
+            },
+            "Backups.Status.ExportFailed");
+    }
+
+    [RelayCommand]
     private void Lock(BackupItemViewModel item)
     {
         if (!item.IsAuto)

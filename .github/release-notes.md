@@ -18,7 +18,8 @@ Get-FileHash .\VRCLearnLauncher-<版本>-win-x64-Setup.exe -Algorithm SHA256
 
 ## 本次更新
 
-- 修复切换语言后部分界面文本不立即更新
+- 左侧栏支持锁定为固定展开状态
+- 备份页支持将备份导出到指定目录
 
 安装包暂未签名，首次运行时 Windows SmartScreen 可能提示；选择「更多信息」→「仍要运行」。
 
@@ -50,6 +51,7 @@ sha256sum -c VRCLearnLauncher-<version>-win-x64-Setup.exe.sha256
 
 ## What's new
 
-- Fixed some interface texts not updating immediately after switching languages
+- The sidebar can be locked in its expanded state
+- Backups can be exported to a folder
 
 The installer is not code-signed yet, so Windows SmartScreen may warn on first run. Choose "More info" and then "Run anyway".
