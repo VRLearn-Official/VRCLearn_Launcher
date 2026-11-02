@@ -11,6 +11,7 @@ tools/
 /*.md
 /*.txt
 !/README.md
+!/README.en.md
 !/README.zh-CN.md
 !/THIRD-PARTY-NOTICES.txt
 /build/*

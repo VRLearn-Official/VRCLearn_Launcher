@@ -1,9 +1,9 @@
-﻿<div align="center">
+<div align="center">
   <img src="docs/images/logo.png" alt="VRCLearn Launcher" width="120">
   <h1>VRCLearn Launcher</h1>
-  <p>A VRChat package and project manager for Windows, built with .NET 10 and WPF.</p>
+  <p>Windows 上的 VRChat 包与项目管理器，基于 .NET 10 与 WPF 构建。</p>
 
-  [Download](https://github.com/VRLearn-Official/VRCLearn_Launcher/releases) · [简体中文](README.zh-CN.md) · [Issues](https://github.com/VRLearn-Official/VRCLearn_Launcher/issues)
+  [下载](https://github.com/VRLearn-Official/VRCLearn_Launcher/releases) · [English](README.en.md) · [问题反馈](https://github.com/VRLearn-Official/VRCLearn_Launcher/issues)
 </div>
 
 <p align="center">
@@ -13,79 +13,80 @@
   <a href="LICENSE"><img src="https://img.shields.io/github/license/VRLearn-Official/VRCLearn_Launcher" alt="License"></a>
 </p>
 
-VRCLearn Launcher manages VPM repositories, packages and Unity projects in one place. It is an independent C#/WPF application, not affiliated with VRChat Inc. or Unity Technologies.
+VRCLearn Launcher 把 VPM 仓库、包与 Unity 项目集中在一处管理，是独立的 C#/WPF 应用，与 VRChat Inc.、Unity Technologies 无隶属关系。
 
 > [!WARNING]
-> If you have already built up a large number of existing projects, we do not recommend switching to this tool. Please keep using the official VCC, ALCOM or similar tools.
+> 若您已积累了大量旧项目，不建议使用本工具，请继续使用官方 VCC 或 ALCOM 等工具。
 
-## Screenshots
+## 截图
 
 <p align="center">
-  <img src="docs/images/screenshots-en.png" alt="Projects and project detail">
+  <img src="docs/images/screenshots-zh.png" alt="项目与项目详情">
 </p>
 
-## Features
+## 功能
 
-- **Repositories** — add VPM repositories, search packages, install and upgrade with dependency resolution
-- **Projects** — list, create, favorite and archive projects; launch Unity with a selected editor version; back up and restore
-- **Resources** — manage local unitypackages with covers, tags, search and manuals
-- **Launcher backup** — back up configuration only or everything, restore into a chosen directory
-- **Templates** — import and create `.vrclearn-template` projects
-- **Plugins** — install `.vclplugin` extensions from local files or by drag-and-drop. Plugins are provided by the community and are not bundled (see [docs/plugins.md](docs/plugins.md))
-- **Desktop integration** — `vcc://` deep links and file associations
-- **Update check** — checks the latest GitHub release at most once a day at startup and links to the download page
-- **Localization** — Simplified Chinese and English, with custom language packs
+- **仓库**：管理 VPM 仓库，搜索、安装与升级包，自动处理依赖
+- **项目**：列表、新建、收藏、归档；按所选 Unity 版本启动；备份、还原与导出
+- **资源**：管理本地 unitypackage，支持封面、标签、搜索与说明书
+- **启动器备份**：仅配置或全量备份，可还原到指定目录
+- **界面**：侧栏支持锁定为固定展开状态
+- **模板**：导入与创建 `.vrclearn-template` 项目
+- **插件**：从本地文件或拖放安装 `.vclplugin` 扩展。插件由社区提供，不随程序分发（见 [docs/plugins.md](docs/plugins.md)）
+- **桌面集成**：`vcc://` 深链与文件关联
+- **检查更新**：启动时最多每天检查一次 GitHub 最新版本，有新版本时打开下载页
+- **本地化**：简体中文与英文，支持自定义
 
-## Install
+## 安装
 
-Download `VRCLearnLauncher-<version>-win-x64-Setup.exe` from [Releases](https://github.com/VRLearn-Official/VRCLearn_Launcher/releases) and run it.
+从 [Releases](https://github.com/VRLearn-Official/VRCLearn_Launcher/releases) 下载 `VRCLearnLauncher-<版本>-win-x64-Setup.exe` 并运行。
 
-- Windows 10 or later, x64
-- The .NET 10 desktop runtime is bundled; no separate installation is required
+- Windows 10 或更高版本，x64
+- 安装包已内置 .NET 10 桌面运行时，无需单独安装
 
-The installer is not code-signed yet, so Windows SmartScreen may warn on first run. Choose "More info" and then "Run anyway".
+安装包暂未签名，首次运行时 Windows SmartScreen 可能提示；选择「更多信息」→「仍要运行」。
 
-## Build
+## 构建
 
-Requirements:
+环境要求：
 
-- Windows 10 or later, x64
+- Windows 10 或更高版本，x64
 - [.NET 10 SDK](https://dotnet.microsoft.com/download/dotnet/10.0)
 
-Restore and build the application project:
+还原并构建应用项目：
 
 ```
 dotnet restore src/VRCLearn.App/VRCLearn.App.csproj
 dotnet build src/VRCLearn.App/VRCLearn.App.csproj -c Release
 ```
 
-Run from source:
+从源码运行：
 
 ```
 dotnet run --project src/VRCLearn.App/VRCLearn.App.csproj
 ```
 
-Published builds target `net10.0-windows` / `win-x64` and are self-contained.
+发布目标为 `net10.0-windows` / `win-x64`，自包含。
 
-GitHub Actions builds the installer on pushes to `main`, `v*` tags, and manual runs; each run uploads the Setup executable as an artifact. A `v*` tag also creates a draft GitHub Release with the Setup executable and its SHA256 checksum.
+GitHub Actions 会在推送到 `main`、打 `v*` 标签或手动触发时构建安装包，每次运行都会把 Setup 可执行文件作为 artifact 上传。推送 `v*` 标签还会创建草稿 GitHub Release，附上 Setup 安装包和 SHA256 校验文件。
 
-## Project layout
+## 项目结构
 
-| Path | Contents |
+| 路径 | 内容 |
 |---|---|
-| `src/VRCLearn.App` | WPF application: views, view models, localization, themes |
-| `src/VRCLearn.Core` | Platform-independent logic, BCL only |
-| `src/VRCLearn.Infrastructure` | Windows APIs, file system, HTTP, storage |
-| `src/VRCLearn.Plugin.Sdk` | Plugin contracts; the only assembly plugins compile against |
-| `plugin-template` | Copyable plugin project template |
+| `src/VRCLearn.App` | WPF 界面、视图模型、本地化、主题 |
+| `src/VRCLearn.Core` | 与平台无关的逻辑，只依赖 BCL |
+| `src/VRCLearn.Infrastructure` | Windows API、文件系统、HTTP、存储 |
+| `src/VRCLearn.Plugin.Sdk` | 插件契约，插件唯一需要引用的程序集 |
+| `plugin-template` | 可复制修改的插件模板 |
 
-Dependency direction: `App` → `Infrastructure` → `Core`; plugins → `VRCLearn.Plugin.Sdk` only. Plugin packaging is documented in [docs/plugins.md](docs/plugins.md).
+依赖方向：`App` → `Infrastructure` → `Core`；插件只依赖 `VRCLearn.Plugin.Sdk`。插件打包见 [docs/plugins.md](docs/plugins.md)。
 
-## Data directory
+## 数据目录
 
-By default the launcher shares `%LocalAppData%\VRChatCreatorCompanion` with VRChat Creator Companion. Launcher-specific data lives in the `vrclearn\` folder under it.
+默认与 VRChat Creator Companion 共用 `%LocalAppData%\VRChatCreatorCompanion`；启动器自己的数据位于其下的 `vrclearn\`。
 
-## License
+## 许可
 
-[MIT](LICENSE). Third-party components and their licenses are listed in [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt).
+[MIT](LICENSE)。第三方组件及其许可见 [THIRD-PARTY-NOTICES.txt](THIRD-PARTY-NOTICES.txt)。
 
