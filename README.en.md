@@ -35,7 +35,7 @@ VRCLearn Launcher manages VPM repositories, packages and Unity projects in one p
 - **Plugins** — install `.vclplugin` extensions from local files or by drag-and-drop. Plugins are provided by the community and are not bundled (see [docs/plugins.md](docs/plugins.md))
 - **Desktop integration** — `vcc://` deep links and file associations
 - **Update check** — checks the latest GitHub release at most once a day at startup and links to the download page
-- **Localization** — Simplified Chinese and English, with custom language packs
+- **Localization** — Chinese and English, with custom language packs
 
 ## Install
 
