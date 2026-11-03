@@ -60,12 +60,27 @@ public sealed class LocalizationService : INotifyPropertyChanged
     {
         if (string.IsNullOrWhiteSpace(language))
         {
-            var culture = CultureInfo.CurrentUICulture;
-
-            return Find(culture.Name) ?? Find(culture.TwoLetterISOLanguageName) ?? Fallback();
+            return FindCulture(CultureInfo.CurrentUICulture) ?? Fallback();
         }
 
         return Find(language) ?? Fallback();
+    }
+
+    private string? FindCulture(CultureInfo culture)
+    {
+        for (var current = culture; current is { Name.Length: > 0 }; current = current.Parent)
+        {
+            if (Find(current.Name) is { } matched)
+            {
+                return matched;
+            }
+        }
+
+        var prefix = $"{culture.TwoLetterISOLanguageName}-";
+
+        return Packs
+            .FirstOrDefault(x => x.Code.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            ?.Code;
     }
 
     private string? Find(string code) =>
