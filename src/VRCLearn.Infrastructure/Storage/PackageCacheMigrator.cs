@@ -1,4 +1,5 @@
 using VRCLearn.Core.Configuration;
+using VRCLearn.Core.IO;
 using VRCLearn.Core.Projects;
 using VRCLearn.Core.Vpm;
 using VRCLearn.Infrastructure.IO;
@@ -37,7 +38,9 @@ internal static class PackageCacheMigrator
             return new PackageCacheMigrationResult(PackageCacheMigrationStatus.OverlappingPaths);
         }
 
-        var packages = Directory.Exists(source) ? Directory.GetDirectories(source) : [];
+        var packages = Directory.Exists(source)
+            ? Directory.GetDirectories(source, "*", DirectoryEnumeration.TopLevel)
+            : [];
 
         if (packages.Length == 0)
         {
@@ -76,13 +79,13 @@ internal static class PackageCacheMigrator
     }
 
     private static int CountFiles(IEnumerable<string> packages) =>
-        packages.Sum(x => Directory.EnumerateFiles(x, "*", SearchOption.AllDirectories).Count());
+        packages.Sum(x => Directory.EnumerateFiles(x, "*", DirectoryEnumeration.Recursive).Count());
 
     private static long MovePackage(string source, string target, Action? onMoved)
     {
         var bytes = 0L;
 
-        foreach (var file in Directory.EnumerateFiles(source, "*", SearchOption.AllDirectories))
+        foreach (var file in Directory.EnumerateFiles(source, "*", DirectoryEnumeration.Recursive))
         {
             var to = Path.Combine(target, Path.GetRelativePath(source, file));
 
@@ -105,12 +108,12 @@ internal static class PackageCacheMigrator
                 return;
             }
 
-            foreach (var child in Directory.EnumerateDirectories(directory))
+            foreach (var child in Directory.EnumerateDirectories(directory, "*", DirectoryEnumeration.TopLevel))
             {
                 RemoveIfEmpty(child);
             }
 
-            if (!Directory.EnumerateFileSystemEntries(directory).Any())
+            if (!Directory.EnumerateFileSystemEntries(directory, "*", DirectoryEnumeration.TopLevel).Any())
             {
                 Directory.Delete(directory);
             }

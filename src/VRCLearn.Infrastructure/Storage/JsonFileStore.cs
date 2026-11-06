@@ -48,15 +48,19 @@ internal static class JsonFileStore
         }
     }
 
-    public static void Save<T>(string path, T value, Action<string>? onError = null)
+    public static bool Save<T>(string path, T value, Action<string>? onError = null)
     {
         try
         {
             AtomicTextFile.Write(path, JsonSerializer.Serialize(value, JsonDefaults.Indented));
+
+            return true;
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             onError?.Invoke($"{path} 存不下去（{exception.Message}），这次的改动没落盘");
+
+            return false;
         }
     }
 

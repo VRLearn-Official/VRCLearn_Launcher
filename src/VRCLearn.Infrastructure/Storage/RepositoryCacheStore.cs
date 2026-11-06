@@ -2,6 +2,7 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using Microsoft.Extensions.Logging;
 using VRCLearn.Core.Configuration;
+using VRCLearn.Core.IO;
 using VRCLearn.Core.Projects;
 using VRCLearn.Core.Repositories;
 using VRCLearn.Core.Vpm;
@@ -41,14 +42,19 @@ public sealed class RepositoryCacheStore(AppPaths paths, GuiConfigStore configs,
         return cached;
     }
 
-    public void Save(string relativePath, LocalCachedRepository repository)
+    public bool Save(string relativePath, LocalCachedRepository repository)
     {
-        JsonFileStore.Save(
+        var saved = JsonFileStore.Save(
             Resolve(relativePath),
             repository.ToJson(),
             message => logger.LogWarning("{Message}", message));
 
-        _parsed[relativePath] = repository;
+        if (saved)
+        {
+            _parsed[relativePath] = repository;
+        }
+
+        return saved;
     }
 
     public void Delete(string relativePath)
@@ -76,9 +82,9 @@ public sealed class RepositoryCacheStore(AppPaths paths, GuiConfigStore configs,
             return;
         }
 
-        foreach (var directory in Directory.EnumerateDirectories(root))
+        foreach (var directory in Directory.EnumerateDirectories(root, "*", DirectoryEnumeration.TopLevel))
         {
-            foreach (var file in Directory.EnumerateFiles(directory, "vrc-get-*.zip*", SearchOption.AllDirectories))
+            foreach (var file in Directory.EnumerateFiles(directory, "vrc-get-*.zip*", DirectoryEnumeration.Recursive))
             {
                 TryDeleteFile(file);
             }
@@ -108,12 +114,12 @@ public sealed class RepositoryCacheStore(AppPaths paths, GuiConfigStore configs,
 
     private static void DeleteEmptyDirectories(string directory)
     {
-        foreach (var child in Directory.EnumerateDirectories(directory))
+        foreach (var child in Directory.EnumerateDirectories(directory, "*", DirectoryEnumeration.TopLevel))
         {
             DeleteEmptyDirectories(child);
         }
 
-        if (!Directory.EnumerateFileSystemEntries(directory).Any())
+        if (!Directory.EnumerateFileSystemEntries(directory, "*", DirectoryEnumeration.TopLevel).Any())
         {
             Directory.Delete(directory);
         }
@@ -129,8 +135,8 @@ public sealed class RepositoryCacheStore(AppPaths paths, GuiConfigStore configs,
         }
 
         return Directory
-            .EnumerateDirectories(root)
-            .SelectMany(x => Directory.EnumerateFiles(x, "*", SearchOption.AllDirectories))
+            .EnumerateDirectories(root, "*", DirectoryEnumeration.TopLevel)
+            .SelectMany(x => Directory.EnumerateFiles(x, "*", DirectoryEnumeration.Recursive))
             .Sum(x => new FileInfo(x).Length);
     }
 

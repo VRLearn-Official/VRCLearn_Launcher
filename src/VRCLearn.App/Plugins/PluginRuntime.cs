@@ -39,7 +39,11 @@ internal sealed class PluginRuntime(InstalledPlugin installed)
             {
                 try
                 {
-                    await asyncDisposable.DisposeAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(2));
+                    await asyncDisposable
+                        .DisposeAsync()
+                        .AsTask()
+                        .WaitAsync(TimeSpan.FromSeconds(2))
+                        .ConfigureAwait(false);
                 }
                 catch (TimeoutException)
                 {

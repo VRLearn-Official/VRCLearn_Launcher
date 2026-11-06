@@ -10,7 +10,10 @@ internal static class HttpRequests
         {
             foreach (var (name, value) in headers)
             {
-                request.Headers.TryAddWithoutValidation(name, value);
+                if (!string.IsNullOrWhiteSpace(name) && !string.IsNullOrWhiteSpace(value))
+                {
+                    request.Headers.TryAddWithoutValidation(name, value);
+                }
             }
         }
 

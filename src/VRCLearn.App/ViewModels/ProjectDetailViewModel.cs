@@ -523,26 +523,36 @@ public sealed partial class ProjectDetailViewModel(
     [RelayCommand]
     private async Task OpenInUnity()
     {
-        if (_project is null)
+        if (_project is not { } project)
         {
             return;
         }
+
+        var generation = _loadGeneration;
+        var path = ProjectPath;
+        var name = ProjectName;
+        var version = project.UnityVersion;
 
         UnityHubInstallLink = null;
         Status = localization["Unity.StartingHub"];
 
         var outcome = await opener.OpenAsync(
-            ProjectPath,
+            path,
             SelectedEditor?.Editor,
-            opener.ArgumentsFor(ProjectPath),
+            opener.ArgumentsFor(path),
             CancellationToken.None);
+
+        if (generation != _loadGeneration || _project is null)
+        {
+            return;
+        }
 
         if (outcome.Result == UnityOpenResult.NoEditor)
         {
-            UnityHubInstallLink = UnityHubLink.ForInstall(_project.UnityVersion, _project.UnityRevision);
+            UnityHubInstallLink = UnityHubLink.ForInstall(version, project.UnityRevision);
         }
 
-        Status = UnityLaunchStatus.For(outcome, localization, ProjectName, _project.UnityVersion.ToString());
+        Status = UnityLaunchStatus.For(outcome, localization, name, version.ToString());
 
         RefreshUnityState();
     }
@@ -685,12 +695,12 @@ public sealed partial class ProjectDetailViewModel(
 
             await LoadAsync();
 
-            Status = outcome.LeftoverPath is null
+            Status = outcome.Leftovers.Count == 0
                 ? localization.Format("ProjectDetail.Restore.Done", Path.GetFileName(outcome.SafetyBackup))
                 : localization.Format(
                     "ProjectDetail.Restore.DoneWithLeftover",
                     Path.GetFileName(outcome.SafetyBackup),
-                    outcome.LeftoverPath);
+                    string.Join("、", outcome.Leftovers));
         }
         catch (InsufficientDiskSpaceException exception)
         {

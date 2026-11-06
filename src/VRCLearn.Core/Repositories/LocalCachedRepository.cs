@@ -129,5 +129,26 @@ public sealed class LocalCachedRepository
 
     public void SetETag(string? etag) => ETag = string.IsNullOrEmpty(etag) ? null : etag;
 
+    /// <summary>刷新后的副本；只有落盘成功才替换缓存里的旧对象。</summary>
+    public LocalCachedRepository WithRepository(RemoteRepository repository, string? etag)
+    {
+        var copy = new LocalCachedRepository(Repository, Headers);
+
+        copy.SetRepository(repository);
+        copy.SetETag(etag);
+
+        foreach (var (key, value) in _extra)
+        {
+            copy._extra[key] = value?.DeepClone();
+        }
+
+        foreach (var (key, value) in _vrcGetExtra)
+        {
+            copy._vrcGetExtra[key] = value?.DeepClone();
+        }
+
+        return copy;
+    }
+
     public IEnumerable<RemotePackages> GetPackages() => Repository.GetPackages();
 }

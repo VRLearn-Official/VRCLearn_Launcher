@@ -18,7 +18,7 @@ public sealed class UnityProjectOpener(
 {
     private static readonly TimeSpan HubTimeout = TimeSpan.FromSeconds(60);
 
-    private static readonly TimeSpan OverallTimeout = TimeSpan.FromSeconds(10);
+    private static readonly TimeSpan OverallTimeout = HubTimeout + TimeSpan.FromSeconds(5);
 
     private readonly HashSet<string> _opening = new(StringComparer.OrdinalIgnoreCase);
 
@@ -59,30 +59,30 @@ public sealed class UnityProjectOpener(
             {
                 logger.LogInformation("Unity 正在启动，忽略重复请求：{Project}", projectPath);
 
-                return new UnityOpenOutcome(UnityOpenResult.AlreadyOpen, UnityHubStartResult.AlreadyRunning, null);
+                return new UnityOpenOutcome(UnityOpenResult.Opening, UnityHubStartResult.AlreadyRunning, null);
             }
         }
 
-        var opening = OpenCoreAsync(projectPath, editor, arguments, cancellationToken);
+        using var timeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeout.CancelAfter(OverallTimeout);
 
-        _ = opening.ContinueWith(
-            _ =>
-            {
-                lock (_opening)
-                {
-                    _opening.Remove(projectPath);
-                }
-            },
-            TaskScheduler.Default);
-
-        if (await Task.WhenAny(opening, Task.Delay(OverallTimeout, cancellationToken)) == opening)
+        try
         {
-            return await opening;
+            return await OpenCoreAsync(projectPath, editor, arguments, timeout.Token);
         }
+        catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+        {
+            logger.LogWarning("启动 Unity 超时：{Project}", projectPath);
 
-        logger.LogWarning("启动 Unity 超时：{Project}", projectPath);
-
-        return new UnityOpenOutcome(UnityOpenResult.Timeout, UnityHubStartResult.Timeout, null);
+            return new UnityOpenOutcome(UnityOpenResult.Timeout, UnityHubStartResult.Timeout, null);
+        }
+        finally
+        {
+            lock (_opening)
+            {
+                _opening.Remove(projectPath);
+            }
+        }
     }
 
     private async Task<UnityOpenOutcome> OpenCoreAsync(
@@ -112,6 +112,8 @@ public sealed class UnityProjectOpener(
             logger.LogWarning("Unity Hub 不可用（{Result}）：{Project}", hubResult, projectPath);
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
+
         try
         {
             launcher.Launch(editor.ExecutablePath, projectPath, UnityLaunchArguments.For(projectPath, arguments));
@@ -134,6 +136,9 @@ public sealed class UnityProjectOpener(
 public enum UnityOpenResult
 {
     AlreadyOpen,
+
+    /// <summary>同一项目的上一次启动还没结束。</summary>
+    Opening,
 
     NoEditor,
 

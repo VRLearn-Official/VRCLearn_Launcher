@@ -13,6 +13,8 @@ public static class UnityLaunchStatus
         {
             UnityOpenResult.AlreadyOpen =>
                 localization.Format("Projects.Status.UnityAlreadyOpen", projectName),
+            UnityOpenResult.Opening =>
+                localization.Format("Projects.Status.UnityOpening", projectName),
             UnityOpenResult.NoEditor =>
                 localization.Format("Projects.Status.UnityNotFound", unityVersion),
             UnityOpenResult.Timeout =>

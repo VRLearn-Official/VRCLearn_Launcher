@@ -11,7 +11,8 @@ public interface ILauncherSettingsStore
 
     void Reload();
 
-    void Save();
+    /// <summary>返回是否真的写到磁盘。</summary>
+    bool Save();
 }
 
 public interface IRepositoryCacheStore
@@ -21,7 +22,8 @@ public interface IRepositoryCacheStore
 
     LocalCachedRepository? Load(string relativePath);
 
-    void Save(string relativePath, LocalCachedRepository repository);
+    /// <summary>返回是否真的写到磁盘。</summary>
+    bool Save(string relativePath, LocalCachedRepository repository);
 
     void Delete(string relativePath);
 

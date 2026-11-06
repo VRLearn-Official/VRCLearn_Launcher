@@ -67,7 +67,7 @@ public sealed class LauncherSettings : IJsonOnDeserialized
 
         foreach (var repo in UserRepos)
         {
-            repo.Headers ??= [];
+            repo.Headers = RepositoryHeaders.Clean(repo.Headers ?? []);
         }
 
         UserProjects ??= [];

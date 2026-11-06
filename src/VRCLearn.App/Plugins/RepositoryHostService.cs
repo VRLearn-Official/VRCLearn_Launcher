@@ -78,6 +78,7 @@ public sealed class RepositoryHostService(
         AddRepositoryStatus.AlreadyAdded => Sdk.RepositoryAddStatus.AlreadyAdded,
         AddRepositoryStatus.Unreachable => Sdk.RepositoryAddStatus.Unreachable,
         AddRepositoryStatus.InvalidContent => Sdk.RepositoryAddStatus.InvalidContent,
+        AddRepositoryStatus.SaveFailed => Sdk.RepositoryAddStatus.SaveFailed,
         _ => Sdk.RepositoryAddStatus.InvalidUrl,
     };
 }

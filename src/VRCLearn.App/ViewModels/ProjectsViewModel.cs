@@ -170,6 +170,8 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
 
     public void RefreshUnityStates()
     {
+        PruneTracking();
+
         var changed = new List<string>();
 
         foreach (var project in Projects)
@@ -596,9 +598,19 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
             {
                 Projects.Add(item);
             }
+
+            PruneTracking();
         });
 
         OnPropertyChanged(nameof(HasProjects));
         OnPropertyChanged(nameof(IsSearchEmpty));
+    }
+
+    private void PruneTracking()
+    {
+        var paths = Projects.Select(x => x.ProjectPath).ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+        _runningProjects.IntersectWith(paths);
+        _refreshedAfterLaunch.IntersectWith(paths);
     }
 }

@@ -79,25 +79,11 @@ internal sealed record Comparator(ComparatorKind Kind, PartialVersion First, Par
         ? !First.Pre.IsEmpty || Second is { Pre.IsEmpty: false }
         : !First.Pre.IsEmpty;
 
-    public bool Matches(PackageVersion version, PrereleaseAcceptance acceptance)
-    {
-        if (!MatchesInternal(version))
-        {
-            return false;
-        }
+    public bool Matches(PackageVersion version) => MatchesInternal(version);
 
-        if (version.IsStable)
-        {
-            return true;
-        }
-
-        return acceptance switch
-        {
-            PrereleaseAcceptance.Deny => false,
-            PrereleaseAcceptance.Allow => true,
-            _ => MatchesPreMinimum(),
-        };
-    }
+    public bool AllowsPrerelease(PackageVersion version) =>
+        HasPrereleaseTuple(First, version)
+        || (Second is not null && HasPrereleaseTuple(Second, version));
 
     public override string ToString() => Kind switch
     {
@@ -112,8 +98,15 @@ internal sealed record Comparator(ComparatorKind Kind, PartialVersion First, Par
         _ => First.ToString(),
     };
 
-    private bool MatchesPreMinimum() =>
-        First.ToZeros().IsPre || (Second is not null && Second.ToZeros().IsPre);
+    private static bool HasPrereleaseTuple(PartialVersion bound, PackageVersion version)
+    {
+        var zeros = bound.ToZeros();
+
+        return zeros.IsPre
+            && zeros.Major == version.Major
+            && zeros.Minor == version.Minor
+            && zeros.Patch == version.Patch;
+    }
 
     private bool MatchesInternal(PackageVersion version) => Kind switch
     {

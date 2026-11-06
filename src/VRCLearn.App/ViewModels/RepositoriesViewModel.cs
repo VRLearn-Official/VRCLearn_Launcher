@@ -105,6 +105,7 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
         {
             RemoveRepositoryStatus.Success => _localization.Format("Repositories.Status.Removed", repository.Title),
             RemoveRepositoryStatus.Stale => _localization["Repositories.Status.Stale"],
+            RemoveRepositoryStatus.SaveFailed => _localization["Repositories.Status.SaveFailed"],
             _ => _localization["Repositories.Status.IndexOutOfRange"],
         };
 
@@ -116,7 +117,12 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
     {
         var status = _service.Reorder(dragged.Index, insertIndex, [.. Repositories.Select(x => x.Id)]);
 
-        Status = status == ReorderRepositoryStatus.Success ? null : _localization["Repositories.Status.Stale"];
+        Status = status switch
+        {
+            ReorderRepositoryStatus.Success => null,
+            ReorderRepositoryStatus.SaveFailed => _localization["Repositories.Status.SaveFailed"],
+            _ => _localization["Repositories.Status.Stale"],
+        };
 
         Reload();
     }
@@ -244,7 +250,7 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
 
     private string MessageFor(AddRepositoryOutcome? outcome, string url)
     {
-        if (outcome is { Status: AddRepositoryStatus.Unreachable or AddRepositoryStatus.InvalidContent })
+        if (outcome is { Status: AddRepositoryStatus.Unreachable or AddRepositoryStatus.InvalidContent or AddRepositoryStatus.SaveFailed })
         {
             _logger.LogWarning("添加仓库失败：{Url} {Status} {Detail}", url, outcome.Status, outcome.Detail);
         }
@@ -255,6 +261,7 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
             AddRepositoryStatus.AlreadyAdded => _localization.Format("Repositories.Status.AlreadyAdded", url),
             AddRepositoryStatus.Unreachable => _localization.Format("Repositories.Status.Unreachable", url, outcome.Detail ?? ""),
             AddRepositoryStatus.InvalidContent => _localization.Format("Repositories.Status.InvalidContent", url),
+            AddRepositoryStatus.SaveFailed => _localization["Repositories.Status.SaveFailed"],
             _ => _localization["Repositories.Status.InvalidUrl"],
         };
     }

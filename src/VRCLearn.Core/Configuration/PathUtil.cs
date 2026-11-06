@@ -24,9 +24,11 @@ public static class PathUtil
             StringComparison.OrdinalIgnoreCase);
     }
 
-    /// <summary>只由 ASCII 字母数字与 <c>. _ -</c> 组成，可以直接当文件名用。</summary>
+    /// <summary>只由 ASCII 字母数字与 <c>. _ -</c> 组成，且不是设备名，可以直接当文件名用。</summary>
     public static bool IsSafeFileName(string? name) =>
-        !string.IsNullOrEmpty(name) && name.All(x => char.IsAsciiLetterOrDigit(x) || x is '.' or '_' or '-');
+        !string.IsNullOrEmpty(name)
+        && name.All(x => char.IsAsciiLetterOrDigit(x) || x is '.' or '_' or '-')
+        && !IsReservedName(name);
 
     /// <summary>CON、NUL、COM1 之类的设备名，带扩展名也算。</summary>
     public static bool IsReservedName(string name) => ReservedNames.Contains(name.Split('.')[0]);

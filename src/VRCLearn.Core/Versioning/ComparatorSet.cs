@@ -19,8 +19,25 @@ internal sealed class ComparatorSet(IReadOnlyList<Comparator> comparators) : IEq
         return new ComparatorSet(comparators);
     }
 
-    public bool Matches(PackageVersion version, PrereleaseAcceptance acceptance) =>
-        Comparators.All(x => x.Matches(version, acceptance));
+    public bool Matches(PackageVersion version, PrereleaseAcceptance acceptance)
+    {
+        if (!Comparators.All(x => x.Matches(version)))
+        {
+            return false;
+        }
+
+        if (version.IsStable)
+        {
+            return true;
+        }
+
+        return acceptance switch
+        {
+            PrereleaseAcceptance.Deny => false,
+            PrereleaseAcceptance.Allow => true,
+            _ => Comparators.Any(x => x.AllowsPrerelease(version)),
+        };
+    }
 
     public bool Equals(ComparatorSet? other) =>
         other is not null && Comparators.SequenceEqual(other.Comparators);

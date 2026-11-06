@@ -38,19 +38,26 @@ public sealed class LauncherSettingsStore(AppPaths paths, ILogger<LauncherSettin
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    public void Save()
+    public bool Save()
     {
+        bool saved;
+
         lock (_gate)
         {
             if (_readOnly)
             {
-                return;
+                return false;
             }
 
-            JsonFileStore.Save(paths.SettingsFile, Current, LogCorrupt);
+            saved = JsonFileStore.Save(paths.SettingsFile, Current, LogCorrupt);
         }
 
-        Changed?.Invoke(this, EventArgs.Empty);
+        if (saved)
+        {
+            Changed?.Invoke(this, EventArgs.Empty);
+        }
+
+        return saved;
     }
 
     private void LogCorrupt(string message) => logger.LogWarning("{Message}", message);

@@ -286,10 +286,23 @@ public sealed class PluginManager : IDisposable
         _localization.PropertyChanged -= OnLocalizationChanged;
         _windows.CloseAll();
 
-        foreach (var runtime in _runtimes.Values)
+        var disposal = Task.Run(DisposeRuntimesAsync);
+
+        if (!disposal.Wait(TimeSpan.FromSeconds(5)))
         {
-            runtime.DisposeAsync(_logger).GetAwaiter().GetResult();
-            _services.RemoveOwner(runtime.Installed.Id);
+            _logger.LogWarning("插件释放超时，退出时不再等待");
+        }
+    }
+
+    private async Task DisposeRuntimesAsync()
+    {
+        var runtimes = _runtimes.ToArray();
+
+        await Task.WhenAll(runtimes.Select(x => x.Value.DisposeAsync(_logger))).ConfigureAwait(false);
+
+        foreach (var (id, _) in runtimes)
+        {
+            _services.RemoveOwner(id);
         }
 
         _runtimes.Clear();

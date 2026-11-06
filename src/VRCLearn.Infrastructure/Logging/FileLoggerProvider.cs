@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.Extensions.Logging;
 using VRCLearn.Core.Configuration;
 
@@ -7,22 +8,40 @@ public sealed class FileLoggerProvider : ILoggerProvider
 {
     private readonly Lock _gate = new();
     private readonly LogLevelFilter _filter;
-    private readonly StreamWriter _writer;
+    private readonly TextWriter _writer;
     private bool _disposed;
+    private bool _failed;
 
     public FileLoggerProvider(LogLevelFilter filter, AppPaths paths)
     {
         _filter = filter;
-
-        Directory.CreateDirectory(paths.LogsDirectory);
-
-        LogRetention.Apply(paths);
-
         Path = System.IO.Path.Combine(paths.LogsDirectory, LogFiles.Name(DateTimeOffset.Now));
-        _writer = new StreamWriter(Path, append: false) { AutoFlush = true };
+
+        try
+        {
+            Directory.CreateDirectory(paths.LogsDirectory);
+
+            LogRetention.Apply(paths);
+
+            _writer = new StreamWriter(Path, append: false) { AutoFlush = true };
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            _failed = true;
+            _writer = TextWriter.Null;
+
+            Debug.WriteLine($"日志文件打不开，本次只输出到调试器：{exception.Message}");
+        }
     }
 
-    /// 本次启动写的日志文件路径。
+    internal FileLoggerProvider(LogLevelFilter filter, string path, TextWriter writer)
+    {
+        _filter = filter;
+        Path = path;
+        _writer = writer;
+    }
+
+    /// <summary>本次启动写的日志文件路径。</summary>
     public string Path { get; }
 
     public ILogger CreateLogger(string categoryName) => new FileLogger(this, categoryName);
@@ -31,8 +50,21 @@ public sealed class FileLoggerProvider : ILoggerProvider
     {
         lock (_gate)
         {
+            if (_disposed)
+            {
+                return;
+            }
+
             _disposed = true;
-            _writer.Dispose();
+
+            try
+            {
+                _writer.Dispose();
+            }
+            catch (Exception exception) when (exception is IOException or ObjectDisposedException)
+            {
+                Debug.WriteLine($"关闭日志文件失败：{exception.Message}");
+            }
         }
     }
 
@@ -40,12 +72,21 @@ public sealed class FileLoggerProvider : ILoggerProvider
     {
         lock (_gate)
         {
-            if (_disposed)
+            if (_disposed || _failed)
             {
                 return;
             }
 
-            _writer.WriteLine(line);
+            try
+            {
+                _writer.WriteLine(line);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or ObjectDisposedException)
+            {
+                _failed = true;
+
+                Debug.WriteLine($"写日志失败，后续日志丢弃：{exception.Message}");
+            }
         }
     }
 

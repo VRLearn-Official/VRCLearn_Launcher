@@ -79,14 +79,27 @@ public sealed class RepositoryService
         var relativePath = RepositoryCachePath.For(repository.Id, url);
         var cached = new LocalCachedRepository(repository, headers);
         cached.SetETag(etag);
-        _cacheStore.Save(relativePath, cached);
 
-        Settings.UserRepos.Add(UserRepoSetting.Create(
+        if (!_cacheStore.Save(relativePath, cached))
+        {
+            return new AddRepositoryOutcome(AddRepositoryStatus.SaveFailed);
+        }
+
+        var entry = UserRepoSetting.Create(
             _cacheStore.Resolve(relativePath),
             name ?? repository.Name,
             url,
-            repository.Id));
-        _settingsStore.Save();
+            repository.Id);
+
+        Settings.UserRepos.Add(entry);
+
+        if (!_settingsStore.Save())
+        {
+            Settings.UserRepos.Remove(entry);
+            _cacheStore.Delete(relativePath);
+
+            return new AddRepositoryOutcome(AddRepositoryStatus.SaveFailed);
+        }
 
         return new AddRepositoryOutcome(AddRepositoryStatus.Success);
     }
@@ -105,7 +118,14 @@ public sealed class RepositoryService
         }
 
         Settings.UserRepos.RemoveAt(index);
-        _settingsStore.Save();
+
+        if (!_settingsStore.Save())
+        {
+            Settings.UserRepos.Insert(index, repository);
+
+            return RemoveRepositoryStatus.SaveFailed;
+        }
+
         _cacheStore.Delete(repository.LocalPath);
 
         return RemoveRepositoryStatus.Success;
@@ -135,7 +155,14 @@ public sealed class RepositoryService
         var moved = repositories[from];
         repositories.RemoveAt(from);
         repositories.Insert(to, moved);
-        _settingsStore.Save();
+
+        if (!_settingsStore.Save())
+        {
+            repositories.RemoveAt(to);
+            repositories.Insert(from, moved);
+
+            return ReorderRepositoryStatus.SaveFailed;
+        }
 
         return ReorderRepositoryStatus.Success;
     }
@@ -198,18 +225,20 @@ public sealed class RepositoryService
                     continue;
                 }
 
-                if (cached is null)
+                var refreshed = cached is null
+                    ? new LocalCachedRepository(result.Value.Repository, setting.Headers)
+                    : cached.WithRepository(result.Value.Repository, result.Value.ETag);
+
+                refreshed.SetETag(result.Value.ETag);
+
+                if (_cacheStore.Save(setting.LocalPath, refreshed))
                 {
-                    cached = new LocalCachedRepository(result.Value.Repository, setting.Headers);
+                    updated++;
                 }
                 else
                 {
-                    cached.SetRepository(result.Value.Repository);
+                    failed++;
                 }
-
-                cached.SetETag(result.Value.ETag);
-                _cacheStore.Save(setting.LocalPath, cached);
-                updated++;
             }
             catch (Exception exception) when (exception is HttpRequestException or IOException or TaskCanceledException or RepositoryParseException or JsonException)
             {

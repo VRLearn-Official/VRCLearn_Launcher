@@ -20,6 +20,8 @@ public enum RepositoryAddStatus
     Unreachable,
 
     InvalidContent,
+
+    SaveFailed,
 }
 
 public sealed record RepositoryAddResult(RepositoryAddStatus Status, string? Detail = null);

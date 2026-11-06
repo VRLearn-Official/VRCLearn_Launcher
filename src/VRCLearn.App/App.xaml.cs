@@ -6,6 +6,7 @@ using VRCLearn.App.Plugins;
 using VRCLearn.App.Services;
 using VRCLearn.App.ViewModels;
 using VRCLearn.Core.Configuration;
+using VRCLearn.Core.Projects;
 using VRCLearn.Core.Repositories;
 using VRCLearn.Core.Unity;
 using VRCLearn.Infrastructure.Http;
@@ -89,6 +90,30 @@ public partial class App : Application
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
             startupLogger.LogWarning(exception, "应用待处理的插件操作失败");
+        }
+
+        try
+        {
+            var recoveries = _services
+                .GetRequiredService<ProjectRestoreService>()
+                .RecoverInterruptedAsync(
+                    _services.GetRequiredService<ProjectService>().List(),
+                    CancellationToken.None)
+                .GetAwaiter()
+                .GetResult();
+
+            foreach (var recovery in recoveries)
+            {
+                startupLogger.LogInformation(
+                    "项目还原中断恢复：{Project}，已恢复：{Recovered}，{Detail}",
+                    recovery.ProjectPath,
+                    recovery.Recovered,
+                    recovery.Detail ?? "");
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            startupLogger.LogWarning(exception, "检查未完成的项目还原失败");
         }
 
         MainWindow = _services.GetRequiredService<MainWindow>();

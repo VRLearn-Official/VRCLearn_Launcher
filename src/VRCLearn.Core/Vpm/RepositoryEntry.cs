@@ -9,6 +9,9 @@ public enum AddRepositoryStatus
     AlreadyAdded,
     Unreachable,
     InvalidContent,
+
+    /// <summary>内容取到了，但写不进磁盘。</summary>
+    SaveFailed,
 }
 
 public sealed record AddRepositoryOutcome(AddRepositoryStatus Status, string? Detail = null);
@@ -18,6 +21,9 @@ public enum RemoveRepositoryStatus
     Success,
     IndexOutOfRange,
     Stale,
+
+    /// <summary>设置写不进磁盘，条目已放回原位。</summary>
+    SaveFailed,
 }
 
 public enum ReorderRepositoryStatus
@@ -25,6 +31,9 @@ public enum ReorderRepositoryStatus
     Success,
 
     Stale,
+
+    /// <summary>设置写不进磁盘，顺序已恢复。</summary>
+    SaveFailed,
 }
 
 public static class RepositoryMove
