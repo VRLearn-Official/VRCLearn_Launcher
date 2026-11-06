@@ -74,7 +74,10 @@ public partial class App : Application
         var config = _services.GetRequiredService<GuiConfigStore>().Current;
 
         proxy.Configure(config.ProxyEnabled, config.ProxyUrl);
-        _services.GetRequiredService<LocalizationService>().Apply(config.Language);
+
+        var localization = _services.GetRequiredService<LocalizationService>();
+
+        localization.Apply(config.Language);
         _services.GetRequiredService<ThemeService>().Apply(config.Theme);
         _services.GetRequiredService<AnimationService>().Apply(config.AnimationEnabled);
         _services.GetRequiredService<LogLevelFilter>().Apply(config.LogsLevel);
@@ -106,7 +109,7 @@ public partial class App : Application
                 "VRCLearn Launcher {Version} started. OS: {OS}, language: {Language}, log level: {Level}, shared directory: {Root}, private directory: {Private}",
                 typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",
                 Environment.OSVersion.VersionString,
-                config.Language,
+                localization.CurrentLanguage,
                 config.LogsLevel,
                 paths.Root,
                 paths.PrivateDirectory);
