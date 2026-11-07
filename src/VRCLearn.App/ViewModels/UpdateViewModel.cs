@@ -132,9 +132,6 @@ public sealed partial class UpdateViewModel : ObservableObject
 
     public bool IsDownloading => Phase == UpdatePhase.Downloading;
 
-    public bool ShowManualDownload => _canInstall
-        && Phase is UpdatePhase.Available or UpdatePhase.DownloadFailed or UpdatePhase.InstallFailed;
-
     public string ButtonText => Phase switch
     {
         UpdatePhase.UpToDate => _localization["Settings.Update.UpToDate"],
@@ -161,7 +158,6 @@ public sealed partial class UpdateViewModel : ObservableObject
     {
         NotifyTexts();
         OnPropertyChanged(nameof(IsDownloading));
-        OnPropertyChanged(nameof(ShowManualDownload));
         ActCommand.NotifyCanExecuteChanged();
     }
 
@@ -222,7 +218,6 @@ public sealed partial class UpdateViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
     private void OpenDownload()
     {
         try
