@@ -437,7 +437,7 @@
 
   "ProjectDetail.Conflict.Unity": "\"{0}\" is not compatible with the current Unity version.",
   "ProjectDetail.Conflict.Packages": "\"{1}\" depends on \"{0}\"; removing \"{0}\" would leave \"{1}\" missing a dependency.",
-  "ProjectDetail.Conflict.Unlocked": "\"{0}\" is an unregistered folder and will be moved aside.",
+  "ProjectDetail.Conflict.Unlocked": "Unregistered folder \"{0}\" will be moved out of Packages, then deleted if possible after applying changes.",
 
   "Backups.Subtitle": "Backups from every project. Archives appear once you switch the filter to \"Archives\".",
   "Backups.SearchPlaceholder": "Search project names",
@@ -633,7 +633,7 @@
   "Settings.ConfigRestore.PickTitle": "Choose a backup archive",
   "Settings.ConfigRestore.Hint": "Restoring overwrites the current settings. Projects and unitypackages from a full backup go to the folder you choose and do not overwrite their original locations.",
   "Settings.ConfigRestore.ConfirmTitle": "Restore settings",
-  "Settings.ConfigRestore.ConfirmMessage": "Restoring overwrites the current settings. A full backup also overwrites the original projects, repo caches and resource files. Continue?",
+  "Settings.ConfigRestore.ConfirmMessage": "Overwrite current settings? Full backups also restore repo caches and extract projects and resources to the chosen folder, overwriting matching files.",
   "Settings.ConfigRestore.ConfirmButton": "Restore",
   "Settings.ConfigRestore.Empty": "The archive contains no files to restore",
   "Settings.ConfigRestore.DoneTitle": "Restore settings",
