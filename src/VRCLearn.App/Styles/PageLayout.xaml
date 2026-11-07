@@ -615,7 +615,7 @@
         <Setter Property="ResizeMode" Value="NoResize" />
         <Setter Property="ShowInTaskbar" Value="False" />
         <Setter Property="SizeToContent" Value="Height" />
-        <Setter Property="WindowBackdropType" Value="Mica" />
+        <Setter Property="WindowBackdropType" Value="None" />
         <Setter Property="ExtendsContentIntoTitleBar" Value="True" />
     </Style>
 
