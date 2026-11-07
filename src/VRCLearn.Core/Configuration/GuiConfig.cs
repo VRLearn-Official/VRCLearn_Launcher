@@ -18,6 +18,8 @@ public sealed class GuiConfig : IJsonOnDeserialized
 
     public bool ExperimentalFeatures { get; set; }
 
+    public bool LauncherAutoUpdate { get; set; }
+
     public bool ProxyEnabled { get; set; }
 
     public string ProxyUrl { get; set; } = "";

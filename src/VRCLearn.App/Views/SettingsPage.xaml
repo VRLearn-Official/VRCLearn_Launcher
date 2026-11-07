@@ -564,17 +564,65 @@
                         <HeaderedContentControl.Header>
                             <StackPanel>
                                 <TextBlock Text="{markup:Tr Settings.Version}" />
-                                <TextBlock Style="{StaticResource Mono}" Text="{Binding Update.CurrentVersionText}" />
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="Auto" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        Style="{StaticResource Mono}"
+                                        Text="{Binding Update.CurrentVersionText}" />
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        Margin="{StaticResource Gap.Inline}"
+                                        HorizontalAlignment="Center"
+                                        VerticalAlignment="Center"
+                                        Style="{StaticResource Caption}"
+                                        Text="{Binding Update.StatusText}"
+                                        TextTrimming="CharacterEllipsis"
+                                        TextWrapping="NoWrap"
+                                        ToolTip="{Binding Update.StatusText}"
+                                        Visibility="{Binding Update.HasStatus, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                </Grid>
                             </StackPanel>
                         </HeaderedContentControl.Header>
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel Margin="{StaticResource Gap.Inline}">
                             <ui:Button
                                 x:Name="UpdateButton"
                                 MinWidth="120"
+                                HorizontalAlignment="Right"
                                 Appearance="Secondary"
                                 Command="{Binding Update.ActCommand}"
-                                Content="{Binding Update.ButtonText}" />
+                                Content="{Binding Update.ButtonText}"
+                                Visibility="{Binding Update.IsDownloading, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                            <ui:Button
+                                MinWidth="120"
+                                HorizontalAlignment="Right"
+                                Appearance="Secondary"
+                                Command="{Binding Update.CancelDownloadCommand}"
+                                Content="{markup:Tr Settings.Update.CancelDownload}"
+                                Visibility="{Binding Update.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         </StackPanel>
+                    </HeaderedContentControl>
+
+                    <HeaderedContentControl Style="{StaticResource FieldRow}">
+                        <HeaderedContentControl.Header>
+                            <StackPanel>
+                                <TextBlock Text="{markup:Tr Settings.Update.AutoUpdate}" />
+                                <TextBlock
+                                    MaxWidth="360"
+                                    Margin="{StaticResource Gap.Tight}"
+                                    HorizontalAlignment="Left"
+                                    Style="{StaticResource Caption}"
+                                    Text="{Binding Update.AutoUpdateHint}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                        </HeaderedContentControl.Header>
+                        <ui:ToggleSwitch
+                            AutomationProperties.Name="{markup:Tr Settings.Update.AutoUpdate}"
+                            IsChecked="{Binding Update.AutoUpdateEnabled, Mode=TwoWay}"
+                            IsEnabled="{Binding Update.CanAutoUpdate}" />
                     </HeaderedContentControl>
 
                     <HeaderedContentControl Style="{StaticResource FieldRow}">

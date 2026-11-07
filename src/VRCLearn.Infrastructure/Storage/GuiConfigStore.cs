@@ -61,6 +61,31 @@ public sealed class GuiConfigStore
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
+    public bool TrySetLauncherAutoUpdate(bool enabled)
+    {
+        lock (_gate)
+        {
+            var config = Current;
+
+            if (_readOnly)
+            {
+                return false;
+            }
+
+            var previous = config.LauncherAutoUpdate;
+            config.LauncherAutoUpdate = enabled;
+
+            if (!JsonFileStore.Save(_paths.GuiConfigFile, config, Complain))
+            {
+                config.LauncherAutoUpdate = previous;
+                return false;
+            }
+        }
+
+        Changed?.Invoke(this, EventArgs.Empty);
+        return true;
+    }
+
     private void Complain(string message) => _logger.LogWarning("{Message}", message);
 
     private void Unreadable(string message)
