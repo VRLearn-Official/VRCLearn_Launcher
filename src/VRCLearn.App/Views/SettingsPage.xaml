@@ -587,7 +587,7 @@
                                 MinWidth="120"
                                 HorizontalAlignment="Right"
                                 Appearance="Secondary"
-                                Command="{Binding Update.ActCancelCommand}"
+                                Command="{Binding Update.CancelDownloadCommand}"
                                 Content="{markup:Tr Settings.Update.CancelDownload}"
                                 Visibility="{Binding Update.IsDownloading, Converter={StaticResource BooleanToVisibilityConverter}}" />
                             <ui:Button
@@ -598,6 +598,25 @@
                                 Content="{markup:Tr Settings.Update.Manual}"
                                 Visibility="{Binding Update.ShowManualDownload, Converter={StaticResource BooleanToVisibilityConverter}}" />
                         </StackPanel>
+                    </HeaderedContentControl>
+
+                    <HeaderedContentControl Style="{StaticResource FieldRow}">
+                        <HeaderedContentControl.Header>
+                            <StackPanel>
+                                <TextBlock Text="{markup:Tr Settings.Update.AutoUpdate}" />
+                                <TextBlock
+                                    MaxWidth="360"
+                                    Margin="{StaticResource Gap.Tight}"
+                                    HorizontalAlignment="Left"
+                                    Style="{StaticResource Caption}"
+                                    Text="{markup:Tr Settings.Update.AutoUpdateHint}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                        </HeaderedContentControl.Header>
+                        <ui:ToggleSwitch
+                            AutomationProperties.Name="{markup:Tr Settings.Update.AutoUpdate}"
+                            IsChecked="{Binding Update.AutoUpdateEnabled, Mode=TwoWay}"
+                            IsEnabled="{Binding Update.CanAutoUpdate}" />
                     </HeaderedContentControl>
 
                     <HeaderedContentControl Style="{StaticResource FieldRow}">

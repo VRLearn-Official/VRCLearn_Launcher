@@ -613,6 +613,8 @@
   "Settings.CheckUpdate": "Check for updates",
   "Settings.Update.UpToDate": "Up to date",
   "Settings.Update.Available": "Download v{0}",
+  "Settings.Update.AutoUpdate": "Automatic updates",
+  "Settings.Update.AutoUpdateHint": "Download new versions and install them the next time you open the launcher.",
   "Settings.Update.Stage": "Download update",
   "Settings.Update.StageHint": "Download v{0} to install the next time you open the launcher.",
   "Settings.Update.Downloading": "Downloading… {0}%",

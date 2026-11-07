@@ -7,6 +7,7 @@ using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using VRCLearn.App.Services;
 using VRCLearn.Infrastructure.Shell;
+using VRCLearn.Infrastructure.Storage;
 using VRCLearn.Infrastructure.Updates;
 
 namespace VRCLearn.App.ViewModels;
@@ -36,6 +37,7 @@ public sealed partial class UpdateViewModel : ObservableObject
 
     private readonly UpdateService _service;
     private readonly LauncherUpdater _updater;
+    private readonly GuiConfigStore _configs;
     private readonly LocalizationService _localization;
     private readonly ILogger<UpdateViewModel> _logger;
     private readonly bool _canInstall;
@@ -43,15 +45,19 @@ public sealed partial class UpdateViewModel : ObservableObject
 
     private string? _downloadUrl;
     private bool _checking;
+    private CancellationTokenSource? _downloadCancellation;
+    private bool _automaticDownload;
 
     public UpdateViewModel(
         UpdateService service,
         LauncherUpdater updater,
+        GuiConfigStore configs,
         LocalizationService localization,
         ILogger<UpdateViewModel> logger)
     {
         _service = service;
         _updater = updater;
+        _configs = configs;
         _localization = localization;
         _logger = logger;
         _canInstall = updater.CanInstall;
@@ -65,9 +71,51 @@ public sealed partial class UpdateViewModel : ObservableObject
         });
 
         _localization.PropertyChanged += (_, _) => NotifyTexts();
+        _configs.Changed += (_, _) => OnPropertyChanged(nameof(AutoUpdateEnabled));
     }
 
     public string CurrentVersionText => _service.CurrentVersionText;
+
+    public bool CanAutoUpdate => _canInstall;
+
+    public bool AutoUpdateEnabled
+    {
+        get => CanAutoUpdate && _configs.Current.LauncherAutoUpdate;
+        set
+        {
+            if (!CanAutoUpdate || value == AutoUpdateEnabled)
+            {
+                return;
+            }
+
+            if (!_configs.TrySetLauncherAutoUpdate(value))
+            {
+                OnPropertyChanged(nameof(AutoUpdateEnabled));
+                return;
+            }
+
+            if (value)
+            {
+                if (Phase != UpdatePhase.Pending && !IsDownloading)
+                {
+                    _ = CheckAsync(force: true);
+                }
+
+                return;
+            }
+
+            if (_automaticDownload)
+            {
+                _downloadCancellation?.Cancel();
+            }
+
+            if (Phase == UpdatePhase.Pending && _updater.Pending is { Automatic: true })
+            {
+                TryCancelPending();
+                Phase = UpdatePhase.Available;
+            }
+        }
+    }
 
     [ObservableProperty]
     private UpdatePhase _phase;
@@ -114,6 +162,7 @@ public sealed partial class UpdateViewModel : ObservableObject
         NotifyTexts();
         OnPropertyChanged(nameof(IsDownloading));
         OnPropertyChanged(nameof(ShowManualDownload));
+        ActCommand.NotifyCanExecuteChanged();
     }
 
     partial void OnVersionChanged(string? value) => NotifyTexts();
@@ -128,7 +177,7 @@ public sealed partial class UpdateViewModel : ObservableObject
 
     public Task InitializeAsync()
     {
-        if (_updater.Pending is { } pending)
+        if (_updater.Pending is { } pending && (!pending.Automatic || AutoUpdateEnabled))
         {
             Version = pending.Version;
             Phase = UpdatePhase.Pending;
@@ -144,15 +193,15 @@ public sealed partial class UpdateViewModel : ObservableObject
         return CheckAsync(force: false);
     }
 
-    private bool CanAct() => !_checking;
+    private bool CanAct() => !_checking && !IsDownloading;
 
-    [RelayCommand(CanExecute = nameof(CanAct), IncludeCancelCommand = true)]
-    private async Task Act(CancellationToken cancellationToken)
+    [RelayCommand(CanExecute = nameof(CanAct))]
+    private async Task Act()
     {
         switch (Phase)
         {
             case UpdatePhase.Available when _canInstall && Version is { } version:
-                await DownloadAsync(version, cancellationToken);
+                await DownloadAsync(version, automatic: false);
                 break;
 
             case UpdatePhase.Available:
@@ -160,14 +209,9 @@ public sealed partial class UpdateViewModel : ObservableObject
                 break;
 
             case UpdatePhase.Pending:
-                try
+                if (TryCancelPending())
                 {
-                    _updater.CancelPending();
                     Phase = UpdatePhase.Available;
-                }
-                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-                {
-                    _logger.LogWarning(exception, "取消待安装的更新失败");
                 }
 
                 break;
@@ -191,17 +235,48 @@ public sealed partial class UpdateViewModel : ObservableObject
         }
     }
 
-    private async Task DownloadAsync(string version, CancellationToken cancellationToken)
+    [RelayCommand]
+    private void CancelDownload() => _downloadCancellation?.Cancel();
+
+    private bool TryCancelPending()
     {
+        try
+        {
+            _updater.CancelPending();
+            return true;
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            _logger.LogWarning(exception, "取消待安装的更新失败");
+            return false;
+        }
+    }
+
+    private async Task DownloadAsync(string version, bool automatic)
+    {
+        using var cancellation = new CancellationTokenSource();
+        _downloadCancellation = cancellation;
+        _automaticDownload = automatic;
         Percent = 0;
         Phase = UpdatePhase.Downloading;
 
         try
         {
-            await _updater.StageAsync(version, new Progress<int>(percent => Percent = percent), cancellationToken);
-            Phase = UpdatePhase.Pending;
+            await _updater.StageAsync(version, new Progress<int>(percent => Percent = percent), cancellation.Token, automatic);
+
+            if (automatic && !AutoUpdateEnabled)
+            {
+                TryCancelPending();
+                Phase = UpdatePhase.Available;
+            }
+            else
+            {
+                Phase = cancellation.IsCancellationRequested && TryCancelPending()
+                    ? UpdatePhase.Available
+                    : UpdatePhase.Pending;
+            }
         }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
         {
             Phase = UpdatePhase.Available;
         }
@@ -210,6 +285,11 @@ public sealed partial class UpdateViewModel : ObservableObject
         {
             _logger.LogWarning(exception, "下载启动器更新失败");
             Phase = UpdatePhase.DownloadFailed;
+        }
+        finally
+        {
+            _automaticDownload = false;
+            _downloadCancellation = null;
         }
     }
 
@@ -244,6 +324,12 @@ public sealed partial class UpdateViewModel : ObservableObject
                     _downloadUrl = status.DownloadUrl;
                     Version = status.Version;
                     Phase = UpdatePhase.Available;
+
+                    if (AutoUpdateEnabled && status.Version is { } version)
+                    {
+                        await DownloadAsync(version, automatic: true);
+                    }
+
                     break;
             }
         }

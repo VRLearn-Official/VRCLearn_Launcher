@@ -85,18 +85,18 @@ public partial class App : Application
 
         var startupLogger = _services.GetRequiredService<ILogger<App>>();
 
-        if (_services.GetRequiredService<LauncherUpdater>().TryStartInstall(e.Args))
-        {
-            Shutdown();
-            return;
-        }
-
         MigrateLegacyGuiConfig(paths, startupLogger);
 
         var configStore = _services.GetRequiredService<GuiConfigStore>();
         VccDataMigration.Run(paths, configStore, startupLogger);
 
         var config = configStore.Current;
+
+        if (_services.GetRequiredService<LauncherUpdater>().TryStartInstall(e.Args, config.LauncherAutoUpdate))
+        {
+            Shutdown();
+            return;
+        }
 
         proxy.Configure(config.ProxyEnabled, config.ProxyUrl);
 

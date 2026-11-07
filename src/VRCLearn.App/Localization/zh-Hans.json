@@ -613,6 +613,8 @@
   "Settings.CheckUpdate": "检查更新",
   "Settings.Update.UpToDate": "已是最新版",
   "Settings.Update.Available": "下载新版 v{0}",
+  "Settings.Update.AutoUpdate": "自动更新",
+  "Settings.Update.AutoUpdateHint": "发现新版时自动下载，下次打开启动器时安装。",
   "Settings.Update.Stage": "下载更新",
   "Settings.Update.StageHint": "下载 v{0}，下次打开启动器时安装。",
   "Settings.Update.Downloading": "正在下载… {0}%",

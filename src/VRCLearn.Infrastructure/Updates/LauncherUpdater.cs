@@ -9,7 +9,7 @@ using VRCLearn.Infrastructure.Storage;
 
 namespace VRCLearn.Infrastructure.Updates;
 
-public sealed record PendingLauncherUpdate(string Version, string Sha256, long Size)
+public sealed record PendingLauncherUpdate(string Version, string Sha256, long Size, bool Automatic = false)
 {
     public PendingLauncherUpdate() : this("", "", 0) { }
 }
@@ -46,7 +46,8 @@ public sealed class LauncherUpdater(
 
     public bool InstallFailed => CanInstall && ReadPending(AttemptPath) is not null;
 
-    public async Task StageAsync(string version, IProgress<int>? progress, CancellationToken cancellationToken)
+    public async Task StageAsync(
+        string version, IProgress<int>? progress, CancellationToken cancellationToken, bool automatic = false)
     {
         if (!CanInstall)
         {
@@ -68,7 +69,7 @@ public sealed class LauncherUpdater(
             cancellationToken.ThrowIfCancellationRequested();
             File.Move(temporary, InstallerPath, overwrite: true);
 
-            if (!JsonFileStore.Save(PendingPath, new PendingLauncherUpdate(version, package.Sha256, package.Size)))
+            if (!JsonFileStore.Save(PendingPath, new PendingLauncherUpdate(version, package.Sha256, package.Size, automatic)))
             {
                 throw new IOException("Could not save the pending update.");
             }
@@ -85,11 +86,12 @@ public sealed class LauncherUpdater(
         TryDelete(InstallerPath);
     }
 
-    public bool TryStartInstall(IReadOnlyList<string> arguments)
+    public bool TryStartInstall(IReadOnlyList<string> arguments, bool automaticUpdatesEnabled)
     {
         // Deep links, restart commands and isolated test sessions keep their usual startup behavior.
         if (arguments.Count != 0 || FindInstalledDirectory() is not { } installed
-            || ReadPending(PendingPath) is not { } pending)
+            || ReadPending(PendingPath) is not { } pending
+            || (pending.Automatic && !automaticUpdatesEnabled))
         {
             return false;
         }
