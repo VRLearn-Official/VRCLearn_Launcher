@@ -48,6 +48,7 @@ public static class AppServices
             .AddSingleton(new WindowsProtocolRegistration(Environment.ProcessPath!))
             .AddSingleton<UpdateStateStore>()
             .AddSingleton<UpdateService>()
+            .AddSingleton<LauncherUpdater>()
             .AddSingleton<UpdateViewModel>()
             .AddSingleton<LocalizationService>()
             .AddSingleton<ThemeService>()

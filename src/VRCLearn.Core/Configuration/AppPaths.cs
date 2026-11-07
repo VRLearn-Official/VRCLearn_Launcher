@@ -66,4 +66,6 @@ public sealed record AppPaths(string Root, bool IsDefaultRoot = false)
     public string PluginUpdateTempDirectory => Path.Combine(DataDirectory, "plugin-updates");
 
     public string UpdateStateFile => Path.Combine(DataDirectory, "update-state.json");
+
+    public string LauncherUpdateDirectory => Path.Combine(DataDirectory, "launcher-update");
 }

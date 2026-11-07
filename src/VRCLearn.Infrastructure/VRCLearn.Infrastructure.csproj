@@ -12,6 +12,10 @@
     <ProjectReference Include="..\VRCLearn.Core\VRCLearn.Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup Condition="'$(OfficialLauncherRelease)' == 'true'">
+    <AssemblyMetadata Include="VRCLearnOfficialRelease" Value="true" />
+  </ItemGroup>
+
   <ItemGroup>
     <InternalsVisibleTo Include="VRCLearn.Infrastructure.Tests" />
   </ItemGroup>

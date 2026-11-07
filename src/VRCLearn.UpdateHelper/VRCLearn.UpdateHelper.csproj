@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TargetFramework>net10.0-windows</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Include="..\VRCLearn.Core\Configuration\AppPaths.cs" Link="AppPaths.cs" />
+    <Compile Include="..\VRCLearn.Infrastructure\Updates\UpdateInstallation.cs" Link="UpdateInstallation.cs" />
+  </ItemGroup>
+</Project>

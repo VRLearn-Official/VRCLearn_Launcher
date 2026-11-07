@@ -15,6 +15,7 @@ using VRCLearn.Infrastructure.Logging;
 using VRCLearn.Infrastructure.ProjectTemplates;
 using VRCLearn.Infrastructure.Shell;
 using VRCLearn.Infrastructure.Storage;
+using VRCLearn.Infrastructure.Updates;
 
 namespace VRCLearn.App;
 
@@ -43,6 +44,12 @@ public partial class App : Application
     {
         base.OnStartup(e);
 
+        if (LauncherUpdater.IsInstalling())
+        {
+            Shutdown();
+            return;
+        }
+
         _singleInstance = SingleInstance.Acquire(
             waitForPrevious: e.Args.Contains(SingleInstance.RestartArgument)
                 ? TimeSpan.FromSeconds(3)
@@ -51,6 +58,12 @@ public partial class App : Application
         {
             WindowActivation.AllowForeground();
             SingleInstance.Handoff(e.Args);
+            Shutdown();
+            return;
+        }
+
+        if (LauncherUpdater.IsInstalling())
+        {
             Shutdown();
             return;
         }
@@ -71,6 +84,12 @@ public partial class App : Application
         _services = services.BuildServiceProvider();
 
         var startupLogger = _services.GetRequiredService<ILogger<App>>();
+
+        if (_services.GetRequiredService<LauncherUpdater>().TryStartInstall(e.Args))
+        {
+            Shutdown();
+            return;
+        }
 
         MigrateLegacyGuiConfig(paths, startupLogger);
 

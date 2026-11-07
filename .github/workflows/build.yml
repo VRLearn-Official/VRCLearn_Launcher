@@ -57,11 +57,14 @@ jobs:
 
       - name: Publish
         shell: pwsh
+        env:
+          OFFICIAL_LAUNCHER_RELEASE: ${{ github.repository == 'VRLearn-Official/VRCLearn_Launcher' && startsWith(github.ref, 'refs/tags/v') }}
         run: |
           dotnet publish src/VRCLearn.App/VRCLearn.App.csproj `
             -c Release `
             -r win-x64 `
             --self-contained true `
+            -p:OfficialLauncherRelease=$env:OFFICIAL_LAUNCHER_RELEASE `
             -p:Version=${{ steps.version.outputs.version }} `
             -p:DebugType=none `
             -p:DebugSymbols=false `
@@ -70,6 +73,24 @@ jobs:
           if ($LASTEXITCODE -ne 0) {
             throw "dotnet publish failed ($LASTEXITCODE)."
           }
+
+      - name: Publish update helper
+        shell: pwsh
+        run: |
+          dotnet publish src/VRCLearn.UpdateHelper/VRCLearn.UpdateHelper.csproj `
+            -c Release `
+            -r win-x64 `
+            --self-contained true `
+            -p:PublishSingleFile=true `
+            -p:PublishTrimmed=true `
+            -p:DebugType=none `
+            -o artifacts/update-helper
+
+          if ($LASTEXITCODE -ne 0) {
+            throw "Update helper publish failed ($LASTEXITCODE)."
+          }
+
+          Copy-Item artifacts/update-helper/VRCLearn.UpdateHelper.exe artifacts/publish
 
       - name: Install Inno Setup
         shell: pwsh
