@@ -576,6 +576,7 @@
                                     <TextBlock
                                         Grid.Column="1"
                                         Margin="{StaticResource Gap.Inline}"
+                                        HorizontalAlignment="Center"
                                         VerticalAlignment="Center"
                                         Style="{StaticResource Caption}"
                                         Text="{Binding Update.StatusText}"
