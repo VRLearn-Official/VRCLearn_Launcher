@@ -318,8 +318,21 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
                         CancellationToken.None,
                         reporter));
 
-                _projects.Add(restored);
-                Status = _localization.Format("Backups.Status.Restored", restored);
+                var addStatus = _projects.Add(restored);
+
+                if (addStatus == AddProjectStatus.NotAProject)
+                {
+                    _logger.LogWarning("还原后的目录没有 ProjectSettings/ProjectVersion.txt：{Directory}", restored);
+                }
+
+                Status = addStatus switch
+                {
+                    AddProjectStatus.Added => _localization.Format("Backups.Status.Restored", restored),
+                    AddProjectStatus.AlreadyAdded => _localization.Format(
+                        "Backups.Status.RestoredAlreadyListed",
+                        restored),
+                    _ => _localization.Format("Backups.Status.RestoredNotListed", restored),
+                };
             },
             "Backups.Status.RestoreFailed");
     }

@@ -490,6 +490,8 @@
   "Backups.Restore.Caches": "復元後はシェーダーなどのキャッシュを再構築するため、初回起動は少し遅くなります。",
   "Backups.Status.Restoring": "「{0}」を復元しています…",
   "Backups.Status.Restored": "{0} に復元し、プロジェクト一覧に追加しました。",
+  "Backups.Status.RestoredAlreadyListed": "{0} に復元しました。このフォルダーは既にプロジェクト一覧にあります。",
+  "Backups.Status.RestoredNotListed": "{0} に復元しましたが、プロジェクト一覧には追加できませんでした。",
   "Backups.Status.RestoreFailed": "復元に失敗しました：{0}",
   "Backups.Status.Deleted": "「{0}」をごみ箱に移動しました",
   "Backups.Status.DeleteFailed": "バックアップの削除に失敗しました：{0}",

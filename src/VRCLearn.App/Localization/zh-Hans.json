@@ -490,6 +490,8 @@
   "Backups.Restore.Caches": "还原后着色器等缓存要重建，第一次打开会比较慢。",
   "Backups.Status.Restoring": "正在还原「{0}」…",
   "Backups.Status.Restored": "已还原到 {0}，并加入项目列表。",
+  "Backups.Status.RestoredAlreadyListed": "已还原到 {0}，该目录已在项目列表中。",
+  "Backups.Status.RestoredNotListed": "已还原到 {0}，但没有加入项目列表。",
   "Backups.Status.RestoreFailed": "还原失败：{0}",
   "Backups.Status.Deleted": "已把「{0}」移到回收站",
   "Backups.Status.DeleteFailed": "删除备份失败：{0}",

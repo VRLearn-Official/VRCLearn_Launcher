@@ -32,7 +32,12 @@ public sealed class ProjectRestoreService(
         await using var source = store.OpenOrNull(backupFilePath)
             ?? throw new FileNotFoundException($"备份文件不在了：{backupFilePath}", backupFilePath);
 
-        DiskSpace.Ensure(parentDirectory, UncompressedSize(source));
+        using var archive = new ZipArchive(source, ZipArchiveMode.Read, leaveOpen: true);
+
+        var root = UnityProjectRootLocator.Locate(archive.Entries.Select(x => x.FullName));
+        var plan = SafeZipExtractor.Plan(archive, root);
+
+        DiskSpace.Ensure(parentDirectory, plan.UncompressedBytes);
 
         var parent = ioFactory.For(parentDirectory);
         var target = FreeName(parent, name);
@@ -40,9 +45,16 @@ public sealed class ProjectRestoreService(
         try
         {
             parent.CreateDirectory(target);
+
             await SafeZipExtractor
-                .ExtractAsync(source, parent, target, cancellationToken, progress)
+                .ExtractAsync(plan, parent, target, cancellationToken, progress)
                 .ConfigureAwait(false);
+
+            if (!parent.FileExists($"{target}/{UnityProject.ProjectVersionPath}"))
+            {
+                throw new InvalidDataException(
+                    "还原内容里没有找到 ProjectSettings/ProjectVersion.txt，已取消还原。");
+            }
         }
         catch
         {
@@ -51,23 +63,6 @@ public sealed class ProjectRestoreService(
         }
 
         return Path.Combine(parentDirectory, target);
-    }
-
-    private static long UncompressedSize(Stream zip)
-    {
-        long total;
-
-        using (var archive = new ZipArchive(zip, ZipArchiveMode.Read, leaveOpen: true))
-        {
-            total = archive.Entries.Sum(x => x.Length);
-        }
-
-        if (zip.CanSeek)
-        {
-            zip.Position = 0;
-        }
-
-        return total;
     }
 
     private static string FreeName(IFileIo parent, string name)
@@ -141,7 +136,11 @@ public sealed class ProjectRestoreService(
         await using var source = store.OpenOrNull(backupFilePath)
             ?? throw new FileNotFoundException($"备份文件不在了：{backupFilePath}", backupFilePath);
 
-        var required = UncompressedSize(source);
+        using var archive = new ZipArchive(source, ZipArchiveMode.Read, leaveOpen: true);
+
+        var root = UnityProjectRootLocator.Locate(archive.Entries.Select(x => x.FullName));
+        var plan = SafeZipExtractor.Plan(archive, root);
+        var required = plan.UncompressedBytes;
 
         var projectDirectory = Path.TrimEndingDirectorySeparator(project.Io.RootDirectory);
 
@@ -173,9 +172,16 @@ public sealed class ProjectRestoreService(
         try
         {
             parent.CreateDirectory(staging);
+
             await SafeZipExtractor
-                .ExtractAsync(source, parent, staging, cancellationToken, progress)
+                .ExtractAsync(plan, parent, staging, cancellationToken, progress)
                 .ConfigureAwait(false);
+
+            if (!parent.FileExists($"{staging}/{UnityProject.ProjectVersionPath}"))
+            {
+                throw new InvalidDataException(
+                    "还原内容里没有找到 ProjectSettings/ProjectVersion.txt，已取消还原，原项目未改动。");
+            }
         }
         catch (Exception exception)
         {

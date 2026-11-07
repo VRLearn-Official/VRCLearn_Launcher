@@ -490,6 +490,8 @@
   "Backups.Restore.Caches": "Shaders and other caches are rebuilt after restoring; the first launch is slow.",
   "Backups.Status.Restoring": "Restoring \"{0}\"...",
   "Backups.Status.Restored": "Restored to {0} and added to the project list.",
+  "Backups.Status.RestoredAlreadyListed": "Restored to {0}; the folder was already in the project list.",
+  "Backups.Status.RestoredNotListed": "Restored to {0}, but it could not be added to the project list.",
   "Backups.Status.RestoreFailed": "Restore failed: {0}",
   "Backups.Status.Deleted": "Moved \"{0}\" to the Recycle Bin",
   "Backups.Status.DeleteFailed": "Could not delete the backup: {0}",
