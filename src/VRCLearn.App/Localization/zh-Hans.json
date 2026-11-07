@@ -437,7 +437,7 @@
 
   "ProjectDetail.Conflict.Unity": "「{0}」与当前的 Unity 版本不兼容。",
   "ProjectDetail.Conflict.Packages": "「{1}」依赖「{0}」，移除后「{1}」会缺依赖。",
-  "ProjectDetail.Conflict.Unlocked": "「{0}」是未登记的目录，将被移走。",
+  "ProjectDetail.Conflict.Unlocked": "未登记的「{0}」将移出 Packages，应用成功后尝试删除。",
 
   "Backups.Subtitle": "所有项目的备份。归档产生的备份要把筛选切到「归档」才看得到。",
   "Backups.SearchPlaceholder": "搜索项目名",
@@ -633,7 +633,7 @@
   "Settings.ConfigRestore.PickTitle": "选择备份压缩包",
   "Settings.ConfigRestore.Hint": "恢复会覆盖当前配置；全量备份中的项目与 unitypackage 会放到你选择的目录，不会覆盖原位置。",
   "Settings.ConfigRestore.ConfirmTitle": "恢复配置",
-  "Settings.ConfigRestore.ConfirmMessage": "恢复会覆盖当前配置；如果压缩包是全量备份，还会覆盖原有的项目、仓库缓存与资源文件，是否继续？",
+  "Settings.ConfigRestore.ConfirmMessage": "恢复会覆盖当前配置。全量备份还会恢复仓库缓存，并将项目和资源解压到所选目录，覆盖同名文件。继续？",
   "Settings.ConfigRestore.ConfirmButton": "恢复",
   "Settings.ConfigRestore.Empty": "压缩包里没有可恢复的文件",
   "Settings.ConfigRestore.DoneTitle": "恢复配置",

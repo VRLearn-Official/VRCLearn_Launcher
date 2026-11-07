@@ -437,7 +437,7 @@
 
   "ProjectDetail.Conflict.Unity": "「{0}」は現在の Unity バージョンと互換性がありません。",
   "ProjectDetail.Conflict.Packages": "「{1}」は「{0}」に依存しています。削除すると「{1}」の依存関係が不足します。",
-  "ProjectDetail.Conflict.Unlocked": "「{0}」は未登録のフォルダーのため、移動されます。",
+  "ProjectDetail.Conflict.Unlocked": "未登録の「{0}」は Packages から退避されます。適用に成功すると削除を試みます。",
 
   "Backups.Subtitle": "すべてのプロジェクトのバックアップです。アーカイブで作成されたバックアップは、フィルターを「アーカイブ」に切り替えないと表示されません。",
   "Backups.SearchPlaceholder": "プロジェクト名を検索",
@@ -633,7 +633,7 @@
   "Settings.ConfigRestore.PickTitle": "バックアップの圧縮ファイルを選択",
   "Settings.ConfigRestore.Hint": "復元すると現在の設定が上書きされます。完全バックアップ内のプロジェクトと unitypackage は選択したフォルダーに展開され、元の場所は上書きされません。",
   "Settings.ConfigRestore.ConfirmTitle": "設定を復元",
-  "Settings.ConfigRestore.ConfirmMessage": "復元すると現在の設定が上書きされます。圧縮ファイルが完全バックアップの場合、既存のプロジェクト、リポジトリキャッシュ、リソースファイルも上書きされます。続行しますか？",
+  "Settings.ConfigRestore.ConfirmMessage": "現在の設定を上書きして復元しますか？完全バックアップではリポジトリのキャッシュも復元し、プロジェクトとリソースを指定先に展開して同名ファイルを上書きします。",
   "Settings.ConfigRestore.ConfirmButton": "復元",
   "Settings.ConfigRestore.Empty": "圧縮ファイルに復元できるファイルがありません",
   "Settings.ConfigRestore.DoneTitle": "設定を復元",
