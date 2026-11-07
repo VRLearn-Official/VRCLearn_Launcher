@@ -57,7 +57,9 @@ public partial class App : Application
 
         var paths = AppPaths.Resolve(e.Args);
         Directory.CreateDirectory(paths.Root);
-        Directory.CreateDirectory(paths.PrivateDirectory);
+        Directory.CreateDirectory(paths.ConfigDirectory);
+        Directory.CreateDirectory(paths.DataDirectory);
+        Directory.CreateDirectory(paths.LogsDirectory);
 
         var proxy = new MutableProxy();
 
@@ -72,7 +74,10 @@ public partial class App : Application
 
         MigrateLegacyGuiConfig(paths, startupLogger);
 
-        var config = _services.GetRequiredService<GuiConfigStore>().Current;
+        var configStore = _services.GetRequiredService<GuiConfigStore>();
+        VccDataMigration.Run(paths, configStore, startupLogger);
+
+        var config = configStore.Current;
 
         proxy.Configure(config.ProxyEnabled, config.ProxyUrl);
 
@@ -131,13 +136,14 @@ public partial class App : Application
 
         _services.GetRequiredService<ILogger<App>>()
             .LogInformation(
-                "VRCLearn Launcher {Version} started. OS: {OS}, language: {Language}, log level: {Level}, shared directory: {Root}, private directory: {Private}",
+                "VRCLearn Launcher {Version} started. OS: {OS}, language: {Language}, log level: {Level}, root: {Root}, config: {Config}, data: {Data}",
                 typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",
                 Environment.OSVersion.VersionString,
                 localization.CurrentLanguage,
                 config.LogsLevel,
                 paths.Root,
-                paths.PrivateDirectory);
+                paths.ConfigDirectory,
+                paths.DataDirectory);
 
         _singleInstance.StartListening(HonourArguments);
 
@@ -208,8 +214,7 @@ public partial class App : Application
         return true;
     }
 
-    private static string TemplatesDirectory(AppPaths paths) =>
-        Path.Combine(paths.PrivateDirectory, "templates");
+    private static string TemplatesDirectory(AppPaths paths) => paths.TemplatesDirectory;
 
     /// <summary>问过之后才把 .alcomtemplate 复制成自家格式，原文件保留。</summary>
     private static void InheritAlcomTemplates(IServiceProvider services, AppPaths paths, ILogger logger)

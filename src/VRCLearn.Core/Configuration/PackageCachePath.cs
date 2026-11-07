@@ -6,7 +6,7 @@ public static class PackageCachePath
     public static string Effective(GuiConfig config, AppPaths paths) =>
         string.IsNullOrWhiteSpace(config.CachePath) ? paths.RepositoriesDirectory : config.CachePath;
 
-    /// <summary>数据目录、它的祖先、以及 vrclearn 自己那一层都不能当缓存目录。</summary>
+    /// <summary>数据根、配置目录、数据目录以及它们的祖先都不能当缓存目录。</summary>
     public static bool IsSafeDestination(AppPaths paths, string destination)
     {
         if (string.IsNullOrWhiteSpace(destination))
@@ -16,7 +16,19 @@ public static class PackageCachePath
 
         return !PathUtil.SamePath(paths.Root, destination)
             && !PathUtil.IsUnder(paths.Root, destination)
-            && !PathUtil.SamePath(paths.PrivateDirectory, destination)
-            && !PathUtil.IsUnder(destination, paths.PrivateDirectory);
+            && !PathUtil.SamePath(paths.ConfigDirectory, destination)
+            && !PathUtil.IsUnder(paths.ConfigDirectory, destination)
+            && !PathUtil.IsUnder(destination, paths.ConfigDirectory)
+            && !PathUtil.SamePath(paths.DataDirectory, destination)
+            && !PathUtil.IsUnder(paths.DataDirectory, destination)
+            && !Touches(paths.ResourcesDirectory, destination)
+            && !Touches(paths.PluginsDirectory, destination)
+            && !Touches(paths.PluginDataDirectory, destination)
+            && !Touches(paths.PluginUpdateTempDirectory, destination)
+            && !Touches(paths.TemplatesDirectory, destination)
+            && !Touches(paths.BackupDirectory, destination);
     }
+
+    private static bool Touches(string directory, string destination) =>
+        PathUtil.SamePath(directory, destination) || PathUtil.IsUnder(destination, directory);
 }

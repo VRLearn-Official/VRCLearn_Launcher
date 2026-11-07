@@ -5,13 +5,12 @@ using VRCLearn.Infrastructure.IO;
 
 namespace VRCLearn.Infrastructure.ProjectTemplates;
 
-/// <summary>用户模板路径：<c>&lt;共用目录&gt;/vrclearn/templates/</c>。</summary>
 public sealed class FileSystemUserTemplateStore(
     AppPaths paths,
     ILogger<FileSystemUserTemplateStore> logger)
     : IUserTemplateStore
 {
-    private string Root => Path.Combine(paths.PrivateDirectory, "templates");
+    private string Root => paths.TemplatesDirectory;
 
     public Task<UserTemplates> LoadAsync(CancellationToken cancellationToken) =>
         Task.FromResult(new UserTemplates(ReadAll()));

@@ -18,9 +18,9 @@ Get-FileHash .\VRCLearnLauncher-<版本>-win-x64-Setup.exe -Algorithm SHA256
 
 ## 本次更新
 
-- 新增日语界面
-- 修复主题切换后对话框底色与文字不匹配
-- 改进备份恢复与未登记包目录的提示文案
+- 配置与数据迁移到独立目录 `%LOCALAPPDATA%\VRCLearnLauncher`，不再与 VCC 共用，VCC 重写 settings.json 不会再覆盖本程序配置
+- 首次启动自动迁移旧配置，项目、仓库、编辑器、插件与资源数据保持不变
+- 包缓存与项目备份文件保留在原位置，可在设置中使用现有的迁移功能搬移
 
 安装包暂未签名，首次运行时 Windows SmartScreen 可能提示；选择「更多信息」→「仍要运行」。
 
@@ -52,8 +52,8 @@ sha256sum -c VRCLearnLauncher-<version>-win-x64-Setup.exe.sha256
 
 ## What's new
 
-- Added a Japanese UI
-- Fixed dialog background and text mismatching after switching themes
-- Clarified the messages shown when restoring backups or moving unregistered package folders
+- Configuration and data moved to `%LOCALAPPDATA%\VRCLearnLauncher`, independent of VCC; VCC rewriting settings.json no longer overwrites this app's configuration
+- The first launch migrates the old configuration automatically; projects, repositories, editors, plugins and resources are preserved
+- Package caches and project backups stay where they are and can be moved with the existing migration tools in Settings
 
 The installer is not code-signed yet, so Windows SmartScreen may warn on first run. Choose "More info" and then "Run anyway".

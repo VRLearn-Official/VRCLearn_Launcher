@@ -34,6 +34,9 @@ public sealed class GuiConfig : IJsonOnDeserialized
 
     public bool SetupCompleted { get; set; }
 
+    /// <summary>是否已从 VCC 共用目录完成一次性迁移。</summary>
+    public bool VccMigrationCompleted { get; set; }
+
     /// <summary><c>name</c> / <c>type</c> / <c>unity</c> / <c>createdAt</c> / <c>lastModified</c>，可再跟 <c>Reversed</c> 表示倒序。</summary>
     public string ProjectSorting { get; set; } = "lastModified";
 

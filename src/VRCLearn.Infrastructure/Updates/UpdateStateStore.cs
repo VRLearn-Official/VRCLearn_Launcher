@@ -15,7 +15,7 @@ public sealed class UpdateState
 
 public sealed class UpdateStateStore(AppPaths paths, ILogger<UpdateStateStore> logger)
 {
-    private string FilePath => Path.Combine(paths.PrivateDirectory, "update-state.json");
+    private string FilePath => paths.UpdateStateFile;
 
     public UpdateState Load() => JsonFileStore.Peek<UpdateState>(FilePath) ?? new UpdateState();
 

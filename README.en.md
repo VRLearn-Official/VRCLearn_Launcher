@@ -84,7 +84,7 @@ Dependency direction: `App` → `Infrastructure` → `Core`; plugins → `VRCLea
 
 ## Data directory
 
-By default the launcher shares `%LocalAppData%\VRChatCreatorCompanion` with VRChat Creator Companion. Launcher-specific data lives in the `vrclearn\` folder under it.
+The launcher uses its own data directory, `%LocalAppData%\VRCLearnLauncher`, independent of VRChat Creator Companion. Configuration lives in `config\`, data in `data\`, and logs in `logs\`; the first run automatically migrates the old shared configuration.
 
 ## License
 

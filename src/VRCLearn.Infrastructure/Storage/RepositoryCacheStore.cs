@@ -147,5 +147,5 @@ public sealed class RepositoryCacheStore(AppPaths paths, GuiConfigStore configs,
 
     /// 入参可能是绝对路径，原样使用。
     public string Resolve(string relativePath) =>
-        Path.Combine(paths.Root, relativePath.Replace('/', Path.DirectorySeparatorChar));
+        Path.Combine(paths.DataDirectory, relativePath.Replace('/', Path.DirectorySeparatorChar));
 }

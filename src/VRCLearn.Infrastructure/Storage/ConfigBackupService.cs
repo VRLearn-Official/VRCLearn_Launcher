@@ -261,7 +261,7 @@ public sealed class ConfigBackupService(
             yield return ("vrclearn/plugin-state.json", paths.PluginStateFile);
         }
 
-        foreach (var file in FilesIn(Path.Combine(paths.PrivateDirectory, "templates"), TemplateExtensions))
+        foreach (var file in FilesIn(paths.TemplatesDirectory, TemplateExtensions))
         {
             yield return ($"vrclearn/templates/{Path.GetFileName(file)}", file);
         }
@@ -358,7 +358,7 @@ public sealed class ConfigBackupService(
     private Staging? StageResourceFiles(BackupManifest manifest)
     {
         var root = Path.Combine(
-            paths.PrivateDirectory,
+            paths.DataDirectory,
             $".backup-staging-{Guid.NewGuid():N}");
 
         var files = new List<(string Relative, string FullPath)>();
@@ -672,7 +672,7 @@ public sealed class ConfigBackupService(
 
         if (IsConfigFile(relative) || (manifest is not null && IsLauncherData(relative)))
         {
-            target = Path.Combine(paths.Root, relative.Replace('/', Path.DirectorySeparatorChar));
+            target = ResolveArchivePath(relative);
             return true;
         }
 
@@ -863,6 +863,60 @@ public sealed class ConfigBackupService(
             || (segments.Length >= 3
                 && segments[0].Equals("vrclearn", StringComparison.OrdinalIgnoreCase)
                 && segments[1].Equals("resources", StringComparison.OrdinalIgnoreCase));
+    }
+
+    /// <summary>归档条目名保持不变，恢复时映射到新的 config/data 目录。</summary>
+    private string ResolveArchivePath(string relative)
+    {
+        static string Rest(string value, string prefix) => value[prefix.Length..];
+
+        if (relative.Equals("settings.json", StringComparison.OrdinalIgnoreCase))
+        {
+            return paths.SettingsFile;
+        }
+
+        if (relative.StartsWith("vrclearn/", StringComparison.OrdinalIgnoreCase))
+        {
+            var rest = Rest(relative, "vrclearn/");
+
+            if (rest.Equals("gui-config.json", StringComparison.OrdinalIgnoreCase))
+            {
+                return paths.GuiConfigFile;
+            }
+
+            if (rest.Equals("plugin-state.json", StringComparison.OrdinalIgnoreCase))
+            {
+                return paths.PluginStateFile;
+            }
+
+            if (rest.Equals("resources.json", StringComparison.OrdinalIgnoreCase))
+            {
+                return paths.ResourcesFile;
+            }
+
+            if (rest.StartsWith("templates/", StringComparison.OrdinalIgnoreCase))
+            {
+                return Path.Combine(
+                    paths.TemplatesDirectory,
+                    Rest(rest, "templates/").Replace('/', Path.DirectorySeparatorChar));
+            }
+
+            if (rest.StartsWith("resources/", StringComparison.OrdinalIgnoreCase))
+            {
+                return Path.Combine(
+                    paths.ResourcesDirectory,
+                    Rest(rest, "resources/").Replace('/', Path.DirectorySeparatorChar));
+            }
+        }
+
+        if (relative.StartsWith($"{AppPaths.RepositoriesFolderName}/", StringComparison.OrdinalIgnoreCase))
+        {
+            return Path.Combine(
+                paths.RepositoriesDirectory,
+                Rest(relative, $"{AppPaths.RepositoriesFolderName}/").Replace('/', Path.DirectorySeparatorChar));
+        }
+
+        return Path.Combine(paths.Root, relative.Replace('/', Path.DirectorySeparatorChar));
     }
 
     private static bool IsConfigFile(string relative)

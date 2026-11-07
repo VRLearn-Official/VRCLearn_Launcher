@@ -4,7 +4,7 @@ using VRCLearn.Core.Repositories;
 
 namespace VRCLearn.Core.Vpm;
 
-/// <summary>VCC 的 <c>settings.json</c>。</summary>
+/// <summary>本程序的 <c>settings.json</c>。</summary>
 public sealed class LauncherSettings : IJsonOnDeserialized
 {
     [JsonPropertyName("userRepos")]
