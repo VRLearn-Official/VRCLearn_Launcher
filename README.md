@@ -84,7 +84,7 @@ GitHub Actions 会在推送到 `main`、打 `v*` 标签或手动触发时构建�
 
 ## 数据目录
 
-使用独立的数据目录 `%LocalAppData%\VRCLearnLauncher`，不与 VRChat Creator Companion 共用。配置在 `config\`，数据在 `data\`，日志在 `logs\`；首次运行会自动迁移旧的共享配置。
+数据目录为 `%LocalAppData%\VRCLearnLauncher`：配置在 `config\`，数据在 `data\`，日志在 `logs\`。首次运行会自动迁移旧版本的配置。
 
 ## 许可
 
