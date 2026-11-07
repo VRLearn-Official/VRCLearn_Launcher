@@ -615,7 +615,7 @@
                                     Margin="{StaticResource Gap.Tight}"
                                     HorizontalAlignment="Left"
                                     Style="{StaticResource Caption}"
-                                    Text="{markup:Tr Settings.Update.AutoUpdateHint}"
+                                    Text="{Binding Update.AutoUpdateHint}"
                                     TextWrapping="Wrap" />
                             </StackPanel>
                         </HeaderedContentControl.Header>

@@ -25,7 +25,7 @@ public sealed class UpdateService(HttpClient http, UpdateStateStore states, ILog
     private const string DefaultReleaseApiUrl =
         "https://api.github.com/repos/VRLearn-Official/VRCLearn_Launcher/releases/latest";
 
-    private const string DefaultDownloadUrl = "https://start.gamemode1.com/pages/vrclearnlauncher/";
+    public const string DefaultDownloadUrl = "https://start.gamemode1.com/pages/vrclearnlauncher/";
 
     private const string OfficialReleasePage = "https://github.com/VRLearn-Official/VRCLearn_Launcher/releases";
 
