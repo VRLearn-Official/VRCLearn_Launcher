@@ -361,6 +361,7 @@
   "ProjectDetail.Unreadable": "プロジェクトを読み込めません：{0}",
   "ProjectDetail.Installed": "インストール済みのパッケージ",
   "ProjectDetail.Available": "インストールできるパッケージ",
+  "ProjectDetail.JumpToAvailable": "インストールできるパッケージへ移動",
   "ProjectDetail.SearchInstalledPlaceholder": "インストール済みのパッケージを検索",
   "ProjectDetail.SearchPlaceholder": "パッケージ名を検索",
   "ProjectDetail.SearchHint": "キーワードで絞り込めます。非表示のリポジトリとユーザーパッケージは表示されません。",

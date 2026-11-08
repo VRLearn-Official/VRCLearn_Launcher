@@ -361,6 +361,7 @@
   "ProjectDetail.Unreadable": "无法读取项目：{0}",
   "ProjectDetail.Installed": "已安装的包",
   "ProjectDetail.Available": "可安装的包",
+  "ProjectDetail.JumpToAvailable": "跳到可安装的包",
   "ProjectDetail.SearchInstalledPlaceholder": "搜索已安装的包",
   "ProjectDetail.SearchPlaceholder": "搜索包名",
   "ProjectDetail.SearchHint": "输入关键词可筛选列表。隐藏的仓库和用户包不显示。",

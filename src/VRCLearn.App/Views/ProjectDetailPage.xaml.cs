@@ -16,6 +16,12 @@ public partial class ProjectDetailPage : UserControl
     public ProjectDetailPage()
     {
         InitializeComponent();
+        DataContextChanged += (_, args) =>
+        {
+            var viewModel = args.NewValue as ProjectDetailViewModel;
+            InstalledPackageRows.Collection = viewModel?.FilteredInstalled;
+            AvailablePackageRows.Collection = viewModel?.Available;
+        };
 
         _unityTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _unityTimer.Tick += (_, _) => (DataContext as ProjectDetailViewModel)?.RefreshUnityState();
@@ -36,30 +42,21 @@ public partial class ProjectDetailPage : UserControl
         Unloaded += (_, _) => _unityTimer.Stop();
     }
 
-    private void OnPackageListMouseWheel(object sender, MouseWheelEventArgs e)
+    private void OnJumpToAvailableClick(object sender, RoutedEventArgs e)
     {
-        var viewer = VisualTree.FindAncestor<ScrollViewer>(e.OriginalSource as DependencyObject);
-        if (viewer is null
-            || (viewer.TemplatedParent != InstalledPackageList && viewer.TemplatedParent != AvailablePackageList)
-            || (e.Delta > 0 ? viewer.VerticalOffset <= 0 : viewer.VerticalOffset >= viewer.ScrollableHeight))
+        var index = ProjectItems.Items.IndexOf(AvailablePackagesSection);
+        if (index < 0 || VisualTree.FindDescendant<VirtualizingStackPanel>(ProjectItems) is not { } panel)
         {
             return;
         }
 
-        // Handle the inner list before the page's smooth scrolling sees the wheel.
-        e.Handled = true;
-        viewer.RaiseEvent(new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta)
+        panel.BringIndexIntoViewPublic(index);
+        ProjectItems.UpdateLayout();
+        AvailablePackageSearchBox.Focus();
+        if (AvailablePackagesSection.IsDescendantOf(panel) && panel.ScrollOwner is { } viewer)
         {
-            RoutedEvent = MouseWheelEvent,
-        });
-    }
-
-    private void OnPackageSearchTextChanged(object sender, TextChangedEventArgs e)
-    {
-        var list = ReferenceEquals(sender, InstalledPackageSearchBox) ? InstalledPackageList : AvailablePackageList;
-        if (list is not null)
-        {
-            VisualTree.FindDescendant<ScrollViewer>(list)?.ScrollToTop();
+            var sectionTop = AvailablePackagesSection.TranslatePoint(new Point(), panel).Y;
+            viewer.ScrollToVerticalOffset(viewer.VerticalOffset + sectionTop);
         }
     }
 
