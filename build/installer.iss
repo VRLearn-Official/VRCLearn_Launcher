@@ -39,10 +39,10 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 english.CloseLauncher=VRCLearn Launcher is running. Close it before continuing.
 chinesesimplified.CloseLauncher=VRCLearn Launcher 正在运行，请先关闭启动器再继续。
 
-english.ConfirmCloseLauncher=VRCLearn Launcher is running. Close it and continue installing?
-chinesesimplified.ConfirmCloseLauncher=VRCLearn Launcher 正在运行。要关闭启动器并继续安装吗？
+english.ConfirmCloseLauncher=VRCLearn Launcher is running. Close it and continue?
+chinesesimplified.ConfirmCloseLauncher=VRCLearn Launcher 正在运行。要关闭启动器并继续吗？
 english.CloseLauncherFailed=The launcher did not close. Close it manually before continuing.
-chinesesimplified.CloseLauncherFailed=未能自动关闭启动器，请手动关闭后再继续安装。
+chinesesimplified.CloseLauncherFailed=未能自动关闭启动器，请手动关闭后再继续。
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -72,15 +72,30 @@ const
   LauncherExitTimeoutMs = 5000;
 
 function GetWindowProcessId(Window: HWND; var ProcessId: DWORD): DWORD;
-  external 'GetWindowThreadProcessId@user32.dll stdcall setuponly';
+  external 'GetWindowThreadProcessId@user32.dll stdcall';
 function OpenLauncherProcess(Access: DWORD; InheritHandle: BOOL; ProcessId: DWORD): THandle;
-  external 'OpenProcess@kernel32.dll stdcall setuponly';
+  external 'OpenProcess@kernel32.dll stdcall';
 function ReadProcessImagePath(Process: THandle; Flags: DWORD; ImagePath: String; var PathLength: DWORD): BOOL;
-  external 'QueryFullProcessImageNameW@kernel32.dll stdcall setuponly';
+  external 'QueryFullProcessImageNameW@kernel32.dll stdcall';
 function WaitForLauncherExit(Process: THandle; Timeout: DWORD): DWORD;
-  external 'WaitForSingleObject@kernel32.dll stdcall setuponly';
+  external 'WaitForSingleObject@kernel32.dll stdcall';
 function CloseProcessHandle(Process: THandle): BOOL;
-  external 'CloseHandle@kernel32.dll stdcall setuponly';
+  external 'CloseHandle@kernel32.dll stdcall';
+function LongPathName(Path: String; LongPath: String; BufferLength: DWORD): DWORD;
+  external 'GetLongPathNameW@kernel32.dll stdcall';
+
+function QueryLongPath(Path: String): String;
+var
+  Size: DWORD;
+begin
+  Size := 32768;
+  SetLength(Result, Size);
+  Size := LongPathName(Path, Result, Size);
+  if Size = 0 then
+    Result := Path
+  else
+    SetLength(Result, Size);
+end;
 
 function RequestLauncherClose(): Boolean;
 var
@@ -89,7 +104,10 @@ var
   Process: THandle;
   ImagePath: String;
 begin
-  Result := False;
+  Result := Length(CheckForMutexes('{#MyAppMutex}')) = 0;
+  if Result then
+    Exit;
+
   Window := FindWindowByWindowName('{#MyAppName}');
   if (Window = 0) or (GetWindowProcessId(Window, ProcessId) = 0) then
     Exit;
@@ -106,7 +124,7 @@ begin
     SetLength(ImagePath, PathLength);
 
     { Verify the window belongs to the executable this installer will replace. }
-    if CompareText(ImagePath, ExpandConstant('{app}\{#MyAppExeName}')) <> 0 then
+    if CompareText(QueryLongPath(ImagePath), QueryLongPath(ExpandConstant('{app}\{#MyAppExeName}'))) <> 0 then
       Exit;
     if (GetWindowProcessId(Window, CurrentProcessId) = 0) or (CurrentProcessId <> ProcessId) then
       Exit;
@@ -121,37 +139,20 @@ end;
 
 function ConfirmLauncherClose(): Boolean;
 begin
-  Result := not CheckForMutexes('{#MyAppMutex}');
+  Result := Length(CheckForMutexes('{#MyAppMutex}')) = 0;
   if Result then
     Exit;
 
   if SuppressibleMsgBox(CustomMessage('ConfirmCloseLauncher'), mbConfirmation, MB_OKCANCEL, IDCANCEL) <> IDOK then
     Exit;
 
-  if not CheckForMutexes('{#MyAppMutex}') then
-    Result := True
-  else
-    Result := RequestLauncherClose() and not CheckForMutexes('{#MyAppMutex}');
+  Result := RequestLauncherClose() or (Length(CheckForMutexes('{#MyAppMutex}')) = 0);
 
   if not Result then
   begin
     Log('VRCLearn Launcher could not be closed automatically.');
     SuppressibleMsgBox(CustomMessage('CloseLauncherFailed'), mbError, MB_OK, IDOK);
   end;
-end;
-
-function WaitForLauncherToClose(Silent: Boolean): Boolean;
-begin
-  Result := False;
-  while CheckForMutexes('{#MyAppMutex}') do
-  begin
-    Log('VRCLearn Launcher is still running.');
-    if Silent then
-      Exit;
-    if SuppressibleMsgBox(CustomMessage('CloseLauncher'), mbInformation, MB_OKCANCEL, IDCANCEL) <> IDOK then
-      Exit;
-  end;
-  Result := True;
 end;
 
 function NextButtonClick(CurPageID: Integer): Boolean;
@@ -164,11 +165,17 @@ end;
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   Result := '';
-  if not WaitForLauncherToClose(True) then
+  if Length(CheckForMutexes('{#MyAppMutex}')) > 0 then
+  begin
+    Log('VRCLearn Launcher is still running.');
     Result := CustomMessage('CloseLauncher');
+  end;
 end;
 
 function InitializeUninstall(): Boolean;
 begin
-  Result := WaitForLauncherToClose(UninstallSilent);
+  if UninstallSilent then
+    Result := Length(CheckForMutexes('{#MyAppMutex}')) = 0
+  else
+    Result := ConfirmLauncherClose();
 end;
