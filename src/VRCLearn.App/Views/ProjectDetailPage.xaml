@@ -169,10 +169,18 @@
                     x:Name="BackupsContent"
                     ClipToBounds="True"
                     Visibility="Collapsed">
-                    <ItemsControl Margin="{StaticResource Gap.Row}" ItemsSource="{Binding Backups}">
+                    <ScrollViewer
+                        MaxHeight="320"
+                        Margin="{StaticResource Gap.Row}"
+                        Style="{StaticResource VirtualizedListScroll}">
+                        <ItemsControl
+                            ItemsSource="{Binding Backups}"
+                            ItemsPanel="{StaticResource VirtualizingStackItemsPanel}"
+                            VirtualizingPanel.ScrollUnit="Pixel"
+                            VirtualizingPanel.VirtualizationMode="Recycling">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <ui:Card Opacity="{Binding RowOpacity}" Style="{StaticResource RowCard}">
+                                <ui:Card Style="{StaticResource MissingRowCard}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -215,7 +223,8 @@
                                 </ui:Card>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        </ItemsControl>
+                    </ScrollViewer>
 
                     <StackPanel Visibility="{Binding HasPendingRestore, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <TextBlock
@@ -311,7 +320,15 @@
                 Text="{markup:Tr ProjectDetail.SearchHint}"
                 Visibility="{Binding IsSearchEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-            <ItemsControl Margin="{StaticResource Gap.Row}" ItemsSource="{Binding Available}">
+            <ScrollViewer
+                MaxHeight="420"
+                Margin="{StaticResource Gap.Row}"
+                Style="{StaticResource VirtualizedListScroll}">
+                <ItemsControl
+                    ItemsSource="{Binding Available}"
+                    ItemsPanel="{StaticResource VirtualizingStackItemsPanel}"
+                    VirtualizingPanel.ScrollUnit="Pixel"
+                    VirtualizingPanel.VirtualizationMode="Recycling">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <ui:Card Style="{StaticResource RowCard}">
@@ -350,7 +367,8 @@
                         </ui:Card>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </ItemsControl>
+            </ScrollViewer>
 
             <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Installed}" />
 

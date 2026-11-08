@@ -261,6 +261,7 @@ public sealed partial class PluginItemViewModel : ObservableObject
         {
             var image = new BitmapImage();
             image.BeginInit();
+            image.DecodePixelWidth = 72;
             image.CacheOption = BitmapCacheOption.OnLoad;
             image.UriSource = new Uri(path, UriKind.Absolute);
             image.EndInit();

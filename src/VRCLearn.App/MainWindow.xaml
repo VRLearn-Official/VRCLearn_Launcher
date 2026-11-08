@@ -100,13 +100,6 @@
             BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
             BorderThickness="0,0,1,0"
             Visibility="{Binding IsNotFirstRunSetup, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border.Effect>
-                <DropShadowEffect
-                    BlurRadius="16"
-                    Direction="0"
-                    Opacity="0.12"
-                    ShadowDepth="2" />
-            </Border.Effect>
             <Grid>
                 <StackPanel VerticalAlignment="Center">
                     <ListBox

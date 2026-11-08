@@ -16,6 +16,8 @@ namespace VRCLearn.App.ViewModels;
 
 public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
 {
+    private const int SearchDelayMilliseconds = 250;
+
     private readonly IBackupStore _store;
     private readonly ProjectRestoreService _restores;
     private readonly ProjectService _projects;
@@ -31,6 +33,7 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
     private readonly IReadOnlyList<Option> _filterOptions;
 
     private IReadOnlyList<BackupItemViewModel> _all = [];
+    private TransientAction? _search;
 
     public BackupsViewModel(
         IBackupStore store,
@@ -111,7 +114,10 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
     [ObservableProperty]
     private string _searchText = "";
 
-    partial void OnSearchTextChanged(string value) => Apply();
+    partial void OnSearchTextChanged(string value) => Search.Run();
+
+    private TransientAction Search =>
+        _search ??= new TransientAction(TimeSpan.FromMilliseconds(SearchDelayMilliseconds), Apply);
 
     public ObservableCollection<BackupItemViewModel> Backups { get; } = [];
 
@@ -558,8 +564,6 @@ public sealed class BackupItemViewModel
     public bool IsAvailable { get; }
 
     public bool IsMissing => !IsAvailable;
-
-    public double RowOpacity => IsMissing ? 0.5 : 1.0;
 
     public string Display { get; }
 

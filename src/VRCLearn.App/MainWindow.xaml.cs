@@ -20,6 +20,8 @@ public partial class MainWindow : FluentWindow
 
     private const double HeaderShiftOffset = 20;
 
+    private const int MaxCachedViews = 3;
+
     private readonly MainWindowViewModel _viewModel;
     private readonly AnimationService _animations;
     private readonly DropImportService _drops;
@@ -115,6 +117,7 @@ public partial class MainWindow : FluentWindow
     }
 
     private readonly Dictionary<object, FrameworkElement> _views = [];
+    private readonly List<object> _viewOrder = [];
 
     private FrameworkElement? _page;
     private bool _shown;
@@ -135,6 +138,7 @@ public partial class MainWindow : FluentWindow
         target.Visibility = Visibility.Visible;
 
         _page = target;
+        TrimViews(viewModel);
 
         if (_shown)
         {
@@ -147,6 +151,9 @@ public partial class MainWindow : FluentWindow
     {
         if (_views.TryGetValue(viewModel, out var cached))
         {
+            _viewOrder.Remove(viewModel);
+            _viewOrder.Add(viewModel);
+
             return cached;
         }
 
@@ -158,8 +165,35 @@ public partial class MainWindow : FluentWindow
 
         PageHost.Children.Add(view);
         _views[viewModel] = view;
+        _viewOrder.Add(viewModel);
 
         return view;
+    }
+
+    private void TrimViews(object current)
+    {
+        while (_views.Count > MaxCachedViews)
+        {
+            object? stale = null;
+
+            foreach (var candidate in _viewOrder)
+            {
+                if (!ReferenceEquals(candidate, current))
+                {
+                    stale = candidate;
+                    break;
+                }
+            }
+
+            if (stale is null || !_views.Remove(stale, out var view))
+            {
+                return;
+            }
+
+            _viewOrder.Remove(stale);
+            view.DataContext = null;
+            PageHost.Children.Remove(view);
+        }
     }
 
     private void PlayPageTransition(FrameworkElement page)

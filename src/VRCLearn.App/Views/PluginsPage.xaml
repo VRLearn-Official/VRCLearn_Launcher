@@ -5,9 +5,14 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:markup="clr-namespace:VRCLearn.App.Markup">
 
-    <ScrollViewer Style="{StaticResource PageScroll}">
-        <StackPanel>
-            <Grid Margin="{StaticResource Gap.Field}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="32,40,32,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -57,19 +62,27 @@
                     Visibility="{Binding IsWorking, Converter={StaticResource BooleanToVisibilityConverter}}" />
             </Grid>
 
+        <StackPanel Grid.Row="1" Margin="32,16,32,0">
             <TextBlock
-                Margin="{StaticResource Gap.Field}"
                 Style="{StaticResource Caption}"
                 Text="{markup:Tr Plugins.Empty}"
                 Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
             <TextBlock
-                Margin="{StaticResource Gap.Field}"
                 Style="{StaticResource Caption}"
                 Text="{markup:Tr Plugins.SearchEmpty}"
                 Visibility="{Binding IsSearchEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        </StackPanel>
 
-            <ItemsControl Margin="{StaticResource Gap.Field}" ItemsSource="{Binding FilteredPlugins}">
+        <ScrollViewer
+            Grid.Row="2"
+            Padding="32,16,32,32"
+            Style="{StaticResource VirtualizedListScroll}">
+            <ItemsControl
+                ItemsSource="{Binding FilteredPlugins}"
+                ItemsPanel="{StaticResource VirtualizingStackItemsPanel}"
+                VirtualizingPanel.ScrollUnit="Pixel"
+                VirtualizingPanel.VirtualizationMode="Recycling">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <ui:Card
@@ -224,6 +237,6 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-        </StackPanel>
-    </ScrollViewer>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

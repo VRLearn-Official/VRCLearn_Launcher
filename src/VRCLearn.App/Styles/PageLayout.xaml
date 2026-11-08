@@ -155,6 +155,17 @@
         <Setter Property="markup:SmoothScroll.IsEnabled" Value="True" />
     </Style>
 
+    <ItemsPanelTemplate x:Key="VirtualizingStackItemsPanel">
+        <VirtualizingStackPanel />
+    </ItemsPanelTemplate>
+
+    <Style x:Key="VirtualizedListScroll" TargetType="ScrollViewer">
+        <Setter Property="CanContentScroll" Value="True" />
+        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="markup:SmoothScroll.IsEnabled" Value="True" />
+    </Style>
+
     <Style x:Key="PageTitle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource FontSize.Title}" />
         <Setter Property="FontWeight" Value="SemiBold" />
@@ -260,6 +271,17 @@
                 <Setter Property="Background" Value="{DynamicResource CardBackgroundPointerOver}" />
                 <Setter Property="BorderBrush" Value="{DynamicResource ControlElevationBorderBrush}" />
             </Trigger>
+        </Style.Triggers>
+    </Style>
+
+    <Style
+        x:Key="MissingRowCard"
+        BasedOn="{StaticResource RowCard}"
+        TargetType="ui:Card">
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding IsMissing}" Value="True">
+                <Setter Property="Opacity" Value="0.5" />
+            </DataTrigger>
         </Style.Triggers>
     </Style>
 

@@ -5,10 +5,13 @@
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:markup="clr-namespace:VRCLearn.App.Markup">
 
-    <ui:Card Margin="0,0,12,12" Padding="10">
+    <ui:Card
+        Width="208"
+        Margin="0,0,12,12"
+        Padding="10">
         <StackPanel>
             <Border
-                Height="{Binding ActualWidth, RelativeSource={RelativeSource Self}}"
+                Height="188"
                 Background="{DynamicResource ControlFillColorSecondaryBrush}"
                 CornerRadius="{StaticResource Radius.Control}"
                 ClipToBounds="True">
