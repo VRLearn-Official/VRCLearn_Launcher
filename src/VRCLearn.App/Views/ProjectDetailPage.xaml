@@ -202,13 +202,6 @@
                                 IsUnityRunning="{Binding IsUnityRunning}"
                                 LaunchCommand="{Binding OpenInUnityCommand}" />
                         </StackPanel>
-                        <ui:Button
-                            Margin="{StaticResource Gap.Wrapped}"
-                            Style="{StaticResource ToolbarButton}"
-                            Appearance="Secondary"
-                            Click="OnJumpToAvailableClick"
-                            Content="{markup:Tr ProjectDetail.JumpToAvailable}"
-                            Icon="{ui:SymbolIcon ArrowDown24}" />
                     </WrapPanel>
 
                     <StackPanel Margin="{StaticResource Gap.Small}" Orientation="Horizontal">
@@ -399,7 +392,24 @@
                         </StackPanel>
                 </StackPanel>
                 <StackPanel Margin="0,0,0,8">
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Installed}" />
+                    <Grid Margin="{StaticResource Gap.Section}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Margin="0"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SectionTitle}"
+                            Text="{markup:Tr ProjectDetail.Installed}" />
+                        <ui:Button
+                            Grid.Column="1"
+                            Style="{StaticResource RowButton}"
+                            Appearance="Transparent"
+                            Click="OnJumpToAvailableClick"
+                            Content="{markup:Tr ProjectDetail.JumpToAvailable}"
+                            Icon="{ui:SymbolIcon ArrowDown24}" />
+                    </Grid>
 
                     <ui:Card Margin="0,10,0,0" Padding="16,10">
                         <StackPanel Orientation="Horizontal">
