@@ -79,7 +79,9 @@ public static class ListReorder
 
         public Transform? Original { get; init; }
 
-        public double Center { get; init; }
+        public int Index { get; init; }
+
+        public double Offset { get; set; }
     }
 
     private sealed class GhostAdorner : Adorner
@@ -139,7 +141,6 @@ public static class ListReorder
         private object? _item;
         private INotifyCollectionChanged? _collection;
         private int _index = -1;
-        private int _target = -1;
         private int _insertBefore = -1;
         private Point _start;
         private Point _grab;
@@ -147,8 +148,8 @@ public static class ListReorder
         private bool _dragging;
         private bool _ending;
         private double _rowHeight;
-        private Row?[] _rows = [];
-        private double[] _offsets = [];
+        private readonly Dictionary<FrameworkElement, Row> _rows = [];
+        private VirtualizingStackPanel? _panel;
         private ScrollViewer? _scroller;
         private AdornerLayer? _layer;
         private GhostAdorner? _ghost;
@@ -197,17 +198,14 @@ public static class ListReorder
                 return;
             }
 
-            var item = _owner.ItemContainerGenerator.ItemFromContainer(container);
-            var index = item is null ? -1 : _owner.Items.IndexOf(item);
-
-            if (index < 0)
+            if (_owner.ItemContainerGenerator.ItemFromContainer(container) is not RepositoryItemViewModel item)
             {
                 return;
             }
 
             _container = container;
             _item = item;
-            _index = index;
+            _index = item.Index;
             _start = e.GetPosition(_owner);
             _grab = e.GetPosition(container);
 
@@ -341,7 +339,7 @@ public static class ListReorder
                 return false;
             }
 
-            if (VisualTree.FindAncestor<ScrollViewer>(_owner) is not { } scroller)
+            if (VisualTree.FindDescendant<VirtualizingStackPanel>(_owner) is not { ScrollOwner: { } scroller } panel)
             {
                 return false;
             }
@@ -371,17 +369,15 @@ public static class ListReorder
             _scroller = scroller;
             _layer = layer;
             _rowHeight = height;
-            _rows = BuildRows();
+            _panel = panel;
             _cursor = Mouse.OverrideCursor;
             _window = Window.GetWindow(_owner);
-            _target = _index;
             _insertBefore = _index;
 
             layer.Add(ghost);
             _ghost = ghost;
             UpdateGhost();
 
-            container.Visibility = Visibility.Hidden;
             Mouse.OverrideCursor = Cursors.SizeAll;
 
             if (_window is not null)
@@ -421,61 +417,99 @@ public static class ListReorder
 
             UpdateGhost();
 
-            var target = CountAbove(pointer.Y);
-
-            if (target == _target)
+            var rows = RealizedRows();
+            if (rows.Count == 0)
             {
                 return;
             }
 
-            _target = target;
-            _insertBefore = target <= _index ? target : target + 1;
-
-            ApplyShifts();
-        }
-
-        private int CountAbove(double y)
-        {
-            var count = 0;
-
-            for (var i = 0; i < _rows.Length; i++)
+            // The panel only contains nearby rows. Keep their absolute indices when scrolling.
+            var insertBefore = rows[0].Index;
+            foreach (var row in rows)
             {
-                if (i != _index && _rows[i] is { } row && y > row.Center)
+                var center = row.Container.TranslatePoint(new Point(0, row.Container.ActualHeight / 2), _owner).Y;
+                if (pointer.Y > center - row.Transform.Y)
                 {
-                    count++;
+                    insertBefore = Math.Max(insertBefore, row.Index + 1);
                 }
             }
 
-            return Math.Clamp(count, 0, Math.Max(0, _rows.Length - 1));
-        }
-
-        private void ApplyShifts()
-        {
-            for (var i = 0; i < _rows.Length; i++)
+            _insertBefore = insertBefore;
+            var target = insertBefore > _index ? insertBefore - 1 : insertBefore;
+            foreach (var row in rows)
             {
-                if (_rows[i] is not { } row)
-                {
-                    continue;
-                }
-
                 var offset = 0d;
 
-                if (_target > _index && i > _index && i <= _target)
+                if (target > _index && row.Index > _index && row.Index <= target)
                 {
                     offset = -_rowHeight;
                 }
-                else if (_target < _index && i >= _target && i < _index)
+                else if (target < _index && row.Index >= target && row.Index < _index)
                 {
                     offset = _rowHeight;
                 }
 
-                if (Math.Abs(_offsets[i] - offset) < 0.01)
+                if (Math.Abs(row.Offset - offset) >= 0.01)
+                {
+                    row.Offset = offset;
+                    Animate(row.Transform, offset);
+                }
+            }
+        }
+
+        private List<Row> RealizedRows()
+        {
+            var rows = new List<Row>();
+            if (_panel is not { } panel)
+            {
+                return rows;
+            }
+
+            foreach (var container in panel.Children.OfType<FrameworkElement>())
+            {
+                if (_owner.ItemContainerGenerator.ItemFromContainer(container) is not RepositoryItemViewModel item)
                 {
                     continue;
                 }
 
-                _offsets[i] = offset;
-                Animate(row.Transform, offset);
+                if (!_rows.TryGetValue(container, out var row))
+                {
+                    row = new Row
+                    {
+                        Container = container,
+                        Transform = new TranslateTransform(),
+                        Original = container.RenderTransform,
+                        Index = item.Index,
+                    };
+                    _rows.Add(container, row);
+                    container.RenderTransform = row.Transform;
+
+                    if (item.Index == _index)
+                    {
+                        container.Visibility = Visibility.Hidden;
+                    }
+                }
+
+                rows.Add(row);
+            }
+
+            foreach (var row in _rows.Values.Where(row => !row.Container.IsDescendantOf(panel)).ToArray())
+            {
+                RestoreRow(row);
+                _rows.Remove(row.Container);
+            }
+
+            return rows;
+        }
+
+        private void RestoreRow(Row row)
+        {
+            row.Transform.BeginAnimation(TranslateTransform.YProperty, null);
+            row.Container.RenderTransform = row.Original;
+
+            if (row.Index == _index)
+            {
+                row.Container.Visibility = Visibility.Visible;
             }
         }
 
@@ -546,39 +580,6 @@ public static class ListReorder
             ghost.Move(pointer.X - _grab.X, pointer.Y - _grab.Y);
         }
 
-        private Row?[] BuildRows()
-        {
-            var count = _owner.Items.Count;
-            var rows = new Row?[count];
-
-            _offsets = new double[count];
-
-            for (var i = 0; i < count; i++)
-            {
-                if (_owner.ItemContainerGenerator.ContainerFromIndex(i) is not FrameworkElement container)
-                {
-                    continue;
-                }
-
-                var transform = new TranslateTransform();
-                var original = container.RenderTransform;
-
-                container.RenderTransform = transform;
-
-                var top = container.TransformToAncestor(_owner).Transform(new Point()).Y;
-
-                rows[i] = new Row
-                {
-                    Container = container,
-                    Transform = transform,
-                    Original = original,
-                    Center = top + container.ActualHeight / 2,
-                };
-            }
-
-            return rows;
-        }
-
         private static GhostAdorner? CreateGhost(
             ScrollViewer scroller,
             FrameworkElement container,
@@ -619,7 +620,7 @@ public static class ListReorder
 
             var item = _item;
             var insertBefore = _insertBefore;
-            var moved = _target != _index;
+            var moved = insertBefore != _index && insertBefore != _index + 1;
             var owner = _owner;
 
             StopDrag();
@@ -662,22 +663,12 @@ public static class ListReorder
                 _layer = null;
             }
 
-            foreach (var row in _rows)
+            foreach (var row in _rows.Values)
             {
-                if (row is null)
-                {
-                    continue;
-                }
-
-                row.Transform.BeginAnimation(TranslateTransform.YProperty, null);
-                row.Transform.Y = 0;
-                row.Container.RenderTransform = row.Original;
+                RestoreRow(row);
             }
 
-            if (_container is { } container)
-            {
-                container.Visibility = Visibility.Visible;
-            }
+            _rows.Clear();
 
             if (_owner.IsMouseCaptured)
             {
@@ -696,11 +687,9 @@ public static class ListReorder
             _container = null;
             _item = null;
             _index = -1;
-            _target = -1;
             _insertBefore = -1;
             _rowHeight = 0;
-            _rows = [];
-            _offsets = [];
+            _panel = null;
             _scroller = null;
         }
 
