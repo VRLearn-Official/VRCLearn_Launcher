@@ -285,14 +285,6 @@
 
             <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Installed}" />
 
-            <ui:TextBox
-                x:Name="InstalledPackageSearchBox"
-                Margin="0,10,0,0"
-                AutomationProperties.Name="{markup:Tr ProjectDetail.SearchInstalledPlaceholder}"
-                PlaceholderText="{markup:Tr ProjectDetail.SearchInstalledPlaceholder}"
-                TextChanged="OnPackageSearchTextChanged"
-                Text="{Binding InstalledSearchText, UpdateSourceTrigger=PropertyChanged}" />
-
             <ui:Card Margin="0,10,0,0" Padding="16,10">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock
@@ -317,6 +309,14 @@
                         Content="{markup:Tr ProjectDetail.Batch.Clear}" />
                 </StackPanel>
             </ui:Card>
+
+            <ui:TextBox
+                x:Name="InstalledPackageSearchBox"
+                Margin="0,10,0,0"
+                AutomationProperties.Name="{markup:Tr ProjectDetail.SearchInstalledPlaceholder}"
+                PlaceholderText="{markup:Tr ProjectDetail.SearchInstalledPlaceholder}"
+                TextChanged="OnPackageSearchTextChanged"
+                Text="{Binding InstalledSearchText, UpdateSourceTrigger=PropertyChanged}" />
 
             <ItemsControl
                 x:Name="InstalledPackageList"
