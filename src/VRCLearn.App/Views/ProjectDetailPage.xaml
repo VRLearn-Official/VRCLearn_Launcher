@@ -125,8 +125,50 @@
             </ui:Card>
 
             <StackPanel Visibility="{Binding HasBackups, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Backups.Title}" />
-
+                <ToggleButton
+                    Checked="OnBackupsChecked"
+                    Cursor="Hand"
+                    FocusVisualStyle="{x:Null}"
+                    HorizontalContentAlignment="Stretch"
+                    IsChecked="{Binding AreBackupsExpanded, Mode=TwoWay}"
+                    Unchecked="OnBackupsUnchecked">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                    <Grid Margin="{StaticResource Gap.Section}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Margin="0"
+                            Style="{StaticResource SectionTitle}"
+                            Text="{markup:Tr ProjectDetail.Backups.Title}" />
+                        <ui:SymbolIcon
+                            Grid.Column="1"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            FontSize="{StaticResource IconSize.Inline}"
+                            Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                            <ui:SymbolIcon.Style>
+                                <Style TargetType="ui:SymbolIcon">
+                                    <Setter Property="Symbol" Value="ChevronDown24" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AreBackupsExpanded}" Value="True">
+                                            <Setter Property="Symbol" Value="ChevronUp24" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ui:SymbolIcon.Style>
+                        </ui:SymbolIcon>
+                    </Grid>
+                </ToggleButton>
+                <StackPanel
+                    x:Name="BackupsContent"
+                    ClipToBounds="True"
+                    Visibility="Collapsed">
                     <ItemsControl Margin="{StaticResource Gap.Row}" ItemsSource="{Binding Backups}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
@@ -195,6 +237,7 @@
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
+            </StackPanel>
 
             <StackPanel Visibility="{Binding HasPendingChanges, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Review}" />
