@@ -381,7 +381,7 @@
   "ProjectDetail.VersionUnavailable": "リポジトリに「{0}」のバージョン {1} はありません。",
   "ProjectDetail.VersionSwitchFailed": "バージョンの切り替えに失敗しました：{0}",
   "ProjectDetail.Reinstall": "再インストール",
-  "ProjectDetail.UnlockedHint": "このパッケージは Packages フォルダーにありますが、vpm-manifest.json に登録されていないため、マニフェストからは削除できません。",
+  "ProjectDetail.UnlockedHint": "このパッケージは VPM マニフェストに未登録です。管理や削除は Unity のパッケージマネージャーで行ってください。",
   "ProjectDetail.CustomTag": "リポジトリ外",
   "ProjectDetail.Review": "未適用の変更",
   "ProjectDetail.Apply": "適用",

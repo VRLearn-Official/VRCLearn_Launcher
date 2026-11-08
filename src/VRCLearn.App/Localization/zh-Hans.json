@@ -381,7 +381,7 @@
   "ProjectDetail.VersionUnavailable": "仓库里没有「{0}」的 {1} 版本。",
   "ProjectDetail.VersionSwitchFailed": "切换版本失败：{0}",
   "ProjectDetail.Reinstall": "重新安装",
-  "ProjectDetail.UnlockedHint": "该包在 Packages 目录里，但没登记到 vpm-manifest.json，没法通过清单移除。",
+  "ProjectDetail.UnlockedHint": "该包未登记在 VPM 清单中，请通过 Unity 的包管理器管理或移除。",
   "ProjectDetail.CustomTag": "不在仓库",
   "ProjectDetail.Review": "待应用的变更",
   "ProjectDetail.Apply": "应用",

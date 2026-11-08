@@ -381,7 +381,7 @@
   "ProjectDetail.VersionUnavailable": "\"{0}\" has no {1} in any repo.",
   "ProjectDetail.VersionSwitchFailed": "Could not switch versions: {0}",
   "ProjectDetail.Reinstall": "Reinstall",
-  "ProjectDetail.UnlockedHint": "This package sits in the Packages folder but is not registered in vpm-manifest.json, so it cannot be removed through the manifest.",
+  "ProjectDetail.UnlockedHint": "This package is not in the VPM manifest. Use Unity's Package Manager to manage or remove it.",
   "ProjectDetail.CustomTag": "Not in repository",
   "ProjectDetail.Review": "Pending changes",
   "ProjectDetail.Apply": "Apply",
