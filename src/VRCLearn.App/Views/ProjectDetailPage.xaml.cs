@@ -3,6 +3,7 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
 using System.Windows.Threading;
+using VRCLearn.App.Markup;
 using VRCLearn.App.Services;
 using VRCLearn.App.ViewModels;
 
@@ -33,6 +34,31 @@ public partial class ProjectDetailPage : UserControl
         };
 
         Unloaded += (_, _) => _unityTimer.Stop();
+    }
+
+    private void OnPackageListMouseWheel(object sender, MouseWheelEventArgs e)
+    {
+        var viewer = VisualTree.FindAncestor<ScrollViewer>(e.OriginalSource as DependencyObject);
+        if (viewer is null || viewer.TemplatedParent != AvailablePackageList
+            || (e.Delta > 0 ? viewer.VerticalOffset <= 0 : viewer.VerticalOffset >= viewer.ScrollableHeight))
+        {
+            return;
+        }
+
+        // Handle the inner list before the page's smooth scrolling sees the wheel.
+        e.Handled = true;
+        viewer.RaiseEvent(new MouseWheelEventArgs(e.MouseDevice, e.Timestamp, e.Delta)
+        {
+            RoutedEvent = MouseWheelEvent,
+        });
+    }
+
+    private void OnPackageSearchTextChanged(object sender, TextChangedEventArgs e)
+    {
+        if (AvailablePackageList is { } list)
+        {
+            VisualTree.FindDescendant<ScrollViewer>(list)?.ScrollToTop();
+        }
     }
 
     private void OnUpgradeClick(object sender, MouseButtonEventArgs e)

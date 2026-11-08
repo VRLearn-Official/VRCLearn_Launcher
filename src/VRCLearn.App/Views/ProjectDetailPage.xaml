@@ -4,7 +4,8 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
     xmlns:markup="clr-namespace:VRCLearn.App.Markup"
-    xmlns:views="clr-namespace:VRCLearn.App.Views">
+    xmlns:views="clr-namespace:VRCLearn.App.Views"
+    PreviewMouseWheel="OnPackageListMouseWheel">
 
     <ScrollViewer Style="{StaticResource PageScroll}">
         <StackPanel>
@@ -255,60 +256,6 @@
                     </StackPanel>
                 </StackPanel>
 
-            <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Available}" />
-
-            <ui:TextBox
-                Margin="0,10,0,0"
-                PlaceholderText="{markup:Tr ProjectDetail.SearchPlaceholder}"
-                Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-
-            <TextBlock
-                Margin="0,10,0,0"
-                Style="{StaticResource Caption}"
-                Text="{markup:Tr ProjectDetail.SearchHint}"
-                Visibility="{Binding IsSearchEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
-
-            <ItemsControl Margin="{StaticResource Gap.Row}" ItemsSource="{Binding Available}">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <ui:Card Style="{StaticResource RowCard}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
-
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock FontWeight="SemiBold" Text="{Binding DisplayName}" />
-                                    <TextBlock Margin="0,2,0,0" Style="{StaticResource Caption}" Text="{Binding Name}" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="1" Style="{StaticResource RowActions}">
-                                    <ComboBox
-                                        MinWidth="110"
-                                        VerticalAlignment="Center"
-                                        ItemsSource="{Binding AvailableVersions}"
-                                        SelectedItem="{Binding SelectedVersion}"
-                                        Visibility="{Binding CanChooseVersion, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    <TextBlock
-                                        VerticalAlignment="Center"
-                                        Style="{StaticResource Caption}"
-                                        Text="{Binding SelectedVersion}"
-                                        Visibility="{Binding CannotChooseVersion, Converter={StaticResource BooleanToVisibilityConverter}}" />
-
-                                    <ui:Button
-                                        Style="{StaticResource RowButton}"
-                                        Appearance="Primary"
-                                        Command="{markup:RowCommand InstallPackageCommand}"
-                                        CommandParameter="{Binding}"
-                                        Content="{markup:Tr ProjectDetail.Add}" />
-                                </StackPanel>
-                            </Grid>
-                        </ui:Card>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-
             <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Installed}" />
 
             <ui:Card Margin="0,10,0,0" Padding="16,10">
@@ -420,6 +367,83 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+
+            <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Available}" />
+
+            <ui:TextBox
+                Margin="0,10,0,0"
+                PlaceholderText="{markup:Tr ProjectDetail.SearchPlaceholder}"
+                TextChanged="OnPackageSearchTextChanged"
+                Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+
+            <TextBlock
+                Margin="0,10,0,0"
+                Style="{StaticResource Caption}"
+                Text="{markup:Tr ProjectDetail.SearchHint}"
+                Visibility="{Binding IsSearchEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+            <ItemsControl
+                x:Name="AvailablePackageList"
+                MaxHeight="480"
+                Margin="{StaticResource Gap.Row}"
+                ItemsSource="{Binding Available}"
+                VirtualizingPanel.IsVirtualizing="True"
+                VirtualizingPanel.ScrollUnit="Pixel"
+                VirtualizingPanel.VirtualizationMode="Recycling">
+                <ItemsControl.Template>
+                    <ControlTemplate TargetType="ItemsControl">
+                        <ScrollViewer
+                            CanContentScroll="True"
+                            HorizontalScrollBarVisibility="Disabled"
+                            VerticalScrollBarVisibility="Auto">
+                            <ItemsPresenter />
+                        </ScrollViewer>
+                    </ControlTemplate>
+                </ItemsControl.Template>
+                <ItemsControl.ItemsPanel>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </ItemsControl.ItemsPanel>
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <ui:Card Style="{StaticResource RowCard}">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                    <TextBlock FontWeight="SemiBold" Text="{Binding DisplayName}" />
+                                    <TextBlock Margin="0,2,0,0" Style="{StaticResource Caption}" Text="{Binding Name}" />
+                                </StackPanel>
+
+                                <StackPanel Grid.Column="1" Style="{StaticResource RowActions}">
+                                    <ComboBox
+                                        MinWidth="110"
+                                        VerticalAlignment="Center"
+                                        ItemsSource="{Binding AvailableVersions}"
+                                        SelectedItem="{Binding SelectedVersion}"
+                                        Visibility="{Binding CanChooseVersion, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    <TextBlock
+                                        VerticalAlignment="Center"
+                                        Style="{StaticResource Caption}"
+                                        Text="{Binding SelectedVersion}"
+                                        Visibility="{Binding CannotChooseVersion, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                                    <ui:Button
+                                        Style="{StaticResource RowButton}"
+                                        Appearance="Primary"
+                                        Command="{markup:RowCommand InstallPackageCommand}"
+                                        CommandParameter="{Binding}"
+                                        Content="{markup:Tr ProjectDetail.Add}" />
+                                </StackPanel>
+                            </Grid>
+                        </ui:Card>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
 
             <Expander Margin="{StaticResource Gap.Large}" Header="{markup:Tr ProjectDetail.UnityArguments}">
                 <StackPanel Margin="{StaticResource Gap.Small}">

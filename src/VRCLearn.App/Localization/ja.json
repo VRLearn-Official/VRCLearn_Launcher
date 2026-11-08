@@ -362,7 +362,7 @@
   "ProjectDetail.Installed": "インストール済みのパッケージ",
   "ProjectDetail.Available": "インストールできるパッケージ",
   "ProjectDetail.SearchPlaceholder": "パッケージ名を検索",
-  "ProjectDetail.SearchHint": "キーワードを入力して検索します。非表示のリポジトリとユーザーパッケージは結果に表示されません。",
+  "ProjectDetail.SearchHint": "キーワードで絞り込めます。非表示のリポジトリとユーザーパッケージは表示されません。",
   "ProjectDetail.Add": "追加",
   "ProjectDetail.Remove": "削除",
   "ProjectDetail.Remove.Title": "パッケージを削除",

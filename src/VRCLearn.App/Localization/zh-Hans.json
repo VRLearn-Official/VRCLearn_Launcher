@@ -362,7 +362,7 @@
   "ProjectDetail.Installed": "已安装的包",
   "ProjectDetail.Available": "可安装的包",
   "ProjectDetail.SearchPlaceholder": "搜索包名",
-  "ProjectDetail.SearchHint": "输入关键字搜索。隐藏的仓库和用户包不出现在结果里。",
+  "ProjectDetail.SearchHint": "输入关键词可筛选列表。隐藏的仓库和用户包不显示。",
   "ProjectDetail.Add": "添加",
   "ProjectDetail.Remove": "移除",
   "ProjectDetail.Remove.Title": "移除包",

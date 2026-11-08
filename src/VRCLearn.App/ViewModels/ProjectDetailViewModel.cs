@@ -42,8 +42,6 @@ public sealed partial class ProjectDetailViewModel(
     ToastService toasts,
     ILogger<ProjectDetailViewModel> logger) : PageViewModelBase(toasts), IPageViewModel
 {
-    private const int SearchLimit = 100;
-
     private const int SearchDelayMilliseconds = 250;
 
     private UnityProject? _project;
@@ -1539,11 +1537,7 @@ public sealed partial class ProjectDetailViewModel(
         }
 
         var query = SearchText.Trim();
-
-        if (query.Length == 0)
-        {
-            return;
-        }
+        var showAll = query.Length == 0;
 
         var installed = _project.AllPackages.Select(x => x.Name).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var catalog = OfferedCatalog();
@@ -1569,18 +1563,19 @@ public sealed partial class ProjectDetailViewModel(
 
             var display = candidates[0].Manifest.DisplayName ?? name;
 
-            if (ApproximateMatch.Rank(query, name, display) is not { } rank)
+            var rank = showAll ? 0 : ApproximateMatch.Rank(query, name, display);
+            if (rank is null)
             {
                 continue;
             }
 
-            matches.Add((rank, name, candidates, display));
+            matches.Add((rank.Value, name, candidates, display));
         }
 
         foreach (var match in matches
                      .OrderBy(x => x.Rank)
-                     .ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase)
-                     .Take(SearchLimit))
+                     .ThenBy(x => showAll ? x.Display : null, StringComparer.OrdinalIgnoreCase)
+                     .ThenBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
         {
             Available.Add(new AvailablePackageViewModel(match.Candidates, match.Display));
         }

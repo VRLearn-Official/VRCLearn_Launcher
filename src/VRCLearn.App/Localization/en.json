@@ -362,7 +362,7 @@
   "ProjectDetail.Installed": "Installed packages",
   "ProjectDetail.Available": "Available packages",
   "ProjectDetail.SearchPlaceholder": "Search package name",
-  "ProjectDetail.SearchHint": "Type a keyword to search. Hidden repos and user packages are left out.",
+  "ProjectDetail.SearchHint": "Type to filter. Hidden repositories and user packages are excluded.",
   "ProjectDetail.Add": "Add",
   "ProjectDetail.Remove": "Remove",
   "ProjectDetail.Remove.Title": "Remove packages",
