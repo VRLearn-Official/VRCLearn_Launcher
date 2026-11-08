@@ -29,6 +29,7 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
     private readonly AutoBackupService _autoBackups;
     private readonly ProgressService _progress;
     private readonly ILogger<ProjectsViewModel> _logger;
+    private readonly SemaphoreSlim _reloadGate = new(1, 1);
     private readonly IReadOnlyList<Option> _sortingKeys;
     private readonly IReadOnlyList<Option> _sortingDirections;
     private readonly HashSet<string> _runningProjects = new(StringComparer.OrdinalIgnoreCase);
@@ -567,6 +568,20 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
     }
 
     public async Task ReloadAsync()
+    {
+        await _reloadGate.WaitAsync();
+
+        try
+        {
+            await ReloadCoreAsync();
+        }
+        finally
+        {
+            _reloadGate.Release();
+        }
+    }
+
+    private async Task ReloadCoreAsync()
     {
         await WithBusyAsync(async () =>
         {

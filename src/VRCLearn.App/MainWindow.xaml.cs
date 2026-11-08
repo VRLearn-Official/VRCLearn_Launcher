@@ -4,6 +4,7 @@ using System.Windows.Automation;
 using System.Windows.Controls;
 using System.Windows.Media;
 using System.Windows.Shell;
+using System.Windows.Threading;
 using Microsoft.Extensions.Logging;
 using Wpf.Ui.Controls;
 using VRCLearn.App.Services;
@@ -23,6 +24,10 @@ public partial class MainWindow : FluentWindow
     private readonly AnimationService _animations;
     private readonly DropImportService _drops;
     private readonly ILogger<MainWindow> _logger;
+
+    private string[]? _lastDropPaths;
+    private bool _lastDropValid;
+    private int _dragGeneration;
 
     public MainWindow(
         MainWindowViewModel viewModel,
@@ -223,33 +228,97 @@ public partial class MainWindow : FluentWindow
         }
     }
 
-    private void OnPageDragOver(object sender, DragEventArgs e)
-    {
-        var valid = _viewModel.ShowDropZone
-            && e.Data.GetData(DataFormats.FileDrop) is string[] paths
-            && DropImportService.CanAccept(_viewModel.CurrentKey, paths);
+    private bool IsDropAllowed =>
+        _viewModel.CurrentKey != "setup"
+        && !_drops.IsBusy
+        && !_viewModel.Progress.IsRunning;
 
-        e.Effects = valid ? DragDropEffects.Copy : DragDropEffects.None;
+    private void OnWindowDragOver(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            return;
+        }
+
         e.Handled = true;
+        _dragGeneration++;
+
+        var valid = IsDropAllowed && GetDropPaths(e) is { } paths && IsDropValid(paths);
+
+        DropOverlay.Visibility = valid ? Visibility.Visible : Visibility.Collapsed;
+        e.Effects = valid ? DragDropEffects.Copy : DragDropEffects.None;
     }
 
-    private async void OnPageDrop(object sender, DragEventArgs e)
+    private void OnWindowDragLeave(object sender, DragEventArgs e)
     {
-        e.Handled = true;
+        var generation = _dragGeneration;
 
-        if (!_viewModel.ShowDropZone
-            || e.Data.GetData(DataFormats.FileDrop) is not string[] paths)
+        Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+        {
+            if (generation == _dragGeneration)
+            {
+                HideDropOverlay();
+            }
+        }));
+    }
+
+    private async void OnWindowDrop(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            return;
+        }
+
+        _dragGeneration++;
+        e.Handled = true;
+        HideDropOverlay();
+
+        if (!IsDropAllowed || GetDropPaths(e) is not { } paths)
         {
             return;
         }
 
         try
         {
-            await _drops.ImportAsync(_viewModel.CurrentKey, paths);
+            await _drops.ImportAsync(paths);
         }
         catch (Exception exception)
         {
             _logger.LogWarning(exception, "拖放导入失败");
         }
+        finally
+        {
+            Activate();
+        }
+    }
+
+    private static string[]? GetDropPaths(DragEventArgs e) =>
+        e.Data.GetData(DataFormats.FileDrop) is string[] paths && paths.Length > 0 ? paths : null;
+
+    private bool IsDropValid(string[] paths)
+    {
+        if (ReferenceEquals(paths, _lastDropPaths))
+        {
+            return _lastDropValid;
+        }
+
+        if (_lastDropPaths is not null
+            && paths.Length == _lastDropPaths.Length
+            && paths.SequenceEqual(_lastDropPaths, StringComparer.OrdinalIgnoreCase))
+        {
+            return _lastDropValid;
+        }
+
+        _lastDropPaths = paths;
+        _lastDropValid = DropImportService.CanAccept(paths);
+
+        return _lastDropValid;
+    }
+
+    private void HideDropOverlay()
+    {
+        DropOverlay.Visibility = Visibility.Collapsed;
+        _lastDropPaths = null;
+        _lastDropValid = false;
     }
 }

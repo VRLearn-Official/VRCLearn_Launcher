@@ -80,7 +80,13 @@
 
     </ui:FluentWindow.Resources>
 
-    <Grid>
+    <Grid
+        AllowDrop="True"
+        Background="Transparent"
+        PreviewDragEnter="OnWindowDragOver"
+        PreviewDragLeave="OnWindowDragLeave"
+        PreviewDragOver="OnWindowDragOver"
+        PreviewDrop="OnWindowDrop">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
@@ -295,13 +301,45 @@
                 </StackPanel>
             </Grid>
 
-            <Grid
-                x:Name="PageHost"
-                Grid.Row="1"
-                AllowDrop="True"
-                DragEnter="OnPageDragOver"
-                DragOver="OnPageDragOver"
-                Drop="OnPageDrop" />
+            <Grid x:Name="PageHost" Grid.Row="1" />
+        </Grid>
+
+        <Grid
+            x:Name="DropOverlay"
+            Grid.ColumnSpan="2"
+            Panel.ZIndex="8"
+            Background="#40000000"
+            IsHitTestVisible="False"
+            Visibility="Collapsed">
+            <Border
+                MaxWidth="620"
+                Padding="32,24"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}"
+                BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource Radius.Control}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon
+                        VerticalAlignment="Center"
+                        FontSize="{StaticResource IconSize.Display}"
+                        Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                        Symbol="ArrowDownload24" />
+                    <TextBlock
+                        Grid.Column="1"
+                        Margin="16,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="{StaticResource FontSize.Section}"
+                        FontWeight="SemiBold"
+                        Text="{markup:Tr Drop.Hint}"
+                        TextWrapping="Wrap" />
+                </Grid>
+            </Border>
         </Grid>
 
         <Border

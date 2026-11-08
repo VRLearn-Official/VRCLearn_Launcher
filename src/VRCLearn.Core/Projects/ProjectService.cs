@@ -51,7 +51,7 @@ public sealed class ProjectService
     private LauncherSettings Settings => _settingsStore.Current;
 
     /// <summary>顺序就是添加顺序。</summary>
-    public IReadOnlyList<string> List() => Settings.UserProjects;
+    public IReadOnlyList<string> List() => [.. Settings.UserProjects];
 
     public static bool IsProject(string projectPath) =>
         HasProjectVersion(PathUtil.Normalize(projectPath));

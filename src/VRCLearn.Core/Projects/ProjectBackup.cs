@@ -64,6 +64,8 @@ public static class ProjectBackup
         }
     }
 
+    public const string Extension = ".zip";
+
     public const string StampFormat = "yyyy-MM-ddTHH-mm-ss";
 
     public const int HashLength = 8;
@@ -71,7 +73,7 @@ public static class ProjectBackup
     private const string LegacyArchiveMarker = ".archive";
 
     public static string FileNameFor(string projectName, string hash, int serial) =>
-        $"{projectName}-{hash}-{serial}.zip";
+        $"{projectName}-{hash}-{serial}{Extension}";
 
     public static string ShortHash(ReadOnlySpan<byte> digest) =>
         Sha256Hex.FromDigest(digest[..(HashLength / 2)]);

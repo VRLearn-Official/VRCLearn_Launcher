@@ -127,8 +127,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public bool IsNotFirstRunSetup => !IsFirstRunSetup;
 
-    public bool ShowDropZone => CurrentKey is "projects" or "backups" or "templates" or "plugins";
-
     public void Navigate(string key)
     {
         SetCurrentKey(key);
@@ -148,7 +146,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         OnPropertyChanged(nameof(IsNotFirstRunSetup));
         OnPropertyChanged(nameof(PageTitle));
         OnPropertyChanged(nameof(PageSubtitle));
-        OnPropertyChanged(nameof(ShowDropZone));
 
         _logger.LogInformation("打开页面：{Page}", key);
     }

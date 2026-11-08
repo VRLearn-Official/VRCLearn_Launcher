@@ -150,7 +150,7 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
 
         var files = _dialogs.PickFiles(
             _localization["Backups.Import.PickTitle"],
-            "*.zip|*.zip|*|*");
+            $"*{ProjectBackup.Extension}|*{ProjectBackup.Extension}|*|*");
 
         if (files.Length > 0)
         {
@@ -169,7 +169,7 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
 
         foreach (var path in paths)
         {
-            if (!string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase))
+            if (!string.Equals(Path.GetExtension(path), ProjectBackup.Extension, StringComparison.OrdinalIgnoreCase))
             {
                 continue;
             }
@@ -206,7 +206,7 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
             {
                 try
                 {
-                    if (!string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase))
+                    if (!string.Equals(Path.GetExtension(path), ProjectBackup.Extension, StringComparison.OrdinalIgnoreCase))
                     {
                         failed++;
                         continue;
