@@ -3,8 +3,6 @@
   "Page.OperationFailed": "操作に失敗しました：{0}",
   "Nav.Backups": "バックアップ",
   "Nav.Projects": "プロジェクト",
-  "Nav.LockSidebar": "サイドバーを固定",
-  "Nav.UnlockSidebar": "サイドバーの固定を解除",
   "Packages.User.Title": "ユーザーパッケージのフォルダー",
   "Packages.User.Hint": "フォルダーごとに 1 つのパッケージとして扱います。リポジトリに同じ名前・バージョンのパッケージがある場合は、ローカルのパッケージが優先されます。",
   "Packages.User.Hide": "ユーザーパッケージを非表示",

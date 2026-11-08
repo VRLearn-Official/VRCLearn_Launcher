@@ -3,8 +3,6 @@
   "Page.OperationFailed": "操作失败：{0}",
   "Nav.Backups": "备份",
   "Nav.Projects": "项目",
-  "Nav.LockSidebar": "锁定侧栏",
-  "Nav.UnlockSidebar": "解锁侧栏",
   "Packages.User.Title": "用户包目录",
   "Packages.User.Hint": "每个目录算一个包，覆盖仓库里的同名同版本。",
   "Packages.User.Hide": "隐藏用户包",

@@ -47,7 +47,6 @@
                         <Grid>
                             <Border
                                 x:Name="Row"
-                                HorizontalAlignment="Left"
                                 Background="Transparent"
                                 CornerRadius="{StaticResource Radius.Control}" />
                             <ContentPresenter
@@ -88,15 +87,12 @@
         </Grid.ColumnDefinitions>
 
         <Border
-            x:Name="Sidebar"
             Grid.Column="0"
-            Width="64"
+            Width="220"
             Panel.ZIndex="1"
             Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}"
             BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
             BorderThickness="0,0,1,0"
-            MouseEnter="OnSidebarMouseEnter"
-            MouseLeave="OnSidebarMouseLeave"
             Visibility="{Binding IsNotFirstRunSetup, Converter={StaticResource BooleanToVisibilityConverter}}">
             <Border.Effect>
                 <DropShadowEffect
@@ -105,27 +101,8 @@
                     Opacity="0.12"
                     ShadowDepth="2" />
             </Border.Effect>
-            <Grid ClipToBounds="True">
+            <Grid>
                 <StackPanel VerticalAlignment="Center">
-                    <ui:Button
-                        AutomationProperties.Name="{Binding SidebarLockTip}"
-                        Command="{Binding ToggleSidebarLockCommand}"
-                        HorizontalAlignment="Center"
-                        Margin="0,0,0,8"
-                        Style="{StaticResource CaptionGlyphButton}"
-                        ToolTip="{Binding SidebarLockTip}">
-                        <Grid Width="16" Height="16">
-                            <ui:SymbolIcon
-                                FontSize="{StaticResource IconSize.Nav}"
-                                Symbol="LockOpen24"
-                                Visibility="{Binding SidebarLocked, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
-                            <ui:SymbolIcon
-                                FontSize="{StaticResource IconSize.Nav}"
-                                Symbol="LockClosed24"
-                                Visibility="{Binding SidebarLocked, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        </Grid>
-                    </ui:Button>
-
                     <ListBox
                         x:Name="Navigation"
                         Padding="0"

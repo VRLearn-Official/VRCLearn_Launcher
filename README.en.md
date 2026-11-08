@@ -30,7 +30,6 @@ VRCLearn Launcher manages VPM repositories, packages and Unity projects in one p
 - **Projects** — list, create, favorite and archive projects; launch Unity with a selected editor version; back up, restore and export
 - **Resources** — manage local unitypackages with covers, tags, search and manuals
 - **Launcher backup** — back up configuration only or everything, restore into a chosen directory
-- **Interface** — lock the sidebar in its expanded state
 - **Templates** — import and create `.vrclearn-template` projects
 - **Plugins** — install `.vclplugin` extensions from local files or by drag-and-drop. Plugins are provided by the community and are not bundled (see [docs/plugins.md](docs/plugins.md))
 - **Desktop integration** — `vcc://` deep links and file associations

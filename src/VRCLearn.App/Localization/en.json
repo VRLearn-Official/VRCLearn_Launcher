@@ -3,8 +3,6 @@
   "Page.OperationFailed": "Operation failed: {0}",
   "Nav.Backups": "Backups",
   "Nav.Projects": "Projects",
-  "Nav.LockSidebar": "Lock sidebar",
-  "Nav.UnlockSidebar": "Unlock sidebar",
   "Packages.User.Title": "User package folders",
   "Packages.User.Hint": "Each folder counts as a package and overrides the same name and version from repos.",
   "Packages.User.Hide": "Hide user packages",

@@ -2,9 +2,7 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
 using System.Windows.Shell;
 using Microsoft.Extensions.Logging;
 using Wpf.Ui.Controls;
@@ -20,12 +18,6 @@ public partial class MainWindow : FluentWindow
     private const double PageShiftOffset = 6;
 
     private const double HeaderShiftOffset = 20;
-
-    private const double SidebarCollapsedWidth = 64;
-
-    private const double SidebarExpandedWidth = 220;
-
-    private const double SidebarClipInset = 14;
 
     private readonly MainWindowViewModel _viewModel;
     private readonly AnimationService _animations;
@@ -46,9 +38,6 @@ public partial class MainWindow : FluentWindow
 
         InitializeComponent();
 
-        ApplySidebarLock(_viewModel.SidebarLocked);
-
-        Sidebar.SizeChanged += (_, _) => UpdateSidebarClips();
         UpdateMaximizeButton();
         LocalizationService.Instance.PropertyChanged += (_, _) => UpdateMaximizeButton();
 
@@ -58,7 +47,6 @@ public partial class MainWindow : FluentWindow
         Loaded += (_, _) =>
         {
             _shown = true;
-            UpdateSidebarClips();
 
             if (_page is { } page)
             {
@@ -87,27 +75,6 @@ public partial class MainWindow : FluentWindow
             });
     }
 
-    private void UpdateSidebarClips()
-    {
-        var radius = (CornerRadius)FindResource("Radius.Control");
-        var rowWidth = SidebarExpandedWidth - SidebarClipInset;
-        var width = Math.Clamp(Sidebar.ActualWidth - SidebarClipInset, 0, rowWidth);
-
-        foreach (var item in Navigation.Items.OfType<ListBoxItem>())
-        {
-            if (item.Template?.FindName("Row", item) is not Border row)
-            {
-                continue;
-            }
-
-            row.Width = rowWidth;
-            row.Clip = new RectangleGeometry(
-                new Rect(0, 0, width, Math.Max(0, row.ActualHeight)),
-                radius.TopLeft,
-                radius.TopLeft);
-        }
-    }
-
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainWindowViewModel.CurrentPage))
@@ -118,11 +85,6 @@ public partial class MainWindow : FluentWindow
         if (e.PropertyName == nameof(MainWindowViewModel.CurrentKey))
         {
             SyncNavigationSelection();
-        }
-
-        if (e.PropertyName == nameof(MainWindowViewModel.SidebarLocked))
-        {
-            ApplySidebarLock(_viewModel.SidebarLocked);
         }
     }
 
@@ -218,57 +180,6 @@ public partial class MainWindow : FluentWindow
         {
             _viewModel.Navigate(key);
         }
-    }
-
-    private void OnSidebarMouseEnter(object sender, MouseEventArgs e)
-    {
-        if (!_viewModel.SidebarLocked)
-        {
-            AnimateSidebar(SidebarExpandedWidth);
-        }
-    }
-
-    private void OnSidebarMouseLeave(object sender, MouseEventArgs e)
-    {
-        if (!_viewModel.SidebarLocked)
-        {
-            AnimateSidebar(SidebarCollapsedWidth);
-        }
-    }
-
-    private void ApplySidebarLock(bool locked)
-    {
-        if (locked)
-        {
-            Sidebar.BeginAnimation(WidthProperty, null);
-            Sidebar.Width = SidebarExpandedWidth;
-        }
-        else if (!Sidebar.IsMouseOver)
-        {
-            Sidebar.BeginAnimation(WidthProperty, null);
-            Sidebar.Width = SidebarCollapsedWidth;
-        }
-
-        UpdateSidebarClips();
-    }
-
-    private void AnimateSidebar(double width)
-    {
-        if (!_animations.Enabled)
-        {
-            Sidebar.BeginAnimation(WidthProperty, null);
-            Sidebar.Width = width;
-            return;
-        }
-
-        var animation = new DoubleAnimation
-        {
-            To = width,
-            Duration = TimeSpan.FromMilliseconds(180),
-            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
-        };
-
-        Sidebar.BeginAnimation(WidthProperty, animation);
     }
 
     private void OnMinimizeClick(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
