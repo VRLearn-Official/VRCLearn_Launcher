@@ -382,7 +382,7 @@
   "ProjectDetail.VersionSwitchFailed": "切换版本失败：{0}",
   "ProjectDetail.Reinstall": "重新安装",
   "ProjectDetail.UnlockedHint": "该包在 Packages 目录里，但没登记到 vpm-manifest.json，没法通过清单移除。",
-  "ProjectDetail.CustomTag": "用户自定义",
+  "ProjectDetail.CustomTag": "不在仓库",
   "ProjectDetail.Review": "待应用的变更",
   "ProjectDetail.Apply": "应用",
   "ProjectDetail.Discard": "放弃",

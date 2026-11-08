@@ -382,7 +382,7 @@
   "ProjectDetail.VersionSwitchFailed": "Could not switch versions: {0}",
   "ProjectDetail.Reinstall": "Reinstall",
   "ProjectDetail.UnlockedHint": "This package sits in the Packages folder but is not registered in vpm-manifest.json, so it cannot be removed through the manifest.",
-  "ProjectDetail.CustomTag": "Custom",
+  "ProjectDetail.CustomTag": "Not in repository",
   "ProjectDetail.Review": "Pending changes",
   "ProjectDetail.Apply": "Apply",
   "ProjectDetail.Discard": "Discard",
