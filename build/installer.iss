@@ -11,8 +11,8 @@ AppId={{C3B4BABC-4F9B-4281-A58B-02AA08BC61B7}
 AppName={#MyAppName}
 AppVersion={#MyAppVersion}
 AppVerName={#MyAppName} {#MyAppVersion}
-AppPublisherURL=https://start.gamemode1.com/pages/vrclearnlauncher/
-AppSupportURL=https://start.gamemode1.com/pages/vrclearnlauncher/
+AppPublisherURL=https://github.com/VRLearn-Official/VRCLearn_Launcher
+AppSupportURL=https://github.com/VRLearn-Official/VRCLearn_Launcher/issues/
 DefaultDirName={localappdata}\Programs\VRCLearnLauncher
 DefaultGroupName={#MyAppName}
 DisableProgramGroupPage=yes
@@ -37,12 +37,12 @@ Name: "english"; MessagesFile: "compiler:Default.isl"
 
 [CustomMessages]
 english.CloseLauncher=VRCLearn Launcher is running. Close it before continuing.
-chinesesimplified.CloseLauncher=VRCLearn Launcher 正在运行，请先关闭启动器再继续。
+chinesesimplified.CloseLauncher=VRCLearn Launcher 正在运行，请先关闭后再继续。
 
 english.ConfirmCloseLauncher=VRCLearn Launcher is running. Close it and continue?
-chinesesimplified.ConfirmCloseLauncher=VRCLearn Launcher 正在运行。要关闭启动器并继续吗？
-english.CloseLauncherFailed=The launcher did not close. Close it manually before continuing.
-chinesesimplified.CloseLauncherFailed=未能自动关闭启动器，请手动关闭后再继续。
+chinesesimplified.ConfirmCloseLauncher=VRCLearn Launcher 正在运行。关闭后继续吗？
+english.CloseLauncherFailed=VRCLearn Launcher did not close. Close it manually before continuing.
+chinesesimplified.CloseLauncherFailed=未能自动关闭 VRCLearn Launcher，请手动关闭后再继续。
 
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
@@ -104,7 +104,7 @@ var
   Process: THandle;
   ImagePath: String;
 begin
-  Result := Length(CheckForMutexes('{#MyAppMutex}')) = 0;
+  Result := not CheckForMutexes('{#MyAppMutex}');
   if Result then
     Exit;
 
@@ -139,14 +139,14 @@ end;
 
 function ConfirmLauncherClose(): Boolean;
 begin
-  Result := Length(CheckForMutexes('{#MyAppMutex}')) = 0;
+  Result := not CheckForMutexes('{#MyAppMutex}');
   if Result then
     Exit;
 
   if SuppressibleMsgBox(CustomMessage('ConfirmCloseLauncher'), mbConfirmation, MB_OKCANCEL, IDCANCEL) <> IDOK then
     Exit;
 
-  Result := RequestLauncherClose() or (Length(CheckForMutexes('{#MyAppMutex}')) = 0);
+  Result := RequestLauncherClose() or (not CheckForMutexes('{#MyAppMutex}'));
 
   if not Result then
   begin
@@ -165,7 +165,7 @@ end;
 function PrepareToInstall(var NeedsRestart: Boolean): String;
 begin
   Result := '';
-  if Length(CheckForMutexes('{#MyAppMutex}')) > 0 then
+  if CheckForMutexes('{#MyAppMutex}') then
   begin
     Log('VRCLearn Launcher is still running.');
     Result := CustomMessage('CloseLauncher');
@@ -175,7 +175,7 @@ end;
 function InitializeUninstall(): Boolean;
 begin
   if UninstallSilent then
-    Result := Length(CheckForMutexes('{#MyAppMutex}')) = 0
+    Result := not CheckForMutexes('{#MyAppMutex}')
   else
     Result := ConfirmLauncherClose();
 end;
