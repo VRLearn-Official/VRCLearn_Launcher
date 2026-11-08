@@ -7,6 +7,33 @@
     xmlns:views="clr-namespace:VRCLearn.App.Views"
     PreviewMouseWheel="OnPackageListMouseWheel">
 
+    <UserControl.Resources>
+        <Style x:Key="PackageList" TargetType="ItemsControl">
+            <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+            <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel" />
+            <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="ItemsControl">
+                        <ScrollViewer
+                            CanContentScroll="True"
+                            HorizontalScrollBarVisibility="Disabled"
+                            VerticalScrollBarVisibility="Auto">
+                            <ItemsPresenter />
+                        </ScrollViewer>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+            <Setter Property="ItemsPanel">
+                <Setter.Value>
+                    <ItemsPanelTemplate>
+                        <VirtualizingStackPanel />
+                    </ItemsPanelTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </UserControl.Resources>
+
     <ScrollViewer Style="{StaticResource PageScroll}">
         <StackPanel>
 
@@ -258,6 +285,14 @@
 
             <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Installed}" />
 
+            <ui:TextBox
+                x:Name="InstalledPackageSearchBox"
+                Margin="0,10,0,0"
+                AutomationProperties.Name="{markup:Tr ProjectDetail.SearchInstalledPlaceholder}"
+                PlaceholderText="{markup:Tr ProjectDetail.SearchInstalledPlaceholder}"
+                TextChanged="OnPackageSearchTextChanged"
+                Text="{Binding InstalledSearchText, UpdateSourceTrigger=PropertyChanged}" />
+
             <ui:Card Margin="0,10,0,0" Padding="16,10">
                 <StackPanel Orientation="Horizontal">
                     <TextBlock
@@ -283,7 +318,12 @@
                 </StackPanel>
             </ui:Card>
 
-            <ItemsControl Margin="{StaticResource Gap.Small}" ItemsSource="{Binding Installed}">
+            <ItemsControl
+                x:Name="InstalledPackageList"
+                MaxHeight="320"
+                Margin="{StaticResource Gap.Small}"
+                ItemsSource="{Binding FilteredInstalled}"
+                Style="{StaticResource PackageList}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <ui:Card Style="{StaticResource RowCard}">
@@ -387,24 +427,7 @@
                 MaxHeight="480"
                 Margin="{StaticResource Gap.Row}"
                 ItemsSource="{Binding Available}"
-                VirtualizingPanel.IsVirtualizing="True"
-                VirtualizingPanel.ScrollUnit="Pixel"
-                VirtualizingPanel.VirtualizationMode="Recycling">
-                <ItemsControl.Template>
-                    <ControlTemplate TargetType="ItemsControl">
-                        <ScrollViewer
-                            CanContentScroll="True"
-                            HorizontalScrollBarVisibility="Disabled"
-                            VerticalScrollBarVisibility="Auto">
-                            <ItemsPresenter />
-                        </ScrollViewer>
-                    </ControlTemplate>
-                </ItemsControl.Template>
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <VirtualizingStackPanel />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
+                Style="{StaticResource PackageList}">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <ui:Card Style="{StaticResource RowCard}">

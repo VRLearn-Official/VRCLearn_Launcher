@@ -39,7 +39,8 @@ public partial class ProjectDetailPage : UserControl
     private void OnPackageListMouseWheel(object sender, MouseWheelEventArgs e)
     {
         var viewer = VisualTree.FindAncestor<ScrollViewer>(e.OriginalSource as DependencyObject);
-        if (viewer is null || viewer.TemplatedParent != AvailablePackageList
+        if (viewer is null
+            || (viewer.TemplatedParent != InstalledPackageList && viewer.TemplatedParent != AvailablePackageList)
             || (e.Delta > 0 ? viewer.VerticalOffset <= 0 : viewer.VerticalOffset >= viewer.ScrollableHeight))
         {
             return;
@@ -55,7 +56,8 @@ public partial class ProjectDetailPage : UserControl
 
     private void OnPackageSearchTextChanged(object sender, TextChangedEventArgs e)
     {
-        if (AvailablePackageList is { } list)
+        var list = ReferenceEquals(sender, InstalledPackageSearchBox) ? InstalledPackageList : AvailablePackageList;
+        if (list is not null)
         {
             VisualTree.FindDescendant<ScrollViewer>(list)?.ScrollToTop();
         }

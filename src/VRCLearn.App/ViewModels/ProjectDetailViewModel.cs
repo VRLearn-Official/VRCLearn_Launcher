@@ -1,6 +1,7 @@
 ﻿using System.Collections.ObjectModel;
 using System.ComponentModel;
 using System.IO;
+using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -164,7 +165,12 @@ public sealed partial class ProjectDetailViewModel(
     [ObservableProperty]
     private string _searchText = "";
 
+    [ObservableProperty]
+    private string _installedSearchText = "";
+
     public ObservableCollection<InstalledPackageViewModel> Installed { get; } = [];
+
+    public ICollectionView FilteredInstalled => CollectionViewSource.GetDefaultView(Installed);
 
     public ObservableCollection<AvailablePackageViewModel> Available { get; } = [];
 
@@ -395,6 +401,7 @@ public sealed partial class ProjectDetailViewModel(
         ClearPending();
         Status = null;
         SearchText = "";
+        InstalledSearchText = "";
         ProjectType = ProjectType.Unknown;
 
         OnPropertyChanged(nameof(ProjectPath));
@@ -1193,6 +1200,21 @@ public sealed partial class ProjectDetailViewModel(
         Status = leftover.Count > 0
             ? localization.Format("ProjectDetail.AppliedWithLeftovers", leftover.Count)
             : successMessage;
+    }
+
+    partial void OnInstalledSearchTextChanged(string value)
+    {
+        var query = value.Trim();
+        var view = FilteredInstalled;
+        view.Filter = query.Length == 0
+            ? null
+            : item => item is InstalledPackageViewModel row
+                && ApproximateMatch.Rank(query, row.Name, row.DisplayName) is not null;
+
+        foreach (var row in Installed.Where(row => row.IsSelected && !view.Contains(row)))
+        {
+            row.IsSelected = false;
+        }
     }
 
     private TransientAction Search =>

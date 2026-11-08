@@ -361,6 +361,7 @@
   "ProjectDetail.Unreadable": "Could not read project: {0}",
   "ProjectDetail.Installed": "Installed packages",
   "ProjectDetail.Available": "Available packages",
+  "ProjectDetail.SearchInstalledPlaceholder": "Search installed packages",
   "ProjectDetail.SearchPlaceholder": "Search package name",
   "ProjectDetail.SearchHint": "Type to filter. Hidden repositories and user packages are excluded.",
   "ProjectDetail.Add": "Add",
