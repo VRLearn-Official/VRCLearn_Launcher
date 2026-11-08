@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
@@ -45,19 +45,34 @@ public partial class ProjectDetailPage : UserControl
     private void OnJumpToAvailableClick(object sender, RoutedEventArgs e)
     {
         var index = ProjectItems.Items.IndexOf(AvailablePackagesSection);
-        if (index < 0 || VisualTree.FindDescendant<VirtualizingStackPanel>(ProjectItems) is not { } panel)
+        if (index < 0
+            || VisualTree.FindDescendant<VirtualizingStackPanel>(ProjectItems) is not { ScrollOwner: { } viewer } panel)
         {
             return;
         }
 
+        var start = viewer.VerticalOffset;
         panel.BringIndexIntoViewPublic(index);
         ProjectItems.UpdateLayout();
-        AvailablePackageSearchBox.Focus();
-        if (AvailablePackagesSection.IsDescendantOf(panel) && panel.ScrollOwner is { } viewer)
+        if (SectionOffset() is not { } destination)
         {
-            var sectionTop = AvailablePackagesSection.TranslatePoint(new Point(), panel).Y;
-            viewer.ScrollToVerticalOffset(viewer.VerticalOffset + sectionTop);
+            return;
         }
+
+        AvailablePackageSearchBox.Focus();
+        if (AnimationService.Current?.Enabled != false)
+        {
+            // Start near a distant section so the transition stays short even in large projects.
+            var approach = Math.Max(start, destination - viewer.ViewportHeight / 2);
+            viewer.ScrollToVerticalOffset(approach);
+            ProjectItems.UpdateLayout();
+        }
+
+        SmoothScroll.ScrollTo(viewer, SectionOffset);
+
+        double? SectionOffset() => AvailablePackagesSection.IsDescendantOf(panel)
+            ? viewer.VerticalOffset + AvailablePackagesSection.TranslatePoint(new Point(), panel).Y
+            : null;
     }
 
     private void OnUpgradeClick(object sender, MouseButtonEventArgs e)

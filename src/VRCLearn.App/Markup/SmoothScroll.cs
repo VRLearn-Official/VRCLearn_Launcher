@@ -15,6 +15,7 @@ public static class SmoothScroll
     private const double TimeConstant = 0.09;
 
     private const double Settle = 0.5;
+    private static readonly TimeSpan JumpDuration = TimeSpan.FromMilliseconds(480);
 
     public static readonly DependencyProperty IsEnabledProperty =
         DependencyProperty.RegisterAttached(
@@ -28,6 +29,8 @@ public static class SmoothScroll
         public double Target { get; set; }
 
         public double Position { get; set; }
+        public Func<double?>? JumpTarget { get; init; }
+        public long JumpStarted { get; init; }
     }
 
     private static readonly Dictionary<ScrollViewer, Glide> Glides = [];
@@ -40,11 +43,35 @@ public static class SmoothScroll
     public static bool GetIsEnabled(DependencyObject element) =>
         (bool)element.GetValue(IsEnabledProperty);
 
+    public static void ScrollTo(ScrollViewer viewer, Func<double?> target)
+    {
+        if (AnimationService.Current?.Enabled == false)
+        {
+            Glides.Remove(viewer);
+            if (target() is { } offset)
+            {
+                viewer.ScrollToVerticalOffset(offset);
+            }
+
+            return;
+        }
+
+        Glides[viewer] = new Glide
+        {
+            Position = viewer.VerticalOffset,
+            JumpTarget = target,
+            JumpStarted = Stopwatch.GetTimestamp(),
+        };
+        Start();
+    }
+
     private static void OnIsEnabledChanged(DependencyObject element, DependencyPropertyChangedEventArgs e)
     {
         if (element is ScrollViewer viewer)
         {
             viewer.PreviewMouseWheel -= OnPreviewMouseWheel;
+            viewer.PreviewMouseDown -= OnScrollInput;
+            viewer.PreviewKeyDown -= OnScrollInput;
             viewer.ScrollChanged -= OnScrollChanged;
             viewer.Unloaded -= OnUnloaded;
             Glides.Remove(viewer);
@@ -52,6 +79,8 @@ public static class SmoothScroll
             if ((bool)e.NewValue)
             {
                 viewer.PreviewMouseWheel += OnPreviewMouseWheel;
+                viewer.PreviewMouseDown += OnScrollInput;
+                viewer.PreviewKeyDown += OnScrollInput;
                 viewer.ScrollChanged += OnScrollChanged;
                 viewer.Unloaded += OnUnloaded;
             }
@@ -93,11 +122,20 @@ public static class SmoothScroll
         }
     }
 
+    private static void OnScrollInput(object sender, InputEventArgs e)
+    {
+        if (sender is ScrollViewer viewer && Glides.TryGetValue(viewer, out var glide) && glide.JumpTarget is not null)
+        {
+            Glides.Remove(viewer);
+        }
+    }
+
     private static void OnScrollChanged(object sender, ScrollChangedEventArgs e)
     {
         if (sender is not ScrollViewer viewer
             || e.VerticalChange == 0
             || !Glides.TryGetValue(viewer, out var glide)
+            || glide.JumpTarget is not null
             || Math.Abs(glide.Position - viewer.VerticalOffset) < Settle)
         {
             return;
@@ -129,7 +167,7 @@ public static class SmoothScroll
 
         var step = lines < 0 ? viewer.ViewportHeight : lines * PixelsPerLine;
 
-        if (!Glides.TryGetValue(viewer, out var glide))
+        if (!Glides.TryGetValue(viewer, out var glide) || glide.JumpTarget is not null)
         {
             Glides[viewer] = glide = new Glide()
             {
@@ -178,9 +216,27 @@ public static class SmoothScroll
 
         foreach (var (viewer, glide) in Glides)
         {
+            if (glide.JumpTarget is { } target)
+            {
+                if (target() is not { } offset)
+                {
+                    (settled ??= []).Add(viewer);
+                    continue;
+                }
+
+                // Rebase after virtualized layout changes, while keeping fractional movement between frames.
+                if (Math.Abs(glide.Position - viewer.VerticalOffset) > 1)
+                {
+                    glide.Position = viewer.VerticalOffset;
+                }
+
+                glide.Target = Math.Clamp(offset, 0, viewer.ScrollableHeight);
+            }
+
             var remaining = glide.Target - glide.Position;
 
-            if (Math.Abs(remaining) < Settle)
+            if (Math.Abs(remaining) < Settle
+                || (glide.JumpTarget is not null && Stopwatch.GetElapsedTime(glide.JumpStarted, now) >= JumpDuration))
             {
                 if (glide.Position != glide.Target)
                 {
