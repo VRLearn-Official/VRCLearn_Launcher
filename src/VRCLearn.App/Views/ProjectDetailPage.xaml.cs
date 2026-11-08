@@ -42,9 +42,15 @@ public partial class ProjectDetailPage : UserControl
         Unloaded += (_, _) => _unityTimer.Stop();
     }
 
-    private void OnJumpToAvailableClick(object sender, RoutedEventArgs e)
+    private void OnJumpToAvailableClick(object sender, RoutedEventArgs e) =>
+        JumpToPackageSection(AvailablePackagesSection, AvailablePackageSearchBox);
+
+    private void OnJumpToInstalledClick(object sender, RoutedEventArgs e) =>
+        JumpToPackageSection(InstalledPackagesSection, InstalledPackageSearchBox);
+
+    private void JumpToPackageSection(FrameworkElement section, TextBox searchBox)
     {
-        var index = ProjectItems.Items.IndexOf(AvailablePackagesSection);
+        var index = ProjectItems.Items.IndexOf(section);
         if (index < 0
             || VisualTree.FindDescendant<VirtualizingStackPanel>(ProjectItems) is not { ScrollOwner: { } viewer } panel)
         {
@@ -59,19 +65,20 @@ public partial class ProjectDetailPage : UserControl
             return;
         }
 
-        AvailablePackageSearchBox.Focus();
+        searchBox.Focus();
         if (AnimationService.Current?.Enabled != false)
         {
             // Start near a distant section so the transition stays short even in large projects.
-            var approach = Math.Max(start, destination - viewer.ViewportHeight / 2);
+            var distance = viewer.ViewportHeight / 2;
+            var approach = Math.Clamp(start, destination - distance, destination + distance);
             viewer.ScrollToVerticalOffset(approach);
             ProjectItems.UpdateLayout();
         }
 
         SmoothScroll.ScrollTo(viewer, SectionOffset);
 
-        double? SectionOffset() => AvailablePackagesSection.IsDescendantOf(panel)
-            ? viewer.VerticalOffset + AvailablePackagesSection.TranslatePoint(new Point(), panel).Y
+        double? SectionOffset() => section.IsDescendantOf(panel)
+            ? viewer.VerticalOffset + section.TranslatePoint(new Point(), panel).Y
             : null;
     }
 

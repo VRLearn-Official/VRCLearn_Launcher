@@ -391,7 +391,7 @@
                             </StackPanel>
                         </StackPanel>
                 </StackPanel>
-                <StackPanel Margin="0,0,0,8">
+                <StackPanel x:Name="InstalledPackagesSection" Margin="0,0,0,8">
                     <Grid Margin="{StaticResource Gap.Section}">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="*" />
@@ -445,7 +445,24 @@
                 </StackPanel>
                 <CollectionContainer x:Name="InstalledPackageRows" />
                 <StackPanel x:Name="AvailablePackagesSection" Margin="0,0,0,12">
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Available}" />
+                    <Grid Margin="{StaticResource Gap.Section}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Margin="0"
+                            VerticalAlignment="Center"
+                            Style="{StaticResource SectionTitle}"
+                            Text="{markup:Tr ProjectDetail.Available}" />
+                        <ui:Button
+                            Grid.Column="1"
+                            Style="{StaticResource RowButton}"
+                            Appearance="Transparent"
+                            Click="OnJumpToInstalledClick"
+                            Content="{markup:Tr ProjectDetail.JumpToInstalled}"
+                            Icon="{ui:SymbolIcon ArrowUp24}" />
+                    </Grid>
 
                     <ui:TextBox
                         x:Name="AvailablePackageSearchBox"

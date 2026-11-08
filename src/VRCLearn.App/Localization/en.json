@@ -362,6 +362,7 @@
   "ProjectDetail.Installed": "Installed packages",
   "ProjectDetail.Available": "Available packages",
   "ProjectDetail.JumpToAvailable": "Jump to available packages",
+  "ProjectDetail.JumpToInstalled": "Jump to installed packages",
   "ProjectDetail.SearchInstalledPlaceholder": "Search installed packages",
   "ProjectDetail.SearchPlaceholder": "Search package name",
   "ProjectDetail.SearchHint": "Type to filter. Hidden repositories and user packages are excluded.",
