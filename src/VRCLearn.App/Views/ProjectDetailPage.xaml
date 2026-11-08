@@ -125,12 +125,62 @@
             </ui:Card>
 
             <StackPanel Visibility="{Binding HasBackups, Converter={StaticResource BooleanToVisibilityConverter}}">
-                    <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Backups.Title}" />
-
-                    <ItemsControl Margin="{StaticResource Gap.Row}" ItemsSource="{Binding Backups}">
+                <ToggleButton
+                    Checked="OnBackupsChecked"
+                    Cursor="Hand"
+                    FocusVisualStyle="{x:Null}"
+                    HorizontalContentAlignment="Stretch"
+                    IsChecked="{Binding AreBackupsExpanded, Mode=TwoWay}"
+                    Unchecked="OnBackupsUnchecked">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                    <Grid Margin="{StaticResource Gap.Section}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Margin="0"
+                            Style="{StaticResource SectionTitle}"
+                            Text="{markup:Tr ProjectDetail.Backups.Title}" />
+                        <ui:SymbolIcon
+                            Grid.Column="1"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            FontSize="{StaticResource IconSize.Inline}"
+                            Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                            <ui:SymbolIcon.Style>
+                                <Style TargetType="ui:SymbolIcon">
+                                    <Setter Property="Symbol" Value="ChevronDown24" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AreBackupsExpanded}" Value="True">
+                                            <Setter Property="Symbol" Value="ChevronUp24" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ui:SymbolIcon.Style>
+                        </ui:SymbolIcon>
+                    </Grid>
+                </ToggleButton>
+                <StackPanel
+                    x:Name="BackupsContent"
+                    ClipToBounds="True"
+                    Visibility="Collapsed">
+                    <ScrollViewer
+                        MaxHeight="320"
+                        Margin="{StaticResource Gap.Row}"
+                        Style="{StaticResource VirtualizedListScroll}">
+                        <ItemsControl
+                            ItemsSource="{Binding Backups}"
+                            ItemsPanel="{StaticResource VirtualizingStackItemsPanel}"
+                            VirtualizingPanel.ScrollUnit="Pixel"
+                            VirtualizingPanel.VirtualizationMode="Recycling">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <ui:Card Opacity="{Binding RowOpacity}" Style="{StaticResource RowCard}">
+                                <ui:Card Style="{StaticResource MissingRowCard}">
                                 <Grid>
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="*" />
@@ -173,7 +223,8 @@
                                 </ui:Card>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
-                    </ItemsControl>
+                        </ItemsControl>
+                    </ScrollViewer>
 
                     <StackPanel Visibility="{Binding HasPendingRestore, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <TextBlock
@@ -195,6 +246,7 @@
                         </StackPanel>
                     </StackPanel>
                 </StackPanel>
+            </StackPanel>
 
             <StackPanel Visibility="{Binding HasPendingChanges, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Review}" />
@@ -268,7 +320,15 @@
                 Text="{markup:Tr ProjectDetail.SearchHint}"
                 Visibility="{Binding IsSearchEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
-            <ItemsControl Margin="{StaticResource Gap.Row}" ItemsSource="{Binding Available}">
+            <ScrollViewer
+                MaxHeight="420"
+                Margin="{StaticResource Gap.Row}"
+                Style="{StaticResource VirtualizedListScroll}">
+                <ItemsControl
+                    ItemsSource="{Binding Available}"
+                    ItemsPanel="{StaticResource VirtualizingStackItemsPanel}"
+                    VirtualizingPanel.ScrollUnit="Pixel"
+                    VirtualizingPanel.VirtualizationMode="Recycling">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <ui:Card Style="{StaticResource RowCard}">
@@ -307,7 +367,8 @@
                         </ui:Card>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
-            </ItemsControl>
+                </ItemsControl>
+            </ScrollViewer>
 
             <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Installed}" />
 

@@ -2,10 +2,9 @@ using System.ComponentModel;
 using System.Windows;
 using System.Windows.Automation;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Media;
-using System.Windows.Media.Animation;
 using System.Windows.Shell;
+using System.Windows.Threading;
 using Microsoft.Extensions.Logging;
 using Wpf.Ui.Controls;
 using VRCLearn.App.Services;
@@ -21,16 +20,16 @@ public partial class MainWindow : FluentWindow
 
     private const double HeaderShiftOffset = 20;
 
-    private const double SidebarCollapsedWidth = 64;
-
-    private const double SidebarExpandedWidth = 220;
-
-    private const double SidebarClipInset = 14;
+    private const int MaxCachedViews = 3;
 
     private readonly MainWindowViewModel _viewModel;
     private readonly AnimationService _animations;
     private readonly DropImportService _drops;
     private readonly ILogger<MainWindow> _logger;
+
+    private string[]? _lastDropPaths;
+    private bool _lastDropValid;
+    private int _dragGeneration;
 
     public MainWindow(
         MainWindowViewModel viewModel,
@@ -46,9 +45,6 @@ public partial class MainWindow : FluentWindow
 
         InitializeComponent();
 
-        ApplySidebarLock(_viewModel.SidebarLocked);
-
-        Sidebar.SizeChanged += (_, _) => UpdateSidebarClips();
         UpdateMaximizeButton();
         LocalizationService.Instance.PropertyChanged += (_, _) => UpdateMaximizeButton();
 
@@ -58,7 +54,6 @@ public partial class MainWindow : FluentWindow
         Loaded += (_, _) =>
         {
             _shown = true;
-            UpdateSidebarClips();
 
             if (_page is { } page)
             {
@@ -87,27 +82,6 @@ public partial class MainWindow : FluentWindow
             });
     }
 
-    private void UpdateSidebarClips()
-    {
-        var radius = (CornerRadius)FindResource("Radius.Control");
-        var rowWidth = SidebarExpandedWidth - SidebarClipInset;
-        var width = Math.Clamp(Sidebar.ActualWidth - SidebarClipInset, 0, rowWidth);
-
-        foreach (var item in Navigation.Items.OfType<ListBoxItem>())
-        {
-            if (item.Template?.FindName("Row", item) is not Border row)
-            {
-                continue;
-            }
-
-            row.Width = rowWidth;
-            row.Clip = new RectangleGeometry(
-                new Rect(0, 0, width, Math.Max(0, row.ActualHeight)),
-                radius.TopLeft,
-                radius.TopLeft);
-        }
-    }
-
     private void OnViewModelPropertyChanged(object? sender, PropertyChangedEventArgs e)
     {
         if (e.PropertyName == nameof(MainWindowViewModel.CurrentPage))
@@ -118,11 +92,6 @@ public partial class MainWindow : FluentWindow
         if (e.PropertyName == nameof(MainWindowViewModel.CurrentKey))
         {
             SyncNavigationSelection();
-        }
-
-        if (e.PropertyName == nameof(MainWindowViewModel.SidebarLocked))
-        {
-            ApplySidebarLock(_viewModel.SidebarLocked);
         }
     }
 
@@ -148,6 +117,7 @@ public partial class MainWindow : FluentWindow
     }
 
     private readonly Dictionary<object, FrameworkElement> _views = [];
+    private readonly List<object> _viewOrder = [];
 
     private FrameworkElement? _page;
     private bool _shown;
@@ -168,6 +138,7 @@ public partial class MainWindow : FluentWindow
         target.Visibility = Visibility.Visible;
 
         _page = target;
+        TrimViews(viewModel);
 
         if (_shown)
         {
@@ -180,6 +151,9 @@ public partial class MainWindow : FluentWindow
     {
         if (_views.TryGetValue(viewModel, out var cached))
         {
+            _viewOrder.Remove(viewModel);
+            _viewOrder.Add(viewModel);
+
             return cached;
         }
 
@@ -191,8 +165,35 @@ public partial class MainWindow : FluentWindow
 
         PageHost.Children.Add(view);
         _views[viewModel] = view;
+        _viewOrder.Add(viewModel);
 
         return view;
+    }
+
+    private void TrimViews(object current)
+    {
+        while (_views.Count > MaxCachedViews)
+        {
+            object? stale = null;
+
+            foreach (var candidate in _viewOrder)
+            {
+                if (!ReferenceEquals(candidate, current))
+                {
+                    stale = candidate;
+                    break;
+                }
+            }
+
+            if (stale is null || !_views.Remove(stale, out var view))
+            {
+                return;
+            }
+
+            _viewOrder.Remove(stale);
+            view.DataContext = null;
+            PageHost.Children.Remove(view);
+        }
     }
 
     private void PlayPageTransition(FrameworkElement page)
@@ -218,57 +219,6 @@ public partial class MainWindow : FluentWindow
         {
             _viewModel.Navigate(key);
         }
-    }
-
-    private void OnSidebarMouseEnter(object sender, MouseEventArgs e)
-    {
-        if (!_viewModel.SidebarLocked)
-        {
-            AnimateSidebar(SidebarExpandedWidth);
-        }
-    }
-
-    private void OnSidebarMouseLeave(object sender, MouseEventArgs e)
-    {
-        if (!_viewModel.SidebarLocked)
-        {
-            AnimateSidebar(SidebarCollapsedWidth);
-        }
-    }
-
-    private void ApplySidebarLock(bool locked)
-    {
-        if (locked)
-        {
-            Sidebar.BeginAnimation(WidthProperty, null);
-            Sidebar.Width = SidebarExpandedWidth;
-        }
-        else if (!Sidebar.IsMouseOver)
-        {
-            Sidebar.BeginAnimation(WidthProperty, null);
-            Sidebar.Width = SidebarCollapsedWidth;
-        }
-
-        UpdateSidebarClips();
-    }
-
-    private void AnimateSidebar(double width)
-    {
-        if (!_animations.Enabled)
-        {
-            Sidebar.BeginAnimation(WidthProperty, null);
-            Sidebar.Width = width;
-            return;
-        }
-
-        var animation = new DoubleAnimation
-        {
-            To = width,
-            Duration = TimeSpan.FromMilliseconds(180),
-            EasingFunction = new QuadraticEase { EasingMode = EasingMode.EaseOut },
-        };
-
-        Sidebar.BeginAnimation(WidthProperty, animation);
     }
 
     private void OnMinimizeClick(object sender, RoutedEventArgs e) => WindowState = WindowState.Minimized;
@@ -312,33 +262,97 @@ public partial class MainWindow : FluentWindow
         }
     }
 
-    private void OnPageDragOver(object sender, DragEventArgs e)
-    {
-        var valid = _viewModel.ShowDropZone
-            && e.Data.GetData(DataFormats.FileDrop) is string[] paths
-            && DropImportService.CanAccept(_viewModel.CurrentKey, paths);
+    private bool IsDropAllowed =>
+        _viewModel.CurrentKey != "setup"
+        && !_drops.IsBusy
+        && !_viewModel.Progress.IsRunning;
 
-        e.Effects = valid ? DragDropEffects.Copy : DragDropEffects.None;
+    private void OnWindowDragOver(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            return;
+        }
+
         e.Handled = true;
+        _dragGeneration++;
+
+        var valid = IsDropAllowed && GetDropPaths(e) is { } paths && IsDropValid(paths);
+
+        DropOverlay.Visibility = valid ? Visibility.Visible : Visibility.Collapsed;
+        e.Effects = valid ? DragDropEffects.Copy : DragDropEffects.None;
     }
 
-    private async void OnPageDrop(object sender, DragEventArgs e)
+    private void OnWindowDragLeave(object sender, DragEventArgs e)
     {
-        e.Handled = true;
+        var generation = _dragGeneration;
 
-        if (!_viewModel.ShowDropZone
-            || e.Data.GetData(DataFormats.FileDrop) is not string[] paths)
+        Dispatcher.BeginInvoke(DispatcherPriority.Background, new Action(() =>
+        {
+            if (generation == _dragGeneration)
+            {
+                HideDropOverlay();
+            }
+        }));
+    }
+
+    private async void OnWindowDrop(object sender, DragEventArgs e)
+    {
+        if (!e.Data.GetDataPresent(DataFormats.FileDrop))
+        {
+            return;
+        }
+
+        _dragGeneration++;
+        e.Handled = true;
+        HideDropOverlay();
+
+        if (!IsDropAllowed || GetDropPaths(e) is not { } paths)
         {
             return;
         }
 
         try
         {
-            await _drops.ImportAsync(_viewModel.CurrentKey, paths);
+            await _drops.ImportAsync(paths);
         }
         catch (Exception exception)
         {
             _logger.LogWarning(exception, "拖放导入失败");
         }
+        finally
+        {
+            Activate();
+        }
+    }
+
+    private static string[]? GetDropPaths(DragEventArgs e) =>
+        e.Data.GetData(DataFormats.FileDrop) is string[] paths && paths.Length > 0 ? paths : null;
+
+    private bool IsDropValid(string[] paths)
+    {
+        if (ReferenceEquals(paths, _lastDropPaths))
+        {
+            return _lastDropValid;
+        }
+
+        if (_lastDropPaths is not null
+            && paths.Length == _lastDropPaths.Length
+            && paths.SequenceEqual(_lastDropPaths, StringComparer.OrdinalIgnoreCase))
+        {
+            return _lastDropValid;
+        }
+
+        _lastDropPaths = paths;
+        _lastDropValid = DropImportService.CanAccept(paths);
+
+        return _lastDropValid;
+    }
+
+    private void HideDropOverlay()
+    {
+        DropOverlay.Visibility = Visibility.Collapsed;
+        _lastDropPaths = null;
+        _lastDropValid = false;
     }
 }

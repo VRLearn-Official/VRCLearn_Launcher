@@ -249,15 +249,20 @@ public sealed class PluginManager : IDisposable
     {
         _windows.Close(id);
 
-        if (_runtimes.Remove(id, out var runtime))
+        if (!_runtimes.Remove(id, out var runtime))
         {
-            await runtime.DisposeAsync(_logger);
-            _services.RemoveOwner(id);
+            return;
         }
 
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
+        await runtime.DisposeAsync(_logger);
+        _services.RemoveOwner(id);
+
+        await Task.Run(() =>
+        {
+            GC.Collect();
+            GC.WaitForPendingFinalizers();
+            GC.Collect();
+        });
     }
 
     public string GetDataDirectory(string id)

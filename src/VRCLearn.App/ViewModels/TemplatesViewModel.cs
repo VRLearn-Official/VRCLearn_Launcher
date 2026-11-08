@@ -26,6 +26,7 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
     private readonly GuiConfigStore _configStore;
     private readonly DialogService _dialogs;
     private readonly ILogger<TemplatesViewModel> _logger;
+    private readonly SemaphoreSlim _reloadGate = new(1, 1);
 
     private TemplateLibrary _library;
     private PackageCatalog _catalog = PackageCatalog.FromRepositories([]);
@@ -71,6 +72,20 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
     public string FileExtension => TemplateFormat.Extension;
 
     public async Task ReloadAsync()
+    {
+        await _reloadGate.WaitAsync();
+
+        try
+        {
+            await ReloadCoreAsync();
+        }
+        finally
+        {
+            _reloadGate.Release();
+        }
+    }
+
+    private async Task ReloadCoreAsync()
     {
         try
         {

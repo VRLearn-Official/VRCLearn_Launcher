@@ -6,9 +6,14 @@
     xmlns:markup="clr-namespace:VRCLearn.App.Markup"
     xmlns:views="clr-namespace:VRCLearn.App.Views">
 
-    <ScrollViewer Style="{StaticResource PageScroll}">
-        <StackPanel>
-            <Grid Margin="{StaticResource Gap.Field}">
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.Row="0" Margin="32,40,32,0">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*" />
                     <ColumnDefinition Width="Auto" />
@@ -57,16 +62,24 @@
                     Style="{StaticResource BusyRing}" />
             </Grid>
 
-            <TextBlock
-                Margin="{StaticResource Gap.Field}"
-                Style="{StaticResource Caption}"
-                Text="{Binding EmptyText}"
-                Visibility="{Binding HasResources, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+        <TextBlock
+            Grid.Row="1"
+            Margin="32,16,32,0"
+            Style="{StaticResource Caption}"
+            Text="{Binding EmptyText}"
+            Visibility="{Binding HasResources, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
 
-            <ItemsControl Margin="{StaticResource Gap.Field}" ItemsSource="{Binding Resources}">
+        <ScrollViewer
+            Grid.Row="2"
+            Padding="32,16,32,32"
+            Style="{StaticResource VirtualizedListScroll}">
+            <ItemsControl
+                ItemsSource="{Binding Resources}"
+                VirtualizingPanel.ScrollUnit="Pixel"
+                VirtualizingPanel.VirtualizationMode="Recycling">
                 <ItemsControl.ItemsPanel>
                     <ItemsPanelTemplate>
-                        <UniformGrid Columns="4" />
+                        <ui:VirtualizingWrapPanel />
                     </ItemsPanelTemplate>
                 </ItemsControl.ItemsPanel>
                 <ItemsControl.ItemTemplate>
@@ -75,6 +88,6 @@
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
             </ItemsControl>
-        </StackPanel>
-    </ScrollViewer>
+        </ScrollViewer>
+    </Grid>
 </UserControl>

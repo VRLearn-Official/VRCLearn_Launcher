@@ -1,112 +1,163 @@
 using System.IO;
+using Microsoft.Extensions.Logging;
 using VRCLearn.App.ViewModels;
+using VRCLearn.Core.Projects;
 using VRCLearn.Core.Templates;
 using VRCLearn.Infrastructure.Plugins;
 
 namespace VRCLearn.App.Services;
+
+public sealed record DropPlan(
+    IReadOnlyList<string> Projects,
+    IReadOnlyList<string> Backups,
+    IReadOnlyList<string> Plugins,
+    IReadOnlyList<string> Templates)
+{
+    public bool HasAny =>
+        Projects.Count > 0 || Backups.Count > 0 || Plugins.Count > 0 || Templates.Count > 0;
+}
 
 public sealed class DropImportService(
     ProjectsViewModel projects,
     BackupsViewModel backups,
     TemplatesViewModel templates,
     PluginsViewModel plugins,
+    NavigationService navigation,
     LocalizationService localization,
-    ToastService toasts)
+    ToastService toasts,
+    ILogger<DropImportService> logger)
 {
-    private static bool Supports(string pageKey) =>
-        pageKey is "projects" or "backups" or "templates" or "plugins";
+    private bool _busy;
 
-    public static bool CanAccept(string pageKey, IReadOnlyList<string> paths) =>
-        Supports(pageKey)
-        && pageKey switch
-        {
-            "projects" => paths.Any(Directory.Exists),
-            "backups" => paths.Any(IsArchive),
-            "templates" => paths.Any(IsTemplate),
-            "plugins" => paths.Any(IsPlugin),
-            _ => false,
-        };
+    public bool IsBusy => _busy;
 
-    public async Task ImportAsync(string pageKey, IReadOnlyList<string> paths)
+    public static DropPlan Detect(IReadOnlyList<string> paths)
     {
-        switch (pageKey)
+        var projectPaths = new List<string>();
+        var backupPaths = new List<string>();
+        var pluginPaths = new List<string>();
+        var templatePaths = new List<string>();
+
+        foreach (var path in paths.Distinct(StringComparer.OrdinalIgnoreCase))
         {
-            case "projects":
+            try
             {
-                var directories = paths.Where(Directory.Exists).ToList();
-
-                if (directories.Count == 0)
+                if (Directory.Exists(path))
                 {
-                    Invalid();
-                    return;
+                    if (ProjectService.IsProject(path))
+                    {
+                        projectPaths.Add(path);
+                    }
+
+                    continue;
                 }
 
-                foreach (var directory in directories)
+                if (!File.Exists(path))
                 {
-                    await projects.AddAsync(directory);
+                    continue;
                 }
 
-                return;
+                switch (Path.GetExtension(path).ToLowerInvariant())
+                {
+                    case ProjectBackup.Extension:
+                        backupPaths.Add(path);
+                        break;
+                    case PluginPackageInstaller.Extension:
+                        pluginPaths.Add(path);
+                        break;
+                    case TemplateFormat.Extension:
+                        templatePaths.Add(path);
+                        break;
+                }
             }
-            case "backups":
+            catch (Exception exception) when (exception is IOException
+                or UnauthorizedAccessException
+                or ArgumentException
+                or NotSupportedException)
             {
-                var archives = paths.Where(IsArchive).ToList();
-
-                if (archives.Count == 0)
-                {
-                    Invalid();
-                    return;
-                }
-
-                await backups.ImportFilesAsync(archives);
-                return;
             }
-            case "templates":
+        }
+
+        return new DropPlan(projectPaths, backupPaths, pluginPaths, templatePaths);
+    }
+
+    public static bool CanAccept(IReadOnlyList<string> paths) => Detect(paths).HasAny;
+
+    public async Task ImportAsync(IReadOnlyList<string> paths)
+    {
+        if (_busy)
+        {
+            return;
+        }
+
+        var plan = Detect(paths);
+
+        if (!plan.HasAny)
+        {
+            toasts.Show(localization["Drop.Invalid"]);
+
+            return;
+        }
+
+        _busy = true;
+
+        try
+        {
+            if (plan.Projects.Count > 0)
             {
-                var files = paths.Where(IsTemplate).ToList();
-
-                if (files.Count == 0)
+                await TryAsync("项目", async () =>
                 {
-                    Invalid();
-                    return;
-                }
+                    navigation.GoTo("projects");
 
-                await templates.ImportAsync(files);
-                return;
+                    foreach (var path in plan.Projects)
+                    {
+                        await projects.AddAsync(path);
+                    }
+                });
             }
-            case "plugins":
+
+            if (plan.Backups.Count > 0)
             {
-                var packages = paths.Where(IsPlugin).ToList();
-
-                if (packages.Count == 0)
+                await TryAsync("备份", async () =>
                 {
-                    Invalid();
-                    return;
-                }
-
-                await plugins.InstallAsync(packages);
-                return;
+                    navigation.GoTo("backups");
+                    await backups.ImportFilesAsync(plan.Backups);
+                });
             }
+
+            if (plan.Plugins.Count > 0)
+            {
+                await TryAsync("插件", async () =>
+                {
+                    navigation.GoTo("plugins");
+                    await plugins.InstallAsync(plan.Plugins);
+                });
+            }
+
+            if (plan.Templates.Count > 0)
+            {
+                await TryAsync("模板", async () =>
+                {
+                    navigation.GoTo("templates");
+                    await templates.ImportAsync(plan.Templates);
+                });
+            }
+        }
+        finally
+        {
+            _busy = false;
         }
     }
 
-    private static bool IsArchive(string path) =>
-        File.Exists(path)
-        && string.Equals(Path.GetExtension(path), ".zip", StringComparison.OrdinalIgnoreCase);
-
-    private static bool IsTemplate(string path) =>
-        File.Exists(path)
-        && string.Equals(
-            Path.GetExtension(path),
-            TemplateFormat.Extension,
-            StringComparison.OrdinalIgnoreCase);
-
-    private static bool IsPlugin(string path) =>
-        File.Exists(path)
-        && string.Equals(
-            Path.GetExtension(path),
-            PluginPackageInstaller.Extension,
-            StringComparison.OrdinalIgnoreCase);
-
-    private void Invalid() => toasts.Show(localization["Drop.Invalid"]);
+    private async Task TryAsync(string group, Func<Task> work)
+    {
+        try
+        {
+            await work();
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogWarning(exception, "拖放导入失败：{Group}", group);
+        }
+    }
 }

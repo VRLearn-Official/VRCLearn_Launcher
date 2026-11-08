@@ -51,8 +51,7 @@ public sealed partial class PluginItemViewModel : ObservableObject
         SourceText = manifest is null ? "" : SourceName(manifest.Author);
         SourceUrl = manifest is null ? "" : PluginSource.LinkOf(manifest.Author);
         StatusText = BuildStatusText();
-        IsWarning = snapshot.Missing.Count > 0
-            || snapshot.Status is PluginStatus.MissingDependency or PluginStatus.PendingRestart;
+        IsWarning = snapshot.Status == PluginStatus.PendingRestart;
         IsError = snapshot.Status == PluginStatus.Faulted;
         ErrorText = snapshot.Error ?? snapshot.Installed.Error ?? "";
         HasError = ErrorText.Length > 0;
@@ -89,6 +88,14 @@ public sealed partial class PluginItemViewModel : ObservableObject
     public string StatusText { get; }
 
     public bool HasStatus => StatusText.Length > 0;
+
+    public bool HasMissingDependencies => _snapshot.Missing.Count > 0;
+
+    public string MissingDependenciesText => _snapshot.Missing.Count == 0
+        ? ""
+        : _localization.Format(
+            "Plugins.Status.Missing",
+            string.Join(", ", _snapshot.Missing.Select(_describeMissing)));
 
     public bool IsWarning { get; }
 
@@ -224,26 +231,8 @@ public sealed partial class PluginItemViewModel : ObservableObject
             return _localization["Plugins.Status.Broken"];
         }
 
-        if (_snapshot.Status == PluginStatus.PendingRestart)
-        {
-            return _localization["Plugins.Status.PendingRestart"];
-        }
-
-        if (_snapshot.Missing.Count > 0)
-        {
-            return _localization.Format(
-                "Plugins.Status.Missing",
-                string.Join(", ", _snapshot.Missing.Select(_describeMissing)));
-        }
-
         return _snapshot.Status switch
         {
-            PluginStatus.Disabled => "",
-            PluginStatus.Ready => "",
-            PluginStatus.Loaded => "",
-            PluginStatus.MissingDependency => _localization.Format(
-                "Plugins.Status.Missing",
-                string.Join(", ", _snapshot.Missing.Select(_describeMissing))),
             PluginStatus.PendingRestart => _localization["Plugins.Status.PendingRestart"],
             PluginStatus.Faulted => _localization.Format(
                 "Plugins.Status.Faulted",
@@ -272,6 +261,7 @@ public sealed partial class PluginItemViewModel : ObservableObject
         {
             var image = new BitmapImage();
             image.BeginInit();
+            image.DecodePixelWidth = 72;
             image.CacheOption = BitmapCacheOption.OnLoad;
             image.UriSource = new Uri(path, UriKind.Absolute);
             image.EndInit();

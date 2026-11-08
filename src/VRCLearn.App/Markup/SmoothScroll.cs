@@ -119,6 +119,11 @@ public static class SmoothScroll
             return;
         }
 
+        if (InnerScrollViewer(e.OriginalSource as DependencyObject, viewer) is not null)
+        {
+            return;
+        }
+
         var lines = SystemParameters.WheelScrollLines;
 
         if (lines == 0)
@@ -153,6 +158,22 @@ public static class SmoothScroll
 
         Start();
     }
+
+    private static ScrollViewer? InnerScrollViewer(DependencyObject? source, ScrollViewer outer)
+    {
+        for (var node = source; node is not null && !ReferenceEquals(node, outer); node = ParentOf(node))
+        {
+            if (node is ScrollViewer { ScrollableHeight: > 0 } viewer)
+            {
+                return viewer;
+            }
+        }
+
+        return null;
+    }
+
+    private static DependencyObject? ParentOf(DependencyObject node) =>
+        node is Visual ? VisualTreeHelper.GetParent(node) : LogicalTreeHelper.GetParent(node);
 
     private static void Start()
     {

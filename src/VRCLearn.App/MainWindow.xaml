@@ -47,7 +47,6 @@
                         <Grid>
                             <Border
                                 x:Name="Row"
-                                HorizontalAlignment="Left"
                                 Background="Transparent"
                                 CornerRadius="{StaticResource Radius.Control}" />
                             <ContentPresenter
@@ -81,51 +80,28 @@
 
     </ui:FluentWindow.Resources>
 
-    <Grid>
+    <Grid
+        AllowDrop="True"
+        Background="Transparent"
+        PreviewDragEnter="OnWindowDragOver"
+        PreviewDragLeave="OnWindowDragLeave"
+        PreviewDragOver="OnWindowDragOver"
+        PreviewDrop="OnWindowDrop">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="*" />
         </Grid.ColumnDefinitions>
 
         <Border
-            x:Name="Sidebar"
             Grid.Column="0"
-            Width="64"
+            Width="220"
             Panel.ZIndex="1"
             Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}"
             BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
             BorderThickness="0,0,1,0"
-            MouseEnter="OnSidebarMouseEnter"
-            MouseLeave="OnSidebarMouseLeave"
             Visibility="{Binding IsNotFirstRunSetup, Converter={StaticResource BooleanToVisibilityConverter}}">
-            <Border.Effect>
-                <DropShadowEffect
-                    BlurRadius="16"
-                    Direction="0"
-                    Opacity="0.12"
-                    ShadowDepth="2" />
-            </Border.Effect>
-            <Grid ClipToBounds="True">
+            <Grid>
                 <StackPanel VerticalAlignment="Center">
-                    <ui:Button
-                        AutomationProperties.Name="{Binding SidebarLockTip}"
-                        Command="{Binding ToggleSidebarLockCommand}"
-                        HorizontalAlignment="Center"
-                        Margin="0,0,0,8"
-                        Style="{StaticResource CaptionGlyphButton}"
-                        ToolTip="{Binding SidebarLockTip}">
-                        <Grid Width="16" Height="16">
-                            <ui:SymbolIcon
-                                FontSize="{StaticResource IconSize.Nav}"
-                                Symbol="LockOpen24"
-                                Visibility="{Binding SidebarLocked, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
-                            <ui:SymbolIcon
-                                FontSize="{StaticResource IconSize.Nav}"
-                                Symbol="LockClosed24"
-                                Visibility="{Binding SidebarLocked, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                        </Grid>
-                    </ui:Button>
-
                     <ListBox
                         x:Name="Navigation"
                         Padding="0"
@@ -318,13 +294,45 @@
                 </StackPanel>
             </Grid>
 
-            <Grid
-                x:Name="PageHost"
-                Grid.Row="1"
-                AllowDrop="True"
-                DragEnter="OnPageDragOver"
-                DragOver="OnPageDragOver"
-                Drop="OnPageDrop" />
+            <Grid x:Name="PageHost" Grid.Row="1" />
+        </Grid>
+
+        <Grid
+            x:Name="DropOverlay"
+            Grid.ColumnSpan="2"
+            Panel.ZIndex="8"
+            Background="#40000000"
+            IsHitTestVisible="False"
+            Visibility="Collapsed">
+            <Border
+                MaxWidth="620"
+                Padding="32,24"
+                HorizontalAlignment="Center"
+                VerticalAlignment="Center"
+                Background="{DynamicResource SolidBackgroundFillColorTertiaryBrush}"
+                BorderBrush="{DynamicResource DividerStrokeColorDefaultBrush}"
+                BorderThickness="1"
+                CornerRadius="{StaticResource Radius.Control}">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <ui:SymbolIcon
+                        VerticalAlignment="Center"
+                        FontSize="{StaticResource IconSize.Display}"
+                        Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                        Symbol="ArrowDownload24" />
+                    <TextBlock
+                        Grid.Column="1"
+                        Margin="16,0,0,0"
+                        VerticalAlignment="Center"
+                        FontSize="{StaticResource FontSize.Section}"
+                        FontWeight="SemiBold"
+                        Text="{markup:Tr Drop.Hint}"
+                        TextWrapping="Wrap" />
+                </Grid>
+            </Border>
         </Grid>
 
         <Border
