@@ -74,169 +74,164 @@
                 Visibility="{Binding IsSearchEmpty, Converter={StaticResource BooleanToVisibilityConverter}}" />
         </StackPanel>
 
-        <ScrollViewer
+        <ItemsControl
             Grid.Row="2"
             Padding="32,16,32,32"
-            Style="{StaticResource VirtualizedListScroll}">
-            <ItemsControl
-                ItemsSource="{Binding FilteredPlugins}"
-                ItemsPanel="{StaticResource VirtualizingStackItemsPanel}"
-                VirtualizingPanel.ScrollUnit="Pixel"
-                VirtualizingPanel.VirtualizationMode="Recycling">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <ui:Card
-                            Style="{StaticResource RowCard}"
-                            ToolTip="{Binding ErrorText}"
-                            ToolTipService.IsEnabled="{Binding HasError}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" />
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+            Style="{StaticResource VirtualizedItems}"
+            ItemsSource="{Binding FilteredPlugins}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <ui:Card
+                        Style="{StaticResource RowCard}"
+                        ToolTip="{Binding ErrorText}"
+                        ToolTipService.IsEnabled="{Binding HasError}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                                <Grid
-                                    Width="36"
-                                    Height="36"
-                                    Margin="0,0,12,0"
-                                    VerticalAlignment="Center">
-                                    <ui:SymbolIcon
-                                        HorizontalAlignment="Center"
-                                        VerticalAlignment="Center"
-                                        FontSize="24"
-                                        Foreground="{DynamicResource TextFillColorTertiaryBrush}"
-                                        Symbol="PuzzlePiece24"
-                                        Visibility="{Binding HasIcon, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
-                                    <Image
-                                        Source="{Binding Icon}"
-                                        Stretch="Uniform"
-                                        Visibility="{Binding HasIcon, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                </Grid>
-
-                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal">
-                                        <TextBlock
-                                            Style="{StaticResource RowTitle}"
-                                            Text="{Binding Name}"
-                                            TextTrimming="CharacterEllipsis" />
-                                        <ui:SymbolIcon
-                                            Margin="{StaticResource Gap.Inline}"
-                                            VerticalAlignment="Center"
-                                            FontSize="{StaticResource IconSize.Inline}"
-                                            Foreground="{DynamicResource SystemFillColorCautionBrush}"
-                                            Symbol="Warning24"
-                                            ToolTip="{Binding MissingDependenciesText}"
-                                            Visibility="{Binding HasMissingDependencies, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    </StackPanel>
-
-                                    <StackPanel
-                                        Margin="{StaticResource Gap.Tight}"
-                                        Orientation="Horizontal"
-                                        Visibility="{Binding HasMeta, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <TextBlock Style="{StaticResource Caption}" Text="{Binding VersionText}" />
-                                        <TextBlock Style="{StaticResource Caption}" Text=" · " />
-                                        <TextBlock
-                                            Style="{StaticResource Caption}"
-                                            Visibility="{Binding HasSource, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                            <Hyperlink
-                                                Command="{Binding OpenSourceCommand}"
-                                                Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
-                                                ToolTip="{Binding SourceUrl}">
-                                                <Run Text="{Binding SourceText, Mode=OneWay}" />
-                                            </Hyperlink>
-                                        </TextBlock>
-                                        <TextBlock
-                                            Style="{StaticResource Caption}"
-                                            Text="{Binding SourceText}"
-                                            Visibility="{Binding HasSource, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
-                                    </StackPanel>
-
-                                    <TextBlock
-                                        Margin="{StaticResource Gap.Tight}"
-                                        Style="{StaticResource Caption}"
-                                        Text="{Binding Description}"
-                                        TextTrimming="CharacterEllipsis"
-                                        TextWrapping="NoWrap"
-                                        ToolTip="{Binding Description}" />
-
-                                    <TextBlock
-                                        Margin="{StaticResource Gap.Tight}"
-                                        Text="{Binding StatusText}"
-                                        TextTrimming="CharacterEllipsis"
-                                        TextWrapping="NoWrap"
-                                        ToolTip="{Binding StatusText}"
-                                        Visibility="{Binding HasStatus, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <TextBlock.Style>
-                                            <Style BasedOn="{StaticResource Caption}" TargetType="TextBlock">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsError}" Value="True">
-                                                        <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
-                                                    </DataTrigger>
-                                                    <DataTrigger Binding="{Binding IsWarning}" Value="True">
-                                                        <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="2" Style="{StaticResource RowActions}">
-                                    <ui:ToggleSwitch
-                                        VerticalAlignment="Center"
-                                        IsChecked="{Binding IsEnabled, Mode=TwoWay}"
-                                        IsEnabled="{Binding CanToggle}"
-                                        ToolTip="{markup:Tr Plugins.ToggleHint}" />
-                                    <ui:Button
-                                        Margin="{StaticResource Gap.Inline}"
-                                        Padding="4"
-                                        Appearance="Transparent"
-                                        BorderThickness="0"
-                                        Command="{Binding UpdateCommand}"
-                                        IsEnabled="{Binding CanUpdate}"
-                                        ToolTip="{Binding UpdateToolTip}"
-                                        Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <ui:SymbolIcon
-                                            FontSize="{StaticResource IconSize.Inline}"
-                                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                            Symbol="ArrowCircleUp24" />
-                                    </ui:Button>
-                                    <ui:Button
-                                        Margin="{StaticResource Gap.Inline}"
-                                        Padding="4"
-                                        Appearance="Transparent"
-                                        BorderThickness="0"
-                                        Command="{Binding OpenDataCommand}"
-                                        IsEnabled="{Binding CanOpenData}"
-                                        ToolTip="{markup:Tr Plugins.OpenData}">
-                                        <ui:SymbolIcon FontSize="{StaticResource IconSize.Inline}" Symbol="FolderOpen24" />
-                                    </ui:Button>
-                                    <ui:Button
-                                        Margin="{StaticResource Gap.Inline}"
-                                        Padding="4"
-                                        Appearance="Transparent"
-                                        BorderThickness="0"
-                                        Command="{Binding UninstallCommand}"
-                                        IsEnabled="{Binding CanUninstall}"
-                                        ToolTip="{markup:Tr Plugins.Uninstall}">
-                                        <ui:SymbolIcon
-                                            FontSize="{StaticResource IconSize.Inline}"
-                                            Foreground="{DynamicResource SystemFillColorCriticalBrush}"
-                                            Symbol="Delete24" />
-                                    </ui:Button>
-                                    <ui:Button
-                                        Margin="{StaticResource Gap.Inline}"
-                                        Appearance="Primary"
-                                        Command="{Binding OpenCommand}"
-                                        Content="{markup:Tr Plugins.Open}"
-                                        IsEnabled="{Binding CanOpen}" />
-                                </StackPanel>
+                            <Grid
+                                Width="36"
+                                Height="36"
+                                Margin="0,0,12,0"
+                                VerticalAlignment="Center">
+                                <ui:SymbolIcon
+                                    HorizontalAlignment="Center"
+                                    VerticalAlignment="Center"
+                                    FontSize="24"
+                                    Foreground="{DynamicResource TextFillColorTertiaryBrush}"
+                                    Symbol="PuzzlePiece24"
+                                    Visibility="{Binding HasIcon, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                <Image
+                                    Source="{Binding Icon}"
+                                    Stretch="Uniform"
+                                    Visibility="{Binding HasIcon, Converter={StaticResource BooleanToVisibilityConverter}}" />
                             </Grid>
-                        </ui:Card>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+
+                            <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                <StackPanel Orientation="Horizontal">
+                                    <TextBlock
+                                        Style="{StaticResource RowTitle}"
+                                        Text="{Binding Name}"
+                                        TextTrimming="CharacterEllipsis" />
+                                    <ui:SymbolIcon
+                                        Margin="{StaticResource Gap.Inline}"
+                                        VerticalAlignment="Center"
+                                        FontSize="{StaticResource IconSize.Inline}"
+                                        Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                        Symbol="Warning24"
+                                        ToolTip="{Binding MissingDependenciesText}"
+                                        Visibility="{Binding HasMissingDependencies, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                </StackPanel>
+
+                                <StackPanel
+                                    Margin="{StaticResource Gap.Tight}"
+                                    Orientation="Horizontal"
+                                    Visibility="{Binding HasMeta, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <TextBlock Style="{StaticResource Caption}" Text="{Binding VersionText}" />
+                                    <TextBlock Style="{StaticResource Caption}" Text=" · " />
+                                    <TextBlock
+                                        Style="{StaticResource Caption}"
+                                        Visibility="{Binding HasSource, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                        <Hyperlink
+                                            Command="{Binding OpenSourceCommand}"
+                                            Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
+                                            ToolTip="{Binding SourceUrl}">
+                                            <Run Text="{Binding SourceText, Mode=OneWay}" />
+                                        </Hyperlink>
+                                    </TextBlock>
+                                    <TextBlock
+                                        Style="{StaticResource Caption}"
+                                        Text="{Binding SourceText}"
+                                        Visibility="{Binding HasSource, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                                </StackPanel>
+
+                                <TextBlock
+                                    Margin="{StaticResource Gap.Tight}"
+                                    Style="{StaticResource Caption}"
+                                    Text="{Binding Description}"
+                                    TextTrimming="CharacterEllipsis"
+                                    TextWrapping="NoWrap"
+                                    ToolTip="{Binding Description}" />
+
+                                <TextBlock
+                                    Margin="{StaticResource Gap.Tight}"
+                                    Text="{Binding StatusText}"
+                                    TextTrimming="CharacterEllipsis"
+                                    TextWrapping="NoWrap"
+                                    ToolTip="{Binding StatusText}"
+                                    Visibility="{Binding HasStatus, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <TextBlock.Style>
+                                        <Style BasedOn="{StaticResource Caption}" TargetType="TextBlock">
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding IsError}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
+                                                </DataTrigger>
+                                                <DataTrigger Binding="{Binding IsWarning}" Value="True">
+                                                    <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="2" Style="{StaticResource RowActions}">
+                                <ui:ToggleSwitch
+                                    VerticalAlignment="Center"
+                                    IsChecked="{Binding IsEnabled, Mode=TwoWay}"
+                                    IsEnabled="{Binding CanToggle}"
+                                    ToolTip="{markup:Tr Plugins.ToggleHint}" />
+                                <ui:Button
+                                    Margin="{StaticResource Gap.Inline}"
+                                    Padding="4"
+                                    Appearance="Transparent"
+                                    BorderThickness="0"
+                                    Command="{Binding UpdateCommand}"
+                                    IsEnabled="{Binding CanUpdate}"
+                                    ToolTip="{Binding UpdateToolTip}"
+                                    Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}">
+                                    <ui:SymbolIcon
+                                        FontSize="{StaticResource IconSize.Inline}"
+                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                        Symbol="ArrowCircleUp24" />
+                                </ui:Button>
+                                <ui:Button
+                                    Margin="{StaticResource Gap.Inline}"
+                                    Padding="4"
+                                    Appearance="Transparent"
+                                    BorderThickness="0"
+                                    Command="{Binding OpenDataCommand}"
+                                    IsEnabled="{Binding CanOpenData}"
+                                    ToolTip="{markup:Tr Plugins.OpenData}">
+                                    <ui:SymbolIcon FontSize="{StaticResource IconSize.Inline}" Symbol="FolderOpen24" />
+                                </ui:Button>
+                                <ui:Button
+                                    Margin="{StaticResource Gap.Inline}"
+                                    Padding="4"
+                                    Appearance="Transparent"
+                                    BorderThickness="0"
+                                    Command="{Binding UninstallCommand}"
+                                    IsEnabled="{Binding CanUninstall}"
+                                    ToolTip="{markup:Tr Plugins.Uninstall}">
+                                    <ui:SymbolIcon
+                                        FontSize="{StaticResource IconSize.Inline}"
+                                        Foreground="{DynamicResource SystemFillColorCriticalBrush}"
+                                        Symbol="Delete24" />
+                                </ui:Button>
+                                <ui:Button
+                                    Margin="{StaticResource Gap.Inline}"
+                                    Appearance="Primary"
+                                    Command="{Binding OpenCommand}"
+                                    Content="{markup:Tr Plugins.Open}"
+                                    IsEnabled="{Binding CanOpen}" />
+                            </StackPanel>
+                        </Grid>
+                    </ui:Card>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </UserControl>
