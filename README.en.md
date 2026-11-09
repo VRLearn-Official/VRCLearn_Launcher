@@ -3,7 +3,7 @@
   <h1>VRCLearn Launcher</h1>
   <p>A VRChat package and project manager for Windows, built with .NET 10 and WPF.</p>
 
-  [Download](https://github.com/VRLearn-Official/VRCLearn_Launcher/releases) · [简体中文](README.md) · [Issues](https://github.com/VRLearn-Official/VRCLearn_Launcher/issues)
+  [Download](https://github.com/VRLearn-Official/VRCLearn_Launcher/releases) · [简体中文](README.md) · [日本語](README.ja.md) · [Issues](https://github.com/VRLearn-Official/VRCLearn_Launcher/issues)
 </div>
 
 <p align="center">
@@ -34,7 +34,7 @@ VRCLearn Launcher manages VPM repositories, packages and Unity projects in one p
 - **Plugins** — install `.vclplugin` extensions from local files or by drag-and-drop. Plugins are provided by the community and are not bundled (see [docs/plugins.md](docs/plugins.md))
 - **Desktop integration** — `vcc://` deep links and file associations
 - **Update check** — checks the latest GitHub release at most once a day at startup and links to the download page
-- **Localization** — Chinese and English, with custom language packs
+- **Localization** — Simplified Chinese, English, and Japanese, with custom language packs
 
 ## Install
 

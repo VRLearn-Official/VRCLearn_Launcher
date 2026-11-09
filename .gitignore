@@ -12,6 +12,7 @@ tools/
 /*.txt
 !/README.md
 !/README.en.md
+!/README.ja.md
 !/THIRD-PARTY-NOTICES.txt
 /build/*
 !/build/installer.iss

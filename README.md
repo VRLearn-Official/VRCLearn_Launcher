@@ -3,7 +3,7 @@
   <h1>VRCLearn Launcher</h1>
   <p>Windows 上的 VRChat 包与项目管理器，基于 .NET 10 与 WPF 构建。</p>
 
-  [下载](https://github.com/VRLearn-Official/VRCLearn_Launcher/releases) · [English](README.en.md) · [问题反馈](https://github.com/VRLearn-Official/VRCLearn_Launcher/issues)
+  [下载](https://github.com/VRLearn-Official/VRCLearn_Launcher/releases) · [English](README.en.md) · [日本語](README.ja.md) · [问题反馈](https://github.com/VRLearn-Official/VRCLearn_Launcher/issues)
 </div>
 
 <p align="center">
@@ -34,7 +34,7 @@ VRCLearn Launcher 把 VPM 仓库、包与 Unity 项目集中在一处管理，�
 - **插件**：从本地文件或拖放安装 `.vclplugin` 扩展。插件由社区提供，不随程序分发（见 [docs/plugins.md](docs/plugins.md)）
 - **桌面集成**：`vcc://` 深链与文件关联
 - **检查更新**：启动时最多每天检查一次 GitHub 最新版本，有新版本时打开下载页
-- **本地化**：中文与英文，支持自定义
+- **本地化**：简体中文、英文和日文，支持自定义语言包
 
 ## 安装
 
