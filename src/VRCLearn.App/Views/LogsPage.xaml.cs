@@ -16,7 +16,7 @@ public partial class LogsPage : UserControl
         InitializeComponent();
 
         _timer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
-        _timer.Tick += (_, _) => (DataContext as LogsViewModel)?.Reload();
+        _timer.Tick += (_, _) => _ = (DataContext as LogsViewModel)?.ReloadAsync();
 
         DataContextChanged += (_, args) =>
         {
@@ -30,7 +30,7 @@ public partial class LogsPage : UserControl
             {
                 fresh.ScrolledToEnd += ScrollToEnd;
                 fresh.PropertyChanged += OnViewModelPropertyChanged;
-                fresh.Reload();
+                _ = fresh.ReloadAsync();
             }
         };
 
@@ -69,7 +69,7 @@ public partial class LogsPage : UserControl
             return;
         }
 
-        viewModel.Reload();
+        _ = viewModel.ReloadAsync();
 
         if (viewModel.AutoRefresh)
         {
