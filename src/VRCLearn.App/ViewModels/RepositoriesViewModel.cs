@@ -279,8 +279,8 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
     public void Reload()
     {
         var hidden = _configStore.Current.HiddenRepositories;
+        var rows = new List<RepositoryItemViewModel>();
 
-        Repositories.Clear();
         foreach (var (entry, cached) in _service.ListWithCached())
         {
             var summary = cached is null
@@ -289,7 +289,7 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
 
             var isHidden = entry.Id is not null && hidden.Contains(entry.Id);
 
-            Repositories.Add(new RepositoryItemViewModel(
+            rows.Add(new RepositoryItemViewModel(
                 entry.Index,
                 entry.Id,
                 entry.Url?.AbsoluteUri,
@@ -299,7 +299,17 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
                 _localization[isHidden ? "Repositories.Show" : "Repositories.Hide"]));
         }
 
-        OnPropertyChanged(nameof(HasRepositories));
+        if (rows.Count != Repositories.Count
+            || rows.Zip(Repositories).Any(pair => !pair.First.HasSameContent(pair.Second)))
+        {
+            Repositories.Clear();
+            foreach (var row in rows)
+            {
+                Repositories.Add(row);
+            }
+
+            OnPropertyChanged(nameof(HasRepositories));
+        }
 
         _ = UserPackages.ReloadAsync();
     }
