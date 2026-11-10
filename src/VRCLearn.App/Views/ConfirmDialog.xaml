@@ -53,12 +53,15 @@
                                 x:Name="DetailTitleText"
                                 FontSize="{StaticResource FontSize.Caption}"
                                 FontWeight="SemiBold"
-                                Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                                Foreground="{DynamicResource SystemFillColorCautionBrush}"
                                 TextWrapping="Wrap" />
-                            <TextBlock
-                                x:Name="DetailBodyText"
-                                Margin="{StaticResource Gap.Tight}"
-                                Style="{StaticResource Caption}" />
+                            <ScrollViewer MaxHeight="180" VerticalScrollBarVisibility="Auto">
+                                <TextBlock
+                                    x:Name="DetailBodyText"
+                                    Margin="{StaticResource Gap.Tight}"
+                                    Style="{StaticResource Caption}"
+                                    TextWrapping="Wrap" />
+                            </ScrollViewer>
                         </StackPanel>
                     </Border>
                 </StackPanel>

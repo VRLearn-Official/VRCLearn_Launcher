@@ -901,7 +901,8 @@ public sealed partial class ProjectDetailViewModel(
             [.. _requestedAdds.Values],
             AddPackageOperation.AutoDetected,
             _allowPrerelease,
-            CancellationToken.None);
+            CancellationToken.None,
+            upgradeDependents: true);
 
         if (outcome.Status != AddPackageStatus.Success)
         {
@@ -1236,52 +1237,213 @@ public sealed partial class ProjectDetailViewModel(
 
         foreach (var (name, change) in changes.PackageChanges)
         {
-            var description = change switch
-            {
-                Install { Package: { } package } => localization.Format(
-                    "ProjectDetail.Change.Install",
-                    name,
-                    package.Version.ToString()),
-                Install => localization.Format("ProjectDetail.Change.AddDependency", name),
-                Remove remove => localization.Format(
-                    $"ProjectDetail.Change.Remove.{remove.Reason}",
-                    name),
-                _ => name,
-            };
-
             var removable = change is Install && requestedAdds?.Contains(name) == true;
 
-            PendingChanges.Add(new PackageChangeViewModel(description, name, removable));
+            PendingChanges.Add(new PackageChangeViewModel(DescribeChange(name, change), name, removable));
         }
+
+        foreach (var line in ConflictLines(changes))
+        {
+            PendingConflicts.Add(line);
+        }
+
+        foreach (var line in LegacyLines(changes))
+        {
+            PendingChanges.Add(new PackageChangeViewModel(line));
+        }
+
+        OnPropertyChanged(nameof(HasPendingChanges));
+    }
+
+    private string DescribeChange(string name, PackageChange change) => change switch
+    {
+        Install { Package: { } package } => localization.Format(
+            "ProjectDetail.Change.Install",
+            name,
+            package.Version.ToString()),
+        Install => localization.Format("ProjectDetail.Change.AddDependency", name),
+        Remove remove => localization.Format(
+            $"ProjectDetail.Change.Remove.{remove.Reason}",
+            name),
+        _ => name,
+    };
+
+    private List<string> ConflictLines(
+        PendingProjectChanges changes,
+        IReadOnlyCollection<string>? explained = null)
+    {
+        var skip = explained is null
+            ? null
+            : new HashSet<string>(explained, StringComparer.OrdinalIgnoreCase);
+
+        var lines = new List<string>();
 
         foreach (var (name, conflict) in changes.Conflicts)
         {
             if (conflict.ConflictsWithUnity)
             {
-                PendingConflicts.Add(localization.Format("ProjectDetail.Conflict.Unity", name));
+                lines.Add(localization.Format("ProjectDetail.Conflict.Unity", name));
             }
 
-            if (conflict.ConflictingPackages.Count > 0)
+            var conflicting = skip is null
+                ? conflict.ConflictingPackages
+                : conflict.ConflictingPackages.Where(x => !skip.Contains(x)).ToList();
+
+            if (conflicting.Count > 0)
             {
-                PendingConflicts.Add(localization.Format(
+                lines.Add(localization.Format(
                     "ProjectDetail.Conflict.Packages",
                     name,
-                    Join(conflict.ConflictingPackages)));
+                    Join(conflicting)));
             }
 
             foreach (var unlocked in conflict.UnlockedNames)
             {
-                PendingConflicts.Add(localization.Format("ProjectDetail.Conflict.Unlocked", unlocked));
+                lines.Add(localization.Format("ProjectDetail.Conflict.Unlocked", unlocked));
             }
         }
 
-        foreach (var asset in changes.RemoveLegacyFiles.Concat(changes.RemoveLegacyFolders))
+        return lines;
+    }
+
+    private List<string> BlockingConflicts(
+        PendingProjectChanges changes,
+        IReadOnlyCollection<string>? explained = null)
+    {
+        var skip = explained is null
+            ? null
+            : new HashSet<string>(explained, StringComparer.OrdinalIgnoreCase);
+
+        var lines = new List<string>();
+
+        foreach (var (name, conflict) in changes.Conflicts)
         {
-            PendingChanges.Add(new PackageChangeViewModel(
-                localization.Format("ProjectDetail.Change.RemoveLegacyAsset", asset.Path, asset.PackageName)));
+            if (conflict.ConflictsWithUnity)
+            {
+                lines.Add(localization.Format("ProjectDetail.Conflict.Unity", name));
+            }
+
+            var conflicting = skip is null
+                ? conflict.ConflictingPackages
+                : conflict.ConflictingPackages.Where(x => !skip.Contains(x)).ToList();
+
+            if (conflicting.Count > 0)
+            {
+                lines.Add(localization.Format(
+                    "ProjectDetail.Conflict.Packages",
+                    name,
+                    Join(conflicting)));
+            }
         }
 
-        OnPropertyChanged(nameof(HasPendingChanges));
+        return lines;
+    }
+
+    private List<string> LegacyLines(PendingProjectChanges changes) =>
+    [
+        .. changes.RemoveLegacyFiles
+            .Concat(changes.RemoveLegacyFolders)
+            .Select(asset => localization.Format(
+                "ProjectDetail.Change.RemoveLegacyAsset",
+                asset.Path,
+                asset.PackageName)),
+    ];
+
+    private List<string> ApplyLines(
+        PendingProjectChanges changes,
+        IReadOnlyCollection<string>? explained = null) =>
+    [
+        .. changes.PackageChanges.Select(x => ApplyLine(x.Key, x.Value)),
+        .. ConflictLines(changes, explained),
+        .. LegacyLines(changes),
+    ];
+
+    private string ApplyLine(string name, PackageChange change)
+    {
+        if (change is not Install { Package: { } package })
+        {
+            return DescribeChange(name, change);
+        }
+
+        var display = DisplayNameOf(name, package);
+        var old = _project?.GetLocked(name)?.Version;
+
+        if (old is null)
+        {
+            return localization.Format("ProjectDetail.Change.InstallLine", display, package.Version);
+        }
+
+        var comparison = package.Version.CompareTo(old);
+
+        return comparison switch
+        {
+            > 0 => localization.Format("ProjectDetail.Change.UpgradeLine", display, old, package.Version),
+            < 0 => localization.Format("ProjectDetail.Change.DowngradeLine", display, old, package.Version),
+            _ => localization.Format("ProjectDetail.Change.ReinstallLine", display, package.Version),
+        };
+    }
+
+    private string DisplayNameOf(string name, PackageInfo package)
+    {
+        var installed = _project?.AllInstalledPackages
+            .FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase))
+            ?.DisplayName;
+
+        if (!string.IsNullOrWhiteSpace(installed))
+        {
+            return installed;
+        }
+
+        return string.IsNullOrWhiteSpace(package.Manifest.DisplayName)
+            ? name
+            : package.Manifest.DisplayName;
+    }
+
+    private string AffectedLine(AffectedDependent dependent, PendingProjectChanges? cascade)
+    {
+        var display = InstalledDisplayName(dependent.Name);
+
+        if (cascade?.PackageChanges
+                .FirstOrDefault(x => string.Equals(
+                    x.Key,
+                    dependent.Name,
+                    StringComparison.OrdinalIgnoreCase))
+                .Value is Install { Package: { } package })
+        {
+            var comparison = package.Version.CompareTo(dependent.Version);
+
+            if (comparison > 0)
+            {
+                return localization.Format(
+                    "ProjectDetail.ApplyChanges.AffectedUpgradeLine",
+                    display,
+                    dependent.Version,
+                    package.Version);
+            }
+
+            if (comparison < 0)
+            {
+                return localization.Format(
+                    "ProjectDetail.ApplyChanges.AffectedDowngradeLine",
+                    display,
+                    dependent.Version,
+                    package.Version);
+            }
+        }
+
+        return localization.Format(
+            "ProjectDetail.ApplyChanges.AffectedLine",
+            display,
+            dependent.Version);
+    }
+
+    private string InstalledDisplayName(string name)
+    {
+        var display = _project?.AllInstalledPackages
+            .FirstOrDefault(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase))
+            ?.DisplayName;
+
+        return string.IsNullOrWhiteSpace(display) ? name : display;
     }
 
     private void ClearPending()
@@ -1430,7 +1592,7 @@ public sealed partial class ProjectDetailViewModel(
             isMissing,
             versions,
             NewerVersion(catalog, name, version, isUnlocked || isCustom),
-            isCustom ? null : chosen => _ = SwitchVersionAsync(name, chosen));
+            isCustom ? null : chosen => _ = ChangeVersionAsync(name, displayName, version, chosen));
 
         row.PropertyChanged += OnInstalledChanged;
 
@@ -1469,19 +1631,41 @@ public sealed partial class ProjectDetailViewModel(
             ?.Version.ToString();
     }
 
-    public Task SwitchToVersionAsync(string name, string version) => SwitchVersionAsync(name, version);
-
-    private async Task SwitchVersionAsync(string name, string version)
+    public async Task UpgradeToVersionAsync(InstalledPackageViewModel package)
     {
-        if (_project is null || _switchingVersion)
+        if (package.NewerVersion is { } version)
+        {
+            await ChangeVersionAsync(package.Name, package.DisplayName, package.Version, version);
+        }
+    }
+
+    private async Task ChangeVersionAsync(
+        string name,
+        string displayName,
+        string currentVersion,
+        string targetVersion)
+    {
+        if (_project is null || IsBusy || _switchingVersion)
         {
             return;
         }
 
-        if (!PackageVersion.TryParse(version, out var parsed))
+        if (!PackageVersion.TryParse(currentVersion, out var current)
+            || !PackageVersion.TryParse(targetVersion, out var target)
+            || current == target)
         {
+            ReloadInstalled();
             return;
         }
+
+        if (HasPendingChanges)
+        {
+            Status = localization["ProjectDetail.VersionChange.PendingFirst"];
+            ReloadInstalled();
+            return;
+        }
+
+        var upgrading = target > current;
 
         _switchingVersion = true;
 
@@ -1489,20 +1673,172 @@ public sealed partial class ProjectDetailViewModel(
         {
             Status = null;
 
+            var changes = await PlanSwitchVersionAsync(name, targetVersion);
+
+            if (changes is null)
+            {
+                ReloadInstalled();
+                return;
+            }
+
+            displayName = string.IsNullOrWhiteSpace(displayName) ? name : displayName;
+
+            var affected = PackageOperations.FindAffectedDependents(
+                _project,
+                changes,
+                _allowPrerelease);
+
+            var explained = affected.Select(x => x.Name).ToList();
+
+            if (BlockingConflicts(changes, explained) is { Count: > 0 } blocking)
+            {
+                dialogs.ShowNotice(
+                    localization["ProjectDetail.VersionChange.ConflictTitle"],
+                    localization["ProjectDetail.VersionChange.ConflictHint"]
+                        + Environment.NewLine
+                        + Environment.NewLine
+                        + string.Join(Environment.NewLine, blocking),
+                    localization["Dialog.Confirm"]);
+
+                ReloadInstalled();
+                return;
+            }
+
+            PendingProjectChanges? cascade = null;
+
+            if (affected.Count > 0)
+            {
+                cascade = await PlanSwitchVersionAsync(
+                    name,
+                    targetVersion,
+                    upgradeDependents: true,
+                    reportFailure: false);
+
+                if (cascade is not null
+                    && (PackageOperations.FindAffectedDependents(
+                            _project,
+                            cascade,
+                            _allowPrerelease).Count > 0
+                        || BlockingConflicts(cascade) is { Count: > 0 }))
+                {
+                    cascade = null;
+                }
+            }
+
+            var message = string.Join(Environment.NewLine, ApplyLines(changes, explained));
+            var detailTitle = affected.Count == 0
+                ? null
+                : localization["ProjectDetail.ApplyChanges.Incompatible"];
+            var detailBody = affected.Count == 0
+                ? null
+                : string.Join(
+                    Environment.NewLine,
+                    affected.Select(x => AffectedLine(x, cascade)));
+
+            var applied = changes;
+
+            if (cascade is null)
+            {
+                if (!dialogs.ShowConfirm(
+                        localization["ProjectDetail.ApplyChanges.Title"],
+                        message,
+                        localization["ProjectDetail.Apply"],
+                        detailTitle: detailTitle,
+                        detailBody: detailBody))
+                {
+                    ReloadInstalled();
+                    return;
+                }
+            }
+            else
+            {
+                var choice = dialogs.ShowChoice(
+                    localization["ProjectDetail.ApplyChanges.Title"],
+                    message,
+                    localization["ProjectDetail.Apply.OnlyThis"],
+                    localization["ProjectDetail.Apply.All"],
+                    detailTitle: detailTitle,
+                    detailBody: detailBody);
+
+                if (choice == ConfirmChoice.Cancel)
+                {
+                    ReloadInstalled();
+                    return;
+                }
+
+                if (choice == ConfirmChoice.Extra)
+                {
+                    applied = cascade;
+                }
+            }
+
+            IsBusy = true;
+
+            try
+            {
+                await ApplyChangesAsync(
+                    applied,
+                    localization.Format(
+                        upgrading ? "ProjectDetail.Upgrade.Done" : "ProjectDetail.SwitchVersion.Done",
+                        displayName,
+                        targetVersion));
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                logger.LogWarning(
+                    exception,
+                    "切换包版本失败：{Project} {Package} {Version}",
+                    ProjectPath,
+                    name,
+                    targetVersion);
+
+                Status = localization.Format("ProjectDetail.ApplyFailed", exception.Message);
+
+                await LoadAsync();
+            }
+            finally
+            {
+                IsBusy = false;
+            }
+        }
+        finally
+        {
+            _switchingVersion = false;
+        }
+    }
+
+    private async Task<PendingProjectChanges?> PlanSwitchVersionAsync(
+        string name,
+        string version,
+        bool upgradeDependents = false,
+        bool reportFailure = true)
+    {
+        if (_project is null || !PackageVersion.TryParse(version, out var parsed))
+        {
+            return null;
+        }
+
+        try
+        {
             var outcome = await PackageOperations.SwitchVersionAsync(
                 _project,
                 Catalog(),
                 name,
                 parsed,
                 _allowPrerelease,
-                CancellationToken.None);
+                CancellationToken.None,
+                upgradeDependents);
 
             if (outcome.Status == AddPackageStatus.VersionNotFound)
             {
                 logger.LogWarning("指定的包版本不存在：{Project} {Package} {Version}", ProjectPath, name, version);
 
-                Status = localization.Format("ProjectDetail.VersionUnavailable", name, version);
-                return;
+                if (reportFailure)
+                {
+                    Status = localization.Format("ProjectDetail.VersionUnavailable", name, version);
+                }
+
+                return null;
             }
 
             if (outcome.Status != AddPackageStatus.Success)
@@ -1513,20 +1849,21 @@ public sealed partial class ProjectDetailViewModel(
                     name,
                     version,
                     ReportMissingDependencies(outcome.MissingDependencies));
-                return;
+                return null;
             }
 
-            await SetPendingAsync(outcome.Changes!);
+            return outcome.Changes;
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {
             logger.LogWarning(exception, "切换包版本失败：{Project} {Package} {Version}", ProjectPath, name, version);
 
-            Status = localization.Format("ProjectDetail.VersionSwitchFailed", exception.Message);
-        }
-        finally
-        {
-            _switchingVersion = false;
+            if (reportFailure)
+            {
+                Status = localization.Format("ProjectDetail.VersionSwitchFailed", exception.Message);
+            }
+
+            return null;
         }
     }
 
@@ -1650,7 +1987,7 @@ public sealed partial class InstalledPackageViewModel : ObservableObject
 
     partial void OnSelectedVersionChanged(string value)
     {
-        if (value != Version)
+        if (!string.IsNullOrEmpty(value) && value != Version)
         {
             _onVersionChosen?.Invoke(value);
         }

@@ -107,10 +107,10 @@ public partial class ProjectDetailPage : UserControl
 
     private void OnUpgradeClick(object sender, MouseButtonEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: InstalledPackageViewModel { NewerVersion: { } version } package }
+        if (sender is FrameworkElement { DataContext: InstalledPackageViewModel { NewerVersion: not null } package }
             && DataContext is ProjectDetailViewModel viewModel)
         {
-            _ = viewModel.SwitchToVersionAsync(package.Name, version);
+            _ = viewModel.UpgradeToVersionAsync(package);
         }
     }
 

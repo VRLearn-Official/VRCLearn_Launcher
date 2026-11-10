@@ -141,7 +141,9 @@ public sealed class DialogService
         string? extraText = null,
         bool extraDanger = false,
         bool confirmDanger = false,
-        Window? owner = null)
+        Window? owner = null,
+        string? detailTitle = null,
+        string? detailBody = null)
     {
         Record(title, message);
 
@@ -151,7 +153,9 @@ public sealed class DialogService
             confirmText,
             extraText,
             confirmDanger: confirmDanger,
-            extraDanger: extraDanger);
+            extraDanger: extraDanger,
+            detailTitle: detailTitle,
+            detailBody: detailBody);
 
         Prepare(dialog, owner);
         dialog.ShowDialog();
