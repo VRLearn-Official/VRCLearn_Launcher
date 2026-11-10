@@ -166,6 +166,26 @@
         <Setter Property="markup:SmoothScroll.IsEnabled" Value="True" />
     </Style>
 
+    <!-- The scroll viewer must host the ItemsPresenter directly for panel virtualization. -->
+    <Style x:Key="VirtualizedItems" TargetType="ItemsControl">
+        <Setter Property="ItemsPanel" Value="{StaticResource VirtualizingStackItemsPanel}" />
+        <Setter Property="VirtualizingPanel.IsVirtualizing" Value="True" />
+        <Setter Property="VirtualizingPanel.ScrollUnit" Value="Pixel" />
+        <Setter Property="VirtualizingPanel.VirtualizationMode" Value="Recycling" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ItemsControl">
+                    <ScrollViewer
+                        Padding="{TemplateBinding Padding}"
+                        CanContentScroll="True"
+                        Style="{StaticResource PageScroll}">
+                        <ItemsPresenter />
+                    </ScrollViewer>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
     <Style x:Key="PageTitle" TargetType="TextBlock">
         <Setter Property="FontSize" Value="{StaticResource FontSize.Title}" />
         <Setter Property="FontWeight" Value="SemiBold" />

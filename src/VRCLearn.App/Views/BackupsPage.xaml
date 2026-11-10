@@ -82,92 +82,87 @@
             Text="{Binding EmptyText}"
             Visibility="{Binding HasBackups, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
 
-        <ScrollViewer
+        <ItemsControl
             Grid.Row="2"
             Padding="32,16,32,32"
-            Style="{StaticResource VirtualizedListScroll}">
-            <ItemsControl
-                ItemsSource="{Binding Backups}"
-                ItemsPanel="{StaticResource VirtualizingStackItemsPanel}"
-                VirtualizingPanel.ScrollUnit="Pixel"
-                VirtualizingPanel.VirtualizationMode="Recycling">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <ui:Card Style="{StaticResource MissingRowCard}">
-                            <Grid>
-                                <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="*" />
-                                    <ColumnDefinition Width="Auto" />
-                                </Grid.ColumnDefinitions>
+            Style="{StaticResource VirtualizedItems}"
+            ItemsSource="{Binding Backups}">
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <ui:Card Style="{StaticResource MissingRowCard}">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
 
-                                <StackPanel Grid.Column="0" VerticalAlignment="Center">
-                                    <TextBlock Style="{StaticResource RowTitle}" Text="{Binding ProjectName}" />
-                                    <StackPanel Margin="{StaticResource Gap.Tight}" Orientation="Horizontal">
-                                        <TextBlock
-                                            Style="{StaticResource Caption}"
-                                            Text="{Binding Display}"
-                                            ToolTip="{Binding FileName}" />
-                                        <TextBlock
-                                            Margin="{StaticResource Gap.Inline}"
-                                            Style="{StaticResource Caption}"
-                                            Text="{Binding SizeText}" />
-                                    </StackPanel>
+                            <StackPanel Grid.Column="0" VerticalAlignment="Center">
+                                <TextBlock Style="{StaticResource RowTitle}" Text="{Binding ProjectName}" />
+                                <StackPanel Margin="{StaticResource Gap.Tight}" Orientation="Horizontal">
                                     <TextBlock
-                                        Margin="{StaticResource Gap.Tight}"
-                                        Style="{StaticResource CaptionDim}"
-                                        Text="{Binding Note}"
-                                        ToolTip="{Binding Note}"
-                                        Visibility="{Binding HasNote, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                </StackPanel>
-
-                                <StackPanel Grid.Column="1" Style="{StaticResource RowActions}">
-                                    <TextBlock
-                                        Margin="0,0,8,0"
-                                        VerticalAlignment="Center"
                                         Style="{StaticResource Caption}"
-                                        Text="{markup:Tr Backups.FileMoved}"
-                                        Visibility="{Binding IsMissing, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    <ui:Button
-                                        Margin="0,0,0,0"
-                                        Appearance="Primary"
-                                        Command="{markup:RowCommand RestoreCommand}"
-                                        CommandParameter="{Binding}"
-                                        Content="{markup:Tr Backups.Restore}"
-                                        Style="{StaticResource RowButton}"
-                                        Visibility="{Binding IsAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    <ui:Button
-                                        Appearance="Secondary"
-                                        Command="{markup:RowCommand DeleteCommand}"
-                                        CommandParameter="{Binding}"
-                                        Content="{markup:Tr Backups.Delete}"
-                                        Style="{StaticResource RowButton}" />
-                                    <ui:Button
-                                        Appearance="Secondary"
-                                        Command="{markup:RowCommand LockCommand}"
-                                        CommandParameter="{Binding}"
-                                        Content="{markup:Tr Backups.Lock}"
-                                        Style="{StaticResource RowButton}"
-                                        Visibility="{Binding CanLock, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    <ui:Button
-                                        Appearance="Secondary"
-                                        Command="{markup:RowCommand EditNoteCommand}"
-                                        CommandParameter="{Binding}"
-                                        Content="{markup:Tr Backups.Note}"
-                                        Style="{StaticResource RowButton}"
-                                        Visibility="{Binding CanEditNote, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    <ui:Button
-                                        Appearance="Secondary"
-                                        Command="{markup:RowCommand ExportCommand}"
-                                        CommandParameter="{Binding}"
-                                        Content="{markup:Tr Backups.Export}"
-                                        Style="{StaticResource RowButton}"
-                                        Visibility="{Binding IsAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                        Text="{Binding Display}"
+                                        ToolTip="{Binding FileName}" />
+                                    <TextBlock
+                                        Margin="{StaticResource Gap.Inline}"
+                                        Style="{StaticResource Caption}"
+                                        Text="{Binding SizeText}" />
                                 </StackPanel>
-                            </Grid>
-                        </ui:Card>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+                                <TextBlock
+                                    Margin="{StaticResource Gap.Tight}"
+                                    Style="{StaticResource CaptionDim}"
+                                    Text="{Binding Note}"
+                                    ToolTip="{Binding Note}"
+                                    Visibility="{Binding HasNote, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+
+                            <StackPanel Grid.Column="1" Style="{StaticResource RowActions}">
+                                <TextBlock
+                                    Margin="0,0,8,0"
+                                    VerticalAlignment="Center"
+                                    Style="{StaticResource Caption}"
+                                    Text="{markup:Tr Backups.FileMoved}"
+                                    Visibility="{Binding IsMissing, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <ui:Button
+                                    Margin="0,0,0,0"
+                                    Appearance="Primary"
+                                    Command="{markup:RowCommand RestoreCommand}"
+                                    CommandParameter="{Binding}"
+                                    Content="{markup:Tr Backups.Restore}"
+                                    Style="{StaticResource RowButton}"
+                                    Visibility="{Binding IsAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <ui:Button
+                                    Appearance="Secondary"
+                                    Command="{markup:RowCommand DeleteCommand}"
+                                    CommandParameter="{Binding}"
+                                    Content="{markup:Tr Backups.Delete}"
+                                    Style="{StaticResource RowButton}" />
+                                <ui:Button
+                                    Appearance="Secondary"
+                                    Command="{markup:RowCommand LockCommand}"
+                                    CommandParameter="{Binding}"
+                                    Content="{markup:Tr Backups.Lock}"
+                                    Style="{StaticResource RowButton}"
+                                    Visibility="{Binding CanLock, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <ui:Button
+                                    Appearance="Secondary"
+                                    Command="{markup:RowCommand EditNoteCommand}"
+                                    CommandParameter="{Binding}"
+                                    Content="{markup:Tr Backups.Note}"
+                                    Style="{StaticResource RowButton}"
+                                    Visibility="{Binding CanEditNote, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <ui:Button
+                                    Appearance="Secondary"
+                                    Command="{markup:RowCommand ExportCommand}"
+                                    CommandParameter="{Binding}"
+                                    Content="{markup:Tr Backups.Export}"
+                                    Style="{StaticResource RowButton}"
+                                    Visibility="{Binding IsAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                            </StackPanel>
+                        </Grid>
+                    </ui:Card>
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </UserControl>

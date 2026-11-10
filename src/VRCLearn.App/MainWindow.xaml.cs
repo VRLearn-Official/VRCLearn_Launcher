@@ -142,7 +142,6 @@ public partial class MainWindow : FluentWindow
 
         if (_shown)
         {
-            target.UpdateLayout();
             PlayPageTransition(target);
         }
     }
