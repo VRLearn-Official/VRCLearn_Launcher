@@ -118,6 +118,19 @@ public sealed partial class ProjectItemViewModel(string projectPath) : Observabl
         }
     }
 
+    internal bool HasSameListContent(ProjectItemViewModel other) =>
+        ProjectPath == other.ProjectPath
+        && CreatedAt == other.CreatedAt
+        && LastModified == other.LastModified
+        && ProjectType == other.ProjectType
+        && UnityVersion == other.UnityVersion
+        && IsFavorite == other.IsFavorite
+        && FavoriteAction == other.FavoriteAction
+        && IsUnityRunning == other.IsUnityRunning
+        && IsUnreadable == other.IsUnreadable
+        && Summary == other.Summary
+        && MetaLine == other.MetaLine;
+
     private static SymbolRegular IconFor(ProjectType type) => type switch
     {
         ProjectType.Avatars or ProjectType.LegacyAvatars or ProjectType.UpmAvatars => SymbolRegular.Person24,
