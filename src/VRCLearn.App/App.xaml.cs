@@ -1,5 +1,6 @@
 using System.IO;
 using System.Windows;
+using System.Windows.Threading;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
 using VRCLearn.App.Plugins;
@@ -83,6 +84,20 @@ public partial class App : Application
 
         var localization = _services.GetRequiredService<LocalizationService>();
 
+        if (config.Language.Length > 0
+            && !localization.Packs.Any(x => string.Equals(
+                x.Code,
+                config.Language,
+                StringComparison.OrdinalIgnoreCase)))
+        {
+            var removed = config.Language;
+
+            config.Language = "";
+            configStore.Save();
+
+            startupLogger.LogInformation("语言包已不存在，回退到系统语言：{Language}", removed);
+        }
+
         localization.Apply(config.Language);
         _services.GetRequiredService<ThemeService>().Apply(config.Theme);
         _services.GetRequiredService<AnimationService>().Apply(config.AnimationEnabled);
@@ -147,14 +162,68 @@ public partial class App : Application
 
         _singleInstance.StartListening(HonourArguments);
 
-        _ = _services.GetRequiredService<UpdateViewModel>().InitializeAsync();
+        var update = _services.GetRequiredService<UpdateViewModel>();
+        var updateTask = update.InitializeAsync();
 
         if (!ShowDeepLink(e.Args))
         {
             _services.GetRequiredService<MainWindowViewModel>().Start();
         }
 
+        _ = ShowStartupUpdatePromptAsync(update, updateTask);
+
         InheritAlcomTemplates(_services, paths, startupLogger);
+    }
+
+    private async Task ShowStartupUpdatePromptAsync(UpdateViewModel update, Task updateTask)
+    {
+        try
+        {
+            await updateTask;
+        }
+        catch (Exception exception)
+        {
+            _services?.GetRequiredService<ILogger<App>>()
+                .LogWarning(exception, "检查更新失败");
+
+            return;
+        }
+
+        if (_services is not { } services
+            || update.Phase != UpdatePhase.Available
+            || update.DownloadUrl is not { Length: > 0 } downloadUrl)
+        {
+            return;
+        }
+
+        await Dispatcher.InvokeAsync(() => { }, DispatcherPriority.ApplicationIdle);
+
+        if (MainWindow is not { IsVisible: true } window)
+        {
+            return;
+        }
+
+        var localization = services.GetRequiredService<LocalizationService>();
+        var dialogs = services.GetRequiredService<DialogService>();
+
+        if (!dialogs.ShowConfirm(
+                localization["Startup.Update.Title"],
+                localization["Startup.Update.Message"],
+                localization["Startup.Update.GetLatest"],
+                owner: window))
+        {
+            return;
+        }
+
+        try
+        {
+            ShellLauncher.OpenUrl(downloadUrl);
+        }
+        catch (Exception exception)
+        {
+            services.GetRequiredService<ILogger<App>>()
+                .LogWarning(exception, "打开下载页失败");
+        }
     }
 
     private void HonourArguments(IReadOnlyList<string> arguments) => Dispatcher.Invoke(() =>

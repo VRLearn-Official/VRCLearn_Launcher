@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Runtime.ExceptionServices;
 using System.Windows;
+using System.Windows.Documents;
 using System.Windows.Media.Animation;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -69,7 +70,10 @@ public sealed class DialogService
         bool danger = false,
         Window? owner = null,
         string? detailTitle = null,
-        string? detailBody = null)
+        string? detailBody = null,
+        double width = 480,
+        IReadOnlyList<Inline>? messageInlines = null,
+        IReadOnlyList<Inline>? detailBodyInlines = null)
     {
         Record(title, message);
 
@@ -79,7 +83,10 @@ public sealed class DialogService
             confirmText,
             confirmDanger: danger,
             detailTitle: detailTitle,
-            detailBody: detailBody);
+            detailBody: detailBody,
+            width: width,
+            messageInlines: messageInlines,
+            detailBodyInlines: detailBodyInlines);
 
         Prepare(dialog, owner);
 
@@ -141,7 +148,12 @@ public sealed class DialogService
         string? extraText = null,
         bool extraDanger = false,
         bool confirmDanger = false,
-        Window? owner = null)
+        Window? owner = null,
+        string? detailTitle = null,
+        string? detailBody = null,
+        double width = 480,
+        IReadOnlyList<Inline>? messageInlines = null,
+        IReadOnlyList<Inline>? detailBodyInlines = null)
     {
         Record(title, message);
 
@@ -151,7 +163,12 @@ public sealed class DialogService
             confirmText,
             extraText,
             confirmDanger: confirmDanger,
-            extraDanger: extraDanger);
+            extraDanger: extraDanger,
+            detailTitle: detailTitle,
+            detailBody: detailBody,
+            width: width,
+            messageInlines: messageInlines,
+            detailBodyInlines: detailBodyInlines);
 
         Prepare(dialog, owner);
         dialog.ShowDialog();

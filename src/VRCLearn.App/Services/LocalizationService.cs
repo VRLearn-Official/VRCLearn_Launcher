@@ -100,8 +100,7 @@ public sealed class LocalizationService : INotifyPropertyChanged
         [
             .. System.IO.Directory.EnumerateFiles(Folder, "*.json")
                 .Select(path => new LanguagePack(Path.GetFileNameWithoutExtension(path), Display(path)))
-                .OrderBy(x => x.Code.Equals(FallbackCode, StringComparison.OrdinalIgnoreCase) ? 0 : 1)
-                .ThenBy(x => x.Code, StringComparer.OrdinalIgnoreCase),
+                .OrderBy(x => x.Code, StringComparer.OrdinalIgnoreCase),
         ];
     }
 

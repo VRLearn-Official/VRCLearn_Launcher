@@ -35,4 +35,8 @@ public sealed class RepositoryItemViewModel
     public string HideAction { get; }
 
     public string Details => Id is null ? Url ?? "" : $"{Id}  ·  {Url}";
+
+    internal bool HasSameContent(RepositoryItemViewModel other) =>
+        Index == other.Index && Id == other.Id && Url == other.Url && Title == other.Title
+        && Summary == other.Summary && IsHidden == other.IsHidden && HideAction == other.HideAction;
 }

@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Collections.Specialized;
 using System.ComponentModel;
 using System.IO;
 using System.Windows.Data;
@@ -30,6 +31,7 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
     private readonly ProgressService _progress;
     private readonly ILogger<ProjectsViewModel> _logger;
     private readonly SemaphoreSlim _reloadGate = new(1, 1);
+    private readonly ProjectRows _projects = new();
     private readonly IReadOnlyList<Option> _sortingKeys;
     private readonly IReadOnlyList<Option> _sortingDirections;
     private readonly HashSet<string> _runningProjects = new(StringComparer.OrdinalIgnoreCase);
@@ -128,7 +130,7 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
         set => SelectedSorting = ProjectSorting.WithDirection(ProjectSorting.KeyOf(SelectedSorting), value == "Descending");
     }
 
-    public ObservableCollection<ProjectItemViewModel> Projects { get; } = [];
+    public ObservableCollection<ProjectItemViewModel> Projects => _projects;
 
     public ICollectionView FilteredProjects { get; }
 
@@ -157,16 +159,10 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
 
     public void Release()
     {
-        if (IsBusy)
+        if (!IsBusy)
         {
-            return;
+            SearchText = "";
         }
-
-        Projects.Clear();
-        SearchText = "";
-
-        OnPropertyChanged(nameof(HasProjects));
-        OnPropertyChanged(nameof(IsSearchEmpty));
     }
 
     public void RefreshUnityStates()
@@ -585,36 +581,38 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
     {
         await WithBusyAsync(async () =>
         {
-            var items = new List<ProjectItemViewModel>();
-            var favorites = _configStore.Current.FavoriteProjects;
-
-            foreach (var path in _service.List())
+            var paths = _service.List();
+            var favorites = _configStore.Current.FavoriteProjects.ToHashSet(StringComparer.Ordinal);
+            var items = await Task.Run(async () =>
             {
-                var item = new ProjectItemViewModel(path);
-
-                await item.LoadAsync(
-                    _service,
-                    _localization,
-                    favorites.Contains(path),
-                    _opener.Status(path) != UnityProjectStatus.Closed,
-                    CancellationToken.None);
-
-                if (item.IsUnreadable)
+                var loaded = new List<ProjectItemViewModel>(paths.Count);
+                foreach (var path in paths)
                 {
-                    _logger.LogWarning("项目读不出来：{Project} {Summary}", path, item.Summary);
+                    var item = new ProjectItemViewModel(path);
+                    await item.LoadAsync(
+                        _service,
+                        _localization,
+                        favorites.Contains(path),
+                        _opener.Status(path) != UnityProjectStatus.Closed,
+                        CancellationToken.None);
+
+                    if (item.IsUnreadable)
+                    {
+                        _logger.LogWarning("项目读不出来：{Project} {Summary}", path, item.Summary);
+                    }
+
+                    loaded.Add(item);
                 }
 
-                items.Add(item);
-            }
+                return loaded;
+            });
 
-            Projects.Clear();
-
-            foreach (var item in ProjectSorting.Apply(items, SelectedSorting).OrderByDescending(x => x.IsFavorite))
+            var sorted = ProjectSorting.Apply(items, SelectedSorting).OrderByDescending(x => x.IsFavorite).ToArray();
+            if (Projects.Count != sorted.Length || Projects.Zip(sorted).Any(pair => !pair.First.HasSameListContent(pair.Second)))
             {
-                Projects.Add(item);
+                _projects.ReplaceWith(sorted);
+                PruneTracking();
             }
-
-            PruneTracking();
         });
 
         OnPropertyChanged(nameof(HasProjects));
@@ -627,5 +625,22 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
 
         _runningProjects.IntersectWith(paths);
         _refreshedAfterLaunch.IntersectWith(paths);
+    }
+
+    private sealed class ProjectRows : ObservableCollection<ProjectItemViewModel>
+    {
+        public void ReplaceWith(IReadOnlyList<ProjectItemViewModel> rows)
+        {
+            CheckReentrancy();
+            Items.Clear();
+            foreach (var row in rows)
+            {
+                Items.Add(row);
+            }
+
+            OnPropertyChanged(new PropertyChangedEventArgs(nameof(Count)));
+            OnPropertyChanged(new PropertyChangedEventArgs("Item[]"));
+            OnCollectionChanged(new NotifyCollectionChangedEventArgs(NotifyCollectionChangedAction.Reset));
+        }
     }
 }

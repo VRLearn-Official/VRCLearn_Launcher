@@ -15,6 +15,11 @@ internal static class FileLock
 
     public static bool IsLocked(string path)
     {
+        if (!File.Exists(path))
+        {
+            return false;
+        }
+
         FileStream stream;
 
         try

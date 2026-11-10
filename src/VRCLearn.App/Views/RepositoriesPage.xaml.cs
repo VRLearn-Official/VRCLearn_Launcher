@@ -1,6 +1,7 @@
 ﻿using System.IO;
 using System.Windows;
 using System.Windows.Controls;
+using System.Windows.Data;
 using VRCLearn.App.Services;
 using VRCLearn.App.ViewModels;
 using VRCLearn.Core.Repositories;
@@ -12,6 +13,11 @@ public partial class RepositoriesPage : UserControl
     public RepositoriesPage()
     {
         InitializeComponent();
+
+        BindingOperations.SetBinding(RepositoryRows, CollectionContainer.CollectionProperty,
+            new Binding("DataContext.Repositories") { Source = this });
+        BindingOperations.SetBinding(UserPackageRows, CollectionContainer.CollectionProperty,
+            new Binding("DataContext.UserPackages.Folders") { Source = this });
 
         IsVisibleChanged += (_, args) =>
         {

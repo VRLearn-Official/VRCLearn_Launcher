@@ -37,8 +37,10 @@ public sealed class RepositoryService
                 _cacheStore.Load(repo.LocalPath)))
             .ToList();
 
-    public IReadOnlyList<LocalCachedRepository> CachedRepositories() =>
-        [.. Settings.UserRepos
+    public IReadOnlyList<LocalCachedRepository> CachedRepositories() => CachedRepositories(List());
+
+    public IReadOnlyList<LocalCachedRepository> CachedRepositories(IReadOnlyList<RepositoryEntry> entries) =>
+        [.. entries
             .Select(x => _cacheStore.Load(x.LocalPath))
             .OfType<LocalCachedRepository>()];
 

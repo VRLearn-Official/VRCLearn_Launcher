@@ -55,13 +55,21 @@ public sealed partial class UserPackagesViewModel : PageViewModelBase
     {
         try
         {
-            var folders = await _userPackages.LoadAsync(CancellationToken.None);
+            var folders = (await _userPackages.LoadAsync(CancellationToken.None))
+                .Select(folder => new UserPackageFolderViewModel(folder, _localization))
+                .ToList();
+
+            if (folders.Count == Folders.Count
+                && folders.Zip(Folders).All(pair => pair.First.HasSameContent(pair.Second)))
+            {
+                return;
+            }
 
             Folders.Clear();
 
             foreach (var folder in folders)
             {
-                Folders.Add(new UserPackageFolderViewModel(folder, _localization));
+                Folders.Add(folder);
             }
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
@@ -110,4 +118,7 @@ public sealed class UserPackageFolderViewModel(UserPackageFolder folder, Localiz
     public string DisplayName { get; } = folder.IsReadable
         ? $"{folder.Manifest!.DisplayName ?? folder.Manifest.Name} {folder.Manifest.Version}"
         : localization["Packages.User.Unreadable"];
+
+    internal bool HasSameContent(UserPackageFolderViewModel other) =>
+        Path == other.Path && IsUnreadable == other.IsUnreadable && DisplayName == other.DisplayName;
 }

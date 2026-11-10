@@ -50,7 +50,7 @@ public sealed partial class LogsViewModel : PageViewModelBase, IPageViewModel
     [ObservableProperty]
     private string _selectedLevel = nameof(LogLevel.Information);
 
-    partial void OnSelectedLevelChanged(string value) => Reload(force: true);
+    partial void OnSelectedLevelChanged(string value) => _ = ReloadAsync(force: true);
 
     [ObservableProperty]
     private bool _autoRefresh = true;
@@ -58,8 +58,8 @@ public sealed partial class LogsViewModel : PageViewModelBase, IPageViewModel
     [ObservableProperty]
     private string _text = "";
 
-    private long _readLength = -1;
-    private DateTime _readWrite;
+    private (long Length, DateTime LastWrite) _readStamp = (-1, default);
+    private Task? _activeRead;
 
     public bool IsEmpty => Text.Length == 0;
 
@@ -73,67 +73,71 @@ public sealed partial class LogsViewModel : PageViewModelBase, IPageViewModel
 
     public void Release()
     {
+        _activeRead = null;
+        _readStamp = (-1, default);
         Text = "";
-
-        _readLength = -1;
     }
 
-    public void Reload() => Reload(force: false);
-
-    private void Reload(bool force)
+    public async Task ReloadAsync(bool force = false)
     {
-        var grown = HasLogChanged();
-
-        if (!force && !grown)
+        if (!force && _activeRead is not null)
         {
             return;
         }
 
-        if (grown)
-        {
-            RememberLogState();
-        }
-
         var minimum = Enum.TryParse<LogLevel>(SelectedLevel, out var level) ? level : LogLevel.Information;
-
-        var lines = LogFile
-            .ReadTail(LogFilePath)
-            .Where(x => x.Level >= minimum)
-            .Select(x => x.Text)
-            .ToList();
-
-        var text = string.Join(Environment.NewLine, lines);
-        var changed = text != Text;
-
-        Text = text;
-
-        if (changed)
+        var path = LogFilePath;
+        var previousStamp = _readStamp;
+        var read = Task.Run(() =>
         {
-            ScrolledToEnd?.Invoke();
+            var file = new FileInfo(path);
+            var stamp = file.Exists ? (file.Length, file.LastWriteTimeUtc) : (-1L, default);
+            if (!force && stamp == previousStamp)
+            {
+                return (stamp, Text: (string?)null);
+            }
+
+            var lines = LogFile.ReadTail(path).Where(x => x.Level >= minimum).Select(x => x.Text);
+            return (stamp, Text: string.Join(Environment.NewLine, lines));
+        });
+        _activeRead = read;
+
+        try
+        {
+            var (stamp, text) = await read;
+            // A newer filter, manual refresh or page release supersedes this read.
+            if (_activeRead != read || text is null)
+            {
+                return;
+            }
+
+            _readStamp = stamp;
+            if (text != Text)
+            {
+                Text = text;
+                ScrolledToEnd?.Invoke();
+            }
         }
-    }
-
-    private bool HasLogChanged()
-    {
-        var file = new FileInfo(LogFilePath);
-
-        return file.Exists
-            ? file.Length != _readLength || file.LastWriteTimeUtc != _readWrite
-            : Text.Length > 0;
-    }
-
-    private void RememberLogState()
-    {
-        var file = new FileInfo(LogFilePath);
-
-        _readLength = file.Exists ? file.Length : -1;
-        _readWrite = file.Exists ? file.LastWriteTimeUtc : default;
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            if (force && _activeRead == read)
+            {
+                Report(exception);
+            }
+        }
+        finally
+        {
+            if (_activeRead == read)
+            {
+                _activeRead = null;
+            }
+        }
     }
 
     public event Action? ScrolledToEnd;
 
     [RelayCommand]
-    private void Refresh() => Reload(force: true);
+    private Task RefreshAsync() => ReloadAsync(force: true);
 
     [RelayCommand]
     private void OpenFolder() => ShellLauncher.OpenFolder(_paths.LogsDirectory);

@@ -46,6 +46,8 @@ public sealed record AddPackageOutcome(
     PendingProjectChanges? Changes,
     IReadOnlyList<MissingDependency> MissingDependencies);
 
+public sealed record AffectedDependent(string Name, PackageVersion Version);
+
 public enum RemovePackageStatus
 {
     Success,
@@ -90,7 +92,8 @@ public static class PackageOperations
         IReadOnlyList<PackageInfo> packages,
         AddPackageOperation operation,
         bool allowPrerelease,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool upgradeDependents = false)
     {
         var builder = new PendingChangesBuilder();
         var toInstall = new List<PackageInfo>();
@@ -103,6 +106,11 @@ public static class PackageOperations
             {
                 return new AddPackageOutcome(status, null, []);
             }
+        }
+
+        if (upgradeDependents)
+        {
+            ExpandDependents(project, catalog, builder, toInstall, allowPrerelease);
         }
 
         if (toInstall.Count == 0)
@@ -151,6 +159,131 @@ public static class PackageOperations
             AddPackageStatus.Success,
             await builder.BuildResolveAsync(project, cancellationToken).ConfigureAwait(false),
             []);
+    }
+
+    private static void ExpandDependents(
+        UnityProject project,
+        PackageCatalog catalog,
+        PendingChangesBuilder builder,
+        List<PackageInfo> toInstall,
+        bool allowPrerelease)
+    {
+        var changed = new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var package in toInstall)
+        {
+            changed[package.Name] = package;
+        }
+
+        var acceptance = PackageResolver.Acceptance(allowPrerelease);
+        var upgrading = changed.Any(x =>
+            project.GetLocked(x.Key) is not { } locked || x.Value.Version > locked.Version);
+
+        var added = true;
+
+        while (added)
+        {
+            added = false;
+
+            foreach (var locked in project.LockedPackages)
+            {
+                if (changed.ContainsKey(locked.Name))
+                {
+                    continue;
+                }
+
+                var affected = locked.Dependencies.Any(x =>
+                    changed.TryGetValue(x.Key, out var target)
+                    && !x.Value.Matches(target.Version, acceptance));
+
+                if (!affected)
+                {
+                    continue;
+                }
+
+                var candidate = FindDependentVersion(
+                    project,
+                    catalog,
+                    locked,
+                    changed,
+                    acceptance,
+                    upgrading);
+
+                if (candidate is null)
+                {
+                    continue;
+                }
+
+                if (project.GetDependency(candidate.Name) is { } declared
+                    && !declared.Matches(candidate.Version))
+                {
+                    builder.AddToDependencies(candidate.Name, DependencyRange.FromVersion(candidate.Version));
+                }
+
+                toInstall.Add(candidate);
+                changed[candidate.Name] = candidate;
+                added = true;
+            }
+        }
+    }
+
+    private static PackageInfo? FindDependentVersion(
+        UnityProject project,
+        PackageCatalog catalog,
+        LockedDependencyInfo dependent,
+        IReadOnlyDictionary<string, PackageInfo> changed,
+        PrereleaseAcceptance acceptance,
+        bool upgrading)
+    {
+        return catalog
+            .GetVersions(dependent.Name)
+            .Where(x => !x.Manifest.IsYanked)
+            .Where(x => UnityCompatibility.IsCompatible(x.Manifest, project.UnityVersion))
+            .Where(x => !upgrading || x.Version >= dependent.Version)
+            .Where(x => changed.All(change =>
+                !x.Manifest.VpmDependencies.TryGetValue(change.Key, out var range)
+                || range.Matches(change.Value.Version, acceptance)))
+            .MaxBy(x => x.Version);
+    }
+
+    public static IReadOnlyList<AffectedDependent> FindAffectedDependents(
+        UnityProject project,
+        PendingProjectChanges changes,
+        bool allowPrerelease)
+    {
+        var changed = new Dictionary<string, PackageVersion>(StringComparer.OrdinalIgnoreCase);
+        var removed = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (name, change) in changes.PackageChanges)
+        {
+            switch (change)
+            {
+                case Install { Package: { } package }:
+                    changed[name] = package.Version;
+                    break;
+
+                case Remove:
+                    removed.Add(name);
+                    break;
+            }
+        }
+
+        if (changed.Count == 0)
+        {
+            return [];
+        }
+
+        var acceptance = PackageResolver.Acceptance(allowPrerelease);
+
+        return
+        [
+            .. project.LockedPackages
+                .Where(x => !changed.ContainsKey(x.Name) && !removed.Contains(x.Name))
+                .Where(x => x.Dependencies.Any(d =>
+                    changed.TryGetValue(d.Key, out var version)
+                    && !d.Value.Matches(version, acceptance)))
+                .Select(x => new AffectedDependent(x.Name, x.Version)),
+        ];
     }
 
     private static AddPackageStatus PlanInstallation(
@@ -258,10 +391,18 @@ public static class PackageOperations
         string name,
         PackageVersion version,
         bool allowPrerelease,
-        CancellationToken cancellationToken) =>
+        CancellationToken cancellationToken,
+        bool upgradeDependents = false) =>
         catalog.Find(name, VersionSelector.ForSpecificVersion(version)) is not { } package
             ? Task.FromResult(new AddPackageOutcome(AddPackageStatus.VersionNotFound, null, []))
-            : AddAsync(project, catalog, [package], AddPackageOperation.AutoDetected, allowPrerelease, cancellationToken);
+            : AddAsync(
+                project,
+                catalog,
+                [package],
+                AddPackageOperation.AutoDetected,
+                allowPrerelease,
+                cancellationToken,
+                upgradeDependents);
 
     public static async Task<ReinstallOutcome> ReinstallAsync(
         UnityProject project,

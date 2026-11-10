@@ -69,25 +69,21 @@
             Text="{Binding EmptyText}"
             Visibility="{Binding HasResources, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
 
-        <ScrollViewer
+        <ItemsControl
             Grid.Row="2"
             Padding="32,16,32,32"
-            Style="{StaticResource VirtualizedListScroll}">
-            <ItemsControl
-                ItemsSource="{Binding Resources}"
-                VirtualizingPanel.ScrollUnit="Pixel"
-                VirtualizingPanel.VirtualizationMode="Recycling">
-                <ItemsControl.ItemsPanel>
-                    <ItemsPanelTemplate>
-                        <ui:VirtualizingWrapPanel />
-                    </ItemsPanelTemplate>
-                </ItemsControl.ItemsPanel>
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <views:ResourceCard />
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+            Style="{StaticResource VirtualizedItems}"
+            ItemsSource="{Binding Resources}">
+            <ItemsControl.ItemsPanel>
+                <ItemsPanelTemplate>
+                    <ui:VirtualizingWrapPanel />
+                </ItemsPanelTemplate>
+            </ItemsControl.ItemsPanel>
+            <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                    <views:ResourceCard />
+                </DataTemplate>
+            </ItemsControl.ItemTemplate>
+        </ItemsControl>
     </Grid>
 </UserControl>

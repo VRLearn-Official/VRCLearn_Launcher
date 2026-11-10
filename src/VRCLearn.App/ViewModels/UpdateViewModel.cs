@@ -54,6 +54,8 @@ public sealed partial class UpdateViewModel : ObservableObject
 
     public string CurrentVersionText => _service.CurrentVersionText;
 
+    public string? DownloadUrl => _downloadUrl;
+
     [ObservableProperty]
     private UpdatePhase _phase;
 
