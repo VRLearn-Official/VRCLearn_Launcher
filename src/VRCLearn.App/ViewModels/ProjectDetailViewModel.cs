@@ -13,6 +13,7 @@ using VRCLearn.Core.Configuration;
 using VRCLearn.Core.IO;
 using VRCLearn.Core.Packages;
 using VRCLearn.Core.Projects;
+using VRCLearn.Core.Repositories;
 using VRCLearn.Core.Templates;
 using VRCLearn.Core.Text;
 using VRCLearn.Core.Unity;
@@ -124,7 +125,7 @@ public sealed partial class ProjectDetailViewModel(
 
     private static string MajorOf(UnityProject project) => project.UnityVersion.Major.ToString();
 
-    private void ReloadEditors()
+    private void ReloadEditors(IReadOnlyList<UnityEditor> installed)
     {
         _reloadingEditors = true;
 
@@ -134,8 +135,6 @@ public sealed partial class ProjectDetailViewModel(
 
             if (_project is { } project)
             {
-                var installed = opener.AllEditors();
-
                 var chosen = UnityEditorList.PickForProject(
                     installed,
                     project.UnityVersion,
@@ -288,33 +287,24 @@ public sealed partial class ProjectDetailViewModel(
 
     private bool _reloadingEditors;
 
-    private PackageCatalog Catalog()
-    {
-        if (_catalog is { } cached)
-        {
-            return cached;
-        }
-
-        var cachedRepositories = repositories.CachedRepositories();
-        _catalogComplete = cachedRepositories.Count == repositories.List().Count;
-
-        return _catalog = PackageCatalog.FromRepositories(cachedRepositories, _userPackages);
-    }
+    private PackageCatalog Catalog() => _catalog!;
 
     /// <summary>「可以装什么」用这份；隐藏的仓库不计入。</summary>
-    private PackageCatalog OfferedCatalog()
+    private PackageCatalog OfferedCatalog() => _offeredCatalog!;
+
+    private static (PackageCatalog Catalog, PackageCatalog Offered, bool Complete) BuildCatalogs(
+        IReadOnlyList<LocalCachedRepository> cached,
+        int repositoryCount,
+        IReadOnlyList<PackageInfo> userPackages,
+        IReadOnlyCollection<string> hidden,
+        bool hideLocal)
     {
-        if (_offeredCatalog is { } cached)
-        {
-            return cached;
-        }
+        var catalog = PackageCatalog.FromRepositories(cached, userPackages);
+        var offered = PackageCatalog.FromRepositories(
+            [.. cached.Where(x => x.Id is null || !hidden.Contains(x.Id))],
+            hideLocal ? [] : userPackages);
 
-        var config = configStore.Current;
-        var hidden = config.HiddenRepositories;
-
-        return _offeredCatalog = PackageCatalog.FromRepositories(
-            [.. repositories.CachedRepositories().Where(x => x.Id is null || !hidden.Contains(x.Id))],
-            config.HideLocalUserPackages ? [] : _userPackages);
+        return (catalog, offered, cached.Count == repositoryCount);
     }
 
     private void ForgetCatalogs()
@@ -413,15 +403,36 @@ public sealed partial class ProjectDetailViewModel(
                 return;
             }
 
+            var repositoryEntries = repositories.List();
+            var hidden = configStore.Current.HiddenRepositories.ToArray();
+            var hideLocal = configStore.Current.HideLocalUserPackages;
+
+            var catalogsTask = Task.Run(() => BuildCatalogs(
+                repositories.CachedRepositories(repositoryEntries),
+                repositoryEntries.Count,
+                loadedUserPackages,
+                hidden,
+                hideLocal));
+
+            var editorsTask = Task.Run(opener.AllEditors);
+
+            await Task.WhenAll(catalogsTask, editorsTask);
+
+            if (generation != _loadGeneration)
+            {
+                return;
+            }
+
             _project = project;
             _userPackages = loadedUserPackages;
-            ForgetCatalogs();
             _allowPrerelease = settings.Current.ShowPrereleasePackages;
+            ForgetCatalogs();
+            (_catalog, _offeredCatalog, _catalogComplete) = catalogsTask.Result;
             ReloadUnityArguments();
             ProjectType = _project.DetectProjectType();
             OnPropertyChanged(nameof(HeaderSubtitle));
 
-            ReloadEditors();
+            ReloadEditors(editorsTask.Result);
             ReloadPackages();
             ReloadBackups();
 

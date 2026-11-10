@@ -290,7 +290,11 @@
                 PlaceholderText="{markup:Tr ProjectDetail.SearchPlaceholder}"
                 Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
 
-            <ItemsControl Margin="{StaticResource Gap.Small}" ItemsSource="{Binding PackageView}">
+            <ItemsControl
+                MaxHeight="520"
+                Margin="{StaticResource Gap.Small}"
+                Style="{StaticResource VirtualizedItems}"
+                ItemsSource="{Binding PackageView}">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <ui:Card Style="{StaticResource RowCard}">

@@ -421,9 +421,34 @@
         TargetType="ui:ProgressRing">
         <Setter Property="Width" Value="18" />
         <Setter Property="Height" Value="18" />
-        <Setter Property="IsIndeterminate" Value="True" />
+        <Setter Property="IsIndeterminate" Value="False" />
         <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="RenderTransformOrigin" Value="0.5,0.5" />
+        <Setter Property="RenderTransform">
+            <Setter.Value>
+                <RotateTransform />
+            </Setter.Value>
+        </Setter>
         <Setter Property="Visibility" Value="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
+        <Style.Triggers>
+            <Trigger Property="IsVisible" Value="True">
+                <Trigger.EnterActions>
+                    <BeginStoryboard x:Name="Spin">
+                        <Storyboard>
+                            <DoubleAnimation
+                                RepeatBehavior="Forever"
+                                Storyboard.TargetProperty="(UIElement.RenderTransform).(RotateTransform.Angle)"
+                                From="0"
+                                To="360"
+                                Duration="0:0:1" />
+                        </Storyboard>
+                    </BeginStoryboard>
+                </Trigger.EnterActions>
+                <Trigger.ExitActions>
+                    <StopStoryboard BeginStoryboardName="Spin" />
+                </Trigger.ExitActions>
+            </Trigger>
+        </Style.Triggers>
     </Style>
 
     <Style x:Key="DialogRow" TargetType="StackPanel">

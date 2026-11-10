@@ -15,62 +15,73 @@ public sealed class RepositoryCacheStore(AppPaths paths, GuiConfigStore configs,
     /// <summary>仓库清单是几 MB 的 JSON，解析一次就一直用，写盘和删除时才换。</summary>
     private readonly Dictionary<string, LocalCachedRepository?> _parsed = new(StringComparer.OrdinalIgnoreCase);
 
+    private readonly Lock _gate = new();
+
     private string PackageCacheDirectory => PackageCachePath.Effective(configs.Current, paths);
 
     public LocalCachedRepository? Load(string relativePath)
     {
-        if (_parsed.TryGetValue(relativePath, out var cached))
+        lock (_gate)
         {
+            if (_parsed.TryGetValue(relativePath, out var cached))
+            {
+                return cached;
+            }
+
+            var path = Resolve(relativePath);
+
+            try
+            {
+                cached = File.Exists(path) && JsonNode.Parse(File.ReadAllText(path)) is JsonObject json
+                    ? LocalCachedRepository.FromJson(json)
+                    : null;
+            }
+            catch (Exception exception) when (exception is IOException or JsonException or RepositoryParseException)
+            {
+                cached = null;
+            }
+
+            _parsed[relativePath] = cached;
+
             return cached;
         }
-
-        var path = Resolve(relativePath);
-
-        try
-        {
-            cached = File.Exists(path) && JsonNode.Parse(File.ReadAllText(path)) is JsonObject json
-                ? LocalCachedRepository.FromJson(json)
-                : null;
-        }
-        catch (Exception exception) when (exception is IOException or JsonException or RepositoryParseException)
-        {
-            cached = null;
-        }
-
-        _parsed[relativePath] = cached;
-
-        return cached;
     }
 
     public bool Save(string relativePath, LocalCachedRepository repository)
     {
-        var saved = JsonFileStore.Save(
-            Resolve(relativePath),
-            repository.ToJson(),
-            message => logger.LogWarning("{Message}", message));
-
-        if (saved)
+        lock (_gate)
         {
-            _parsed[relativePath] = repository;
-        }
+            var saved = JsonFileStore.Save(
+                Resolve(relativePath),
+                repository.ToJson(),
+                message => logger.LogWarning("{Message}", message));
 
-        return saved;
+            if (saved)
+            {
+                _parsed[relativePath] = repository;
+            }
+
+            return saved;
+        }
     }
 
     public void Delete(string relativePath)
     {
-        var path = Resolve(relativePath);
-
-        try
+        lock (_gate)
         {
-            File.Delete(path);
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        {
-            logger.LogWarning(exception, "删除仓库缓存失败：{Path}", path);
-        }
+            var path = Resolve(relativePath);
 
-        _parsed.Remove(relativePath);
+            try
+            {
+                File.Delete(path);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                logger.LogWarning(exception, "删除仓库缓存失败：{Path}", path);
+            }
+
+            _parsed.Remove(relativePath);
+        }
     }
 
     public void ClearPackageCache()
