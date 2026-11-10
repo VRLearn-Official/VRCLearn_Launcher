@@ -39,6 +39,8 @@
                 <ui:Button
                     Grid.Column="2"
                     Margin="{StaticResource Gap.Inline}"
+                    Style="{StaticResource RefreshToolbarButton}"
+                    Tag="{Binding IsCheckingUpdates}"
                     Appearance="Secondary"
                     Command="{Binding CheckUpdatesCommand}"
                     Content="{markup:Tr Plugins.CheckUpdates}"
@@ -58,8 +60,7 @@
                 <ui:ProgressRing
                     Grid.Column="5"
                     Margin="{StaticResource Gap.Inline}"
-                    Style="{StaticResource BusyRing}"
-                    Visibility="{Binding IsWorking, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    Style="{StaticResource BusyRing}" />
             </Grid>
 
         <StackPanel Grid.Row="1" Margin="32,16,32,0">

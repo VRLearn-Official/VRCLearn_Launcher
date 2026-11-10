@@ -150,11 +150,14 @@
                             Click="OnExportClick"
                             Content="{markup:Tr Repositories.Export}" />
                         <ui:Button
-                            Style="{StaticResource ToolbarButton}"
+                            Style="{StaticResource RefreshToolbarButton}"
+                            Tag="{Binding RefreshCommand.IsRunning}"
                             Appearance="Secondary"
                             Command="{Binding RefreshCommand}"
                             Content="{markup:Tr Repositories.Refresh}" />
-                        <ui:ProgressRing Margin="4,0,0,0" Style="{StaticResource BusyRing}" />
+                        <Grid Visibility="{Binding RefreshCommand.IsRunning, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                            <ui:ProgressRing Margin="4,0,0,0" Style="{StaticResource BusyRing}" />
+                        </Grid>
                     </StackPanel>
 
                     <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr Repositories.List}" />
