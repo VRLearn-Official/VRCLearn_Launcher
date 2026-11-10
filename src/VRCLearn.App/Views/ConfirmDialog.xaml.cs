@@ -1,4 +1,5 @@
 ﻿using System.Windows;
+using System.Windows.Documents;
 using Wpf.Ui.Controls;
 
 namespace VRCLearn.App.Views;
@@ -13,19 +14,50 @@ public partial class ConfirmDialog : DialogWindowBase
         bool confirmDanger = false,
         bool extraDanger = false,
         string? detailTitle = null,
-        string? detailBody = null)
+        string? detailBody = null,
+        double width = 480,
+        IReadOnlyList<Inline>? messageInlines = null,
+        IReadOnlyList<Inline>? detailBodyInlines = null)
     {
         InitializeComponent();
 
         Title = title;
         TitleText.Text = title;
-        MessageText.Text = message;
+        Width = width;
         ConfirmButton.Content = confirmText;
+
+        if (messageInlines is null)
+        {
+            MessageText.Text = message;
+        }
+        else
+        {
+            MessageText.Inlines.Clear();
+
+            foreach (var inline in messageInlines)
+            {
+                MessageText.Inlines.Add(inline);
+            }
+        }
 
         if (detailTitle is not null)
         {
             DetailTitleText.Text = detailTitle;
-            DetailBodyText.Text = detailBody ?? "";
+
+            if (detailBodyInlines is null)
+            {
+                DetailBodyText.Text = detailBody ?? "";
+            }
+            else
+            {
+                DetailBodyText.Inlines.Clear();
+
+                foreach (var inline in detailBodyInlines)
+                {
+                    DetailBodyText.Inlines.Add(inline);
+                }
+            }
+
             DetailBlock.Visibility = Visibility.Visible;
         }
 

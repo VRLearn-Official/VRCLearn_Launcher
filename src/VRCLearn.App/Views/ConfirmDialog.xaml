@@ -32,12 +32,14 @@
                         FontSize="{StaticResource FontSize.Section}"
                         FontWeight="SemiBold"
                         TextWrapping="Wrap" />
-                    <TextBlock
-                        x:Name="MessageText"
-                        Margin="{StaticResource Gap.Small}"
-                        FontSize="{StaticResource FontSize.Body}"
-                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                        TextWrapping="Wrap" />
+                    <ScrollViewer MaxHeight="240" VerticalScrollBarVisibility="Auto">
+                        <TextBlock
+                            x:Name="MessageText"
+                            Margin="{StaticResource Gap.Small}"
+                            FontSize="{StaticResource FontSize.Body}"
+                            Foreground="{DynamicResource TextFillColorSecondaryBrush}"
+                            TextWrapping="Wrap" />
+                    </ScrollViewer>
 
                     <Border
                         x:Name="DetailBlock"

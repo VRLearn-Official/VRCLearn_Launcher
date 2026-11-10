@@ -106,7 +106,7 @@ public partial class ProjectDetailPage : UserControl
 
     private void OnUpgradeClick(object sender, RoutedEventArgs e)
     {
-        if (sender is FrameworkElement { DataContext: InstalledPackageViewModel { NewerVersion: not null } package }
+        if (sender is FrameworkElement { DataContext: PackageRowViewModel { NewerVersion: not null } package }
             && DataContext is ProjectDetailViewModel viewModel)
         {
             _ = viewModel.UpgradeToVersionAsync(package);
