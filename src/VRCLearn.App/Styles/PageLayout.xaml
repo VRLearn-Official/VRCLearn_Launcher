@@ -159,13 +159,6 @@
         <VirtualizingStackPanel />
     </ItemsPanelTemplate>
 
-    <Style x:Key="VirtualizedListScroll" TargetType="ScrollViewer">
-        <Setter Property="CanContentScroll" Value="True" />
-        <Setter Property="VerticalScrollBarVisibility" Value="Auto" />
-        <Setter Property="HorizontalScrollBarVisibility" Value="Disabled" />
-        <Setter Property="markup:SmoothScroll.IsEnabled" Value="True" />
-    </Style>
-
     <!-- The scroll viewer must host the ItemsPresenter directly for panel virtualization. -->
     <Style x:Key="VirtualizedItems" TargetType="ItemsControl">
         <Setter Property="ItemsPanel" Value="{StaticResource VirtualizingStackItemsPanel}" />

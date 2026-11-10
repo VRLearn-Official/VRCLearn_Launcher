@@ -169,15 +169,11 @@
                     x:Name="BackupsContent"
                     ClipToBounds="True"
                     Visibility="Collapsed">
-                    <ScrollViewer
+                    <ItemsControl
                         MaxHeight="320"
                         Margin="{StaticResource Gap.Row}"
-                        Style="{StaticResource VirtualizedListScroll}">
-                        <ItemsControl
-                            ItemsSource="{Binding Backups}"
-                            ItemsPanel="{StaticResource VirtualizingStackItemsPanel}"
-                            VirtualizingPanel.ScrollUnit="Pixel"
-                            VirtualizingPanel.VirtualizationMode="Recycling">
+                        Style="{StaticResource VirtualizedItems}"
+                        ItemsSource="{Binding Backups}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <ui:Card Style="{StaticResource MissingRowCard}">
@@ -223,8 +219,7 @@
                                 </ui:Card>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
-                        </ItemsControl>
-                    </ScrollViewer>
+                    </ItemsControl>
 
                     <StackPanel Visibility="{Binding HasPendingRestore, Converter={StaticResource BooleanToVisibilityConverter}}">
                         <TextBlock
