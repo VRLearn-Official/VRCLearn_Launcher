@@ -438,14 +438,13 @@
                                 </StackPanel>
 
                                 <StackPanel Grid.Column="2" Style="{StaticResource RowActions}">
-                                    <TextBlock
+                                    <ui:Button
                                         Margin="0,0,10,0"
-                                        VerticalAlignment="Center"
-                                        Cursor="Hand"
-                                        FontSize="{StaticResource FontSize.Caption}"
-                                        Foreground="{DynamicResource AccentTextFillColorPrimaryBrush}"
-                                        MouseLeftButtonUp="OnUpgradeClick"
-                                        Text="{Binding NewerVersion, StringFormat={}{0} ↑}"
+                                        Style="{StaticResource RowButton}"
+                                        Appearance="Secondary"
+                                        Click="OnUpgradeClick"
+                                        Content="{Binding NewerVersion}"
+                                        Icon="{ui:SymbolIcon ArrowCircleUp24}"
                                         ToolTip="{markup:Tr ProjectDetail.NewerAvailable}"
                                         Visibility="{Binding HasNewerVersion, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
