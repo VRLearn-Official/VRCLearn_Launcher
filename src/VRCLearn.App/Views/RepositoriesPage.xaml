@@ -148,6 +148,8 @@
                                 Content="{markup:Tr Repositories.Add}" />
                             <ui:Button
                                 Margin="{StaticResource Gap.Inline}"
+                                Style="{StaticResource RefreshToolbarButton}"
+                                Tag="{Binding RefreshCommand.IsRunning}"
                                 Appearance="Secondary"
                                 Command="{Binding RefreshCommand}"
                                 Content="{markup:Tr Repositories.Refresh}" />

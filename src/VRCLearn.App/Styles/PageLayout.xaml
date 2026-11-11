@@ -451,6 +451,37 @@
         </Style.Triggers>
     </Style>
 
+    <Style
+        x:Key="RefreshToolbarButton"
+        BasedOn="{StaticResource ToolbarButton}"
+        TargetType="ui:Button">
+        <Setter Property="ContentTemplate">
+            <Setter.Value>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Grid Width="14" Height="14" Margin="0,0,6,0" VerticalAlignment="Center">
+                            <ui:SymbolIcon
+                                FontSize="14"
+                                Symbol="ArrowClockwise24"
+                                Visibility="{Binding Tag, RelativeSource={RelativeSource AncestorType=ui:Button}, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
+                            <ui:ProgressRing
+                                Width="14"
+                                Height="14"
+                                Style="{StaticResource BusyRing}"
+                                Visibility="{Binding Tag, RelativeSource={RelativeSource AncestorType=ui:Button}, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                        </Grid>
+                        <TextBlock VerticalAlignment="Center" Text="{Binding}" />
+                    </StackPanel>
+                </DataTemplate>
+            </Setter.Value>
+        </Setter>
+        <Style.Triggers>
+            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+                <Setter Property="IsEnabled" Value="False" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
     <Style x:Key="DialogRow" TargetType="StackPanel">
         <Setter Property="Margin" Value="{StaticResource Gap.Large}" />
         <Setter Property="HorizontalAlignment" Value="Right" />

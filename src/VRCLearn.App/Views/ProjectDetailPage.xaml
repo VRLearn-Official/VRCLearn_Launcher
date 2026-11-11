@@ -14,14 +14,13 @@
                     Margin="0,0,4,8"
                     Command="{Binding BackCommand}"
                     Icon="{ui:SymbolIcon ArrowLeft24}" />
-                <ui:ProgressRing Margin="12,0,4,8" Style="{StaticResource BusyRing}" />
                 <ui:Button
                     Margin="{StaticResource Gap.Wrapped}"
-                    Style="{StaticResource ToolbarButton}"
+                    Style="{StaticResource RefreshToolbarButton}"
+                    Tag="{Binding RefreshCommand.IsRunning}"
                     Appearance="Secondary"
                     Command="{Binding RefreshCommand}"
-                    Content="{markup:Tr ProjectDetail.Refresh}"
-                    Icon="{ui:SymbolIcon ArrowSync24}" />
+                    Content="{markup:Tr ProjectDetail.Refresh}" />
                 <ui:Button
                     Margin="{StaticResource Gap.Wrapped}"
                     Style="{StaticResource ToolbarButton}"
@@ -66,6 +65,9 @@
                         IsUnityRunning="{Binding IsUnityRunning}"
                         LaunchCommand="{Binding OpenInUnityCommand}" />
                 </StackPanel>
+                <Grid Visibility="{Binding RefreshCommand.IsRunning, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
+                    <ui:ProgressRing Margin="4,0,0,8" Style="{StaticResource BusyRing}" />
+                </Grid>
             </WrapPanel>
 
             <StackPanel Margin="{StaticResource Gap.Small}" Orientation="Horizontal">
