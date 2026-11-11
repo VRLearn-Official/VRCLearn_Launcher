@@ -18,12 +18,7 @@ Get-FileHash .\VRCLearnLauncher-<版本>-win-x64-Setup.exe -Algorithm SHA256
 
 ## 本次更新
 
-- 备份新增默认勾选的「着色器缓存」，并跳过 Unity 占用的缓存文件
-- 移除归档、实验性功能与自动/全量备份
-- 修复新建项目缺少 Unity 包清单导致 VRChat SDK 测试程序集编译失败
-- 插件有更新时「打开」改为「更新」
-- 统一刷新按钮内的进度提示，修复备份时误显示
-- 仓库页调整按钮顺序，「导入仓库」改为「导入」
+- 修复降级包时，传递依赖降到项目清单声明版本以下会被误判为无法处理
 
 安装包暂未签名，首次运行时 Windows SmartScreen 可能提示；选择「更多信息」→「仍要运行」。
 
@@ -55,11 +50,6 @@ sha256sum -c VRCLearnLauncher-<version>-win-x64-Setup.exe.sha256
 
 ## What's new
 
-- Backups can now include the shader cache (enabled by default); files locked by Unity are skipped
-- Removed archives, experimental features, and automatic/full backups
-- Fixed new projects missing the Unity package manifest, which broke compilation of the VRChat SDK test assemblies
-- Plugins with an update now show "Update" instead of "Open"
-- Unified the progress indicator inside refresh buttons and fixed it appearing during backups
-- Reordered the repository page buttons and renamed "Import repos" to "Import"
+- Fixed downgrades being blocked as unresolvable when the target version pulled a transitive dependency below the version declared in the project manifest
 
 The installer is not code-signed yet, so Windows SmartScreen may warn on first run. Choose "More info" and then "Run anyway".

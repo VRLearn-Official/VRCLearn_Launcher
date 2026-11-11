@@ -1257,22 +1257,7 @@ public sealed partial class ProjectDetailViewModel(
 
         foreach (var (name, conflict) in changes.Conflicts)
         {
-            if (conflict.ConflictsWithUnity)
-            {
-                lines.Add(localization.Format("ProjectDetail.Conflict.Unity", name));
-            }
-
-            var conflicting = skip is null
-                ? conflict.ConflictingPackages
-                : conflict.ConflictingPackages.Where(x => !skip.Contains(x)).ToList();
-
-            if (conflicting.Count > 0)
-            {
-                lines.Add(localization.Format(
-                    "ProjectDetail.Conflict.Packages",
-                    name,
-                    Join(conflicting)));
-            }
+            AppendConflictLines(lines, name, conflict, skip);
 
             foreach (var unlocked in conflict.UnlockedNames)
             {
@@ -1295,25 +1280,41 @@ public sealed partial class ProjectDetailViewModel(
 
         foreach (var (name, conflict) in changes.Conflicts)
         {
-            if (conflict.ConflictsWithUnity)
-            {
-                lines.Add(localization.Format("ProjectDetail.Conflict.Unity", name));
-            }
-
-            var conflicting = skip is null
-                ? conflict.ConflictingPackages
-                : conflict.ConflictingPackages.Where(x => !skip.Contains(x)).ToList();
-
-            if (conflicting.Count > 0)
-            {
-                lines.Add(localization.Format(
-                    "ProjectDetail.Conflict.Packages",
-                    name,
-                    Join(conflicting)));
-            }
+            AppendConflictLines(lines, name, conflict, skip);
         }
 
         return lines;
+    }
+
+    private void AppendConflictLines(
+        List<string> lines,
+        string name,
+        ConflictInfo conflict,
+        HashSet<string>? skip)
+    {
+        if (conflict.ConflictsWithUnity)
+        {
+            lines.Add(localization.Format("ProjectDetail.Conflict.Unity", name));
+        }
+
+        var conflicting = skip is null
+            ? conflict.ConflictingPackages
+            : conflict.ConflictingPackages.Where(x => !skip.Contains(x)).ToList();
+
+        if (conflicting.Any(string.IsNullOrEmpty))
+        {
+            lines.Add(localization.Format("ProjectDetail.Conflict.Root", name));
+        }
+
+        var packages = conflicting.Where(x => !string.IsNullOrEmpty(x)).ToList();
+
+        if (packages.Count > 0)
+        {
+            lines.Add(localization.Format(
+                "ProjectDetail.Conflict.Packages",
+                name,
+                Join(packages)));
+        }
     }
 
     private static readonly Regex InlinePlaceholder = new(@"\{(\d)\}", RegexOptions.Compiled);

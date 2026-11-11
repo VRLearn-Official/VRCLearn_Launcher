@@ -25,7 +25,7 @@ public sealed class MissingDependencies
 internal sealed class PackageResolver
 {
     /// <summary>项目根（<c>dependencies</c> 段）在要求表里的键。</summary>
-    private const string Root = "";
+    internal const string Root = "";
 
     private readonly PackageCatalog _catalog;
     private readonly UnityVersion? _unityVersion;
