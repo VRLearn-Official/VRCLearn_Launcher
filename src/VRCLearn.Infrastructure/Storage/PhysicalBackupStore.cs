@@ -77,8 +77,6 @@ public sealed class PhysicalBackupStore(
                     FilePath = finalPath,
                     ProjectName = request.ProjectName,
                     CreatedAt = request.CreatedAt,
-                    IsArchive = request.IsArchive,
-                    IsAuto = request.IsAuto,
                     Serial = serial,
                     Note = request.Note?.Trim() ?? "",
                 };
@@ -139,73 +137,6 @@ public sealed class PhysicalBackupStore(
             }
 
             record.Note = text;
-            configs.Save();
-        }
-    }
-
-    public void PruneAutoBackups(string projectName, int keep)
-    {
-        var limit = Math.Max(0, keep);
-
-        lock (_gate)
-        {
-            var auto = configs.Current.BackupRecords
-                .Where(x => x.IsAuto
-                    && string.Equals(x.ProjectName, projectName, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            var changed = false;
-
-            foreach (var record in auto.Where(x => !File.Exists(x.FilePath)).ToList())
-            {
-                configs.Current.BackupRecords.Remove(record);
-                changed = true;
-            }
-
-            var stale = auto
-                .Where(x => File.Exists(x.FilePath))
-                .OrderByDescending(x => x.CreatedAt)
-                .Skip(limit)
-                .ToList();
-
-            foreach (var record in stale)
-            {
-                try
-                {
-                    if (File.Exists(record.FilePath))
-                    {
-                        File.Delete(record.FilePath);
-                    }
-                }
-                catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-                {
-                    continue;
-                }
-
-                configs.Current.BackupRecords.Remove(record);
-                changed = true;
-            }
-
-            if (changed)
-            {
-                configs.Save();
-            }
-        }
-    }
-
-    public void LockAutoBackup(string absolutePath)
-    {
-        lock (_gate)
-        {
-            var record = configs.Current.BackupRecords.FirstOrDefault(x => SamePath(x.FilePath, absolutePath));
-
-            if (record is null || !record.IsAuto)
-            {
-                return;
-            }
-
-            record.IsAuto = false;
-            record.Note = "";
             configs.Save();
         }
     }

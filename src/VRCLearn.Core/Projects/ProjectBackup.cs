@@ -22,10 +22,33 @@ public static class ProjectBackup
         Stream destination,
         BackupFormat format,
         IProgress<FileProgress>? progress,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        bool skipLockedLibraryFiles = false,
+        ICollection<string>? skippedFiles = null)
     {
         var total = content.Directories.Count + content.Files.Count;
         var done = 0;
+        var lastPercent = -1;
+
+        void Advance()
+        {
+            done++;
+
+            if (progress is null)
+            {
+                return;
+            }
+
+            var percent = total == 0 ? 100 : done * 100 / total;
+
+            if (percent == lastPercent && done != total)
+            {
+                return;
+            }
+
+            lastPercent = percent;
+            progress.Report(new FileProgress(total, done));
+        }
 
         var level = format switch
         {
@@ -41,28 +64,51 @@ public static class ProjectBackup
             cancellationToken.ThrowIfCancellationRequested();
 
             archive.CreateEntry($"{directory}/");
-            progress?.Report(new FileProgress(total, ++done));
+            Advance();
         }
 
         foreach (var file in content.Files)
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            await using var source = await io.OpenReadOrNullAsync(file, cancellationToken).ConfigureAwait(false);
+            Stream? source;
 
-            if (source is null)
+            try
             {
+                source = await io.OpenReadOrNullAsync(file, cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception exception) when (
+                skipLockedLibraryFiles
+                && IsLibraryEntry(file)
+                && exception is IOException or UnauthorizedAccessException)
+            {
+                skippedFiles?.Add(file);
+                Advance();
+
                 continue;
             }
 
-            await using (var target = archive.CreateEntry(file, level).Open())
+            if (source is null)
             {
+                Advance();
+
+                continue;
+            }
+
+            await using (source)
+            {
+                await using var target = archive.CreateEntry(file, level).Open();
+
                 await source.CopyToAsync(target, cancellationToken).ConfigureAwait(false);
             }
 
-            progress?.Report(new FileProgress(total, ++done));
+            Advance();
         }
     }
+
+    private static bool IsLibraryEntry(string relativePath) =>
+        relativePath.Equals("Library", StringComparison.OrdinalIgnoreCase)
+        || relativePath.StartsWith("Library/", StringComparison.OrdinalIgnoreCase);
 
     public const string Extension = ".zip";
 
@@ -81,24 +127,23 @@ public static class ProjectBackup
     public static BackupImportInfo DescribeImport(string fileName, DateTime fallbackTime)
     {
         var stem = Path.GetFileNameWithoutExtension(fileName);
-        var archive = stem.EndsWith(LegacyArchiveMarker, StringComparison.Ordinal);
 
-        if (archive)
+        if (stem.EndsWith(LegacyArchiveMarker, StringComparison.Ordinal))
         {
             stem = stem[..^LegacyArchiveMarker.Length];
         }
 
         if (TrySplitLegacyName(stem, out var projectName, out var timestamp))
         {
-            return new(projectName, timestamp, archive);
+            return new(projectName, timestamp);
         }
 
         if (TrySplitHashName(stem, out projectName))
         {
-            return new(projectName, fallbackTime, archive);
+            return new(projectName, fallbackTime);
         }
 
-        return new(stem.Length > 0 ? stem : fileName, fallbackTime, archive);
+        return new(stem.Length > 0 ? stem : fileName, fallbackTime);
     }
 
     private static bool TrySplitLegacyName(string stem, out string projectName, out DateTime timestamp)
@@ -146,4 +191,4 @@ public static class ProjectBackup
     }
 }
 
-public sealed record BackupImportInfo(string ProjectName, DateTime CreatedAt, bool IsArchive);
+public sealed record BackupImportInfo(string ProjectName, DateTime CreatedAt);

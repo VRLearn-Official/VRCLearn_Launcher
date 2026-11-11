@@ -15,6 +15,7 @@ public static class ProjectCreator
         TemplatePlan plan,
         UnityVersion unityVersion,
         string projectName,
+        byte[]? defaultUpmManifest,
         CancellationToken cancellationToken)
     {
         if (plan.Source is { } source)
@@ -30,6 +31,8 @@ public static class ProjectCreator
         {
             await ImportUnityPackageAsync(destination, fileIo, path, cancellationToken).ConfigureAwait(false);
         }
+
+        await EnsureUpmManifestAsync(destination, defaultUpmManifest, cancellationToken).ConfigureAwait(false);
 
         await UpdateNameAndGuidAsync(destination, projectName, cancellationToken).ConfigureAwait(false);
 
@@ -70,6 +73,27 @@ public static class ProjectCreator
 
         await UnityPackageImporter
             .ImportAsync(destination, new MemoryStream(bytes), cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    private static async Task EnsureUpmManifestAsync(
+        IFileIo destination,
+        byte[]? defaultUpmManifest,
+        CancellationToken cancellationToken)
+    {
+        if (destination.FileExists(UpmManifest.RelativePath))
+        {
+            return;
+        }
+
+        if (defaultUpmManifest is not { Length: > 0 })
+        {
+            throw new InvalidOperationException(
+                "新建项目缺少 Packages/manifest.json，且没有可用的默认清单。");
+        }
+
+        await destination
+            .WriteAllBytesAsync(UpmManifest.RelativePath, defaultUpmManifest, cancellationToken)
             .ConfigureAwait(false);
     }
 

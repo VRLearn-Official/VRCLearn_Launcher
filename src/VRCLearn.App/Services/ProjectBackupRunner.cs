@@ -17,7 +17,8 @@ public sealed class ProjectBackupRunner(
         string projectPath,
         string projectName,
         string note,
-        bool auto,
+        bool includeLibrary,
+        ICollection<string>? skippedFiles,
         CancellationToken cancellationToken)
     {
         await _one.WaitAsync(cancellationToken);
@@ -27,10 +28,22 @@ public sealed class ProjectBackupRunner(
             if (Application.Current?.Dispatcher is { } dispatcher && !dispatcher.CheckAccess())
             {
                 return await dispatcher.InvokeAsync(
-                    () => RunCoreAsync(projectPath, projectName, note, auto, cancellationToken)).Task.Unwrap();
+                    () => RunCoreAsync(
+                        projectPath,
+                        projectName,
+                        note,
+                        includeLibrary,
+                        skippedFiles,
+                        cancellationToken)).Task.Unwrap();
             }
 
-            return await RunCoreAsync(projectPath, projectName, note, auto, cancellationToken);
+            return await RunCoreAsync(
+                projectPath,
+                projectName,
+                note,
+                includeLibrary,
+                skippedFiles,
+                cancellationToken);
         }
         finally
         {
@@ -42,7 +55,8 @@ public sealed class ProjectBackupRunner(
         string projectPath,
         string projectName,
         string note,
-        bool auto,
+        bool includeLibrary,
+        ICollection<string>? skippedFiles,
         CancellationToken cancellationToken) =>
         progress.RunAsync(
             localization["Progress.Backup"],
@@ -58,7 +72,8 @@ public sealed class ProjectBackupRunner(
                     DateTime.Now,
                     reporter,
                     cancellationToken,
-                    note: note,
-                    auto: auto);
+                    includeLibrary,
+                    note,
+                    skippedFiles);
             });
 }

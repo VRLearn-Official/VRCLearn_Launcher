@@ -190,20 +190,6 @@
                                     Padding="4"
                                     Appearance="Transparent"
                                     BorderThickness="0"
-                                    Command="{Binding UpdateCommand}"
-                                    IsEnabled="{Binding CanUpdate}"
-                                    ToolTip="{Binding UpdateToolTip}"
-                                    Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <ui:SymbolIcon
-                                        FontSize="{StaticResource IconSize.Inline}"
-                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                        Symbol="ArrowCircleUp24" />
-                                </ui:Button>
-                                <ui:Button
-                                    Margin="{StaticResource Gap.Inline}"
-                                    Padding="4"
-                                    Appearance="Transparent"
-                                    BorderThickness="0"
                                     Command="{Binding OpenDataCommand}"
                                     IsEnabled="{Binding CanOpenData}"
                                     ToolTip="{markup:Tr Plugins.OpenData}">
@@ -225,9 +211,18 @@
                                 <ui:Button
                                     Margin="{StaticResource Gap.Inline}"
                                     Appearance="Primary"
+                                    Command="{Binding UpdateCommand}"
+                                    Content="{markup:Tr Plugins.Update}"
+                                    IsEnabled="{Binding CanUpdate}"
+                                    ToolTip="{Binding UpdateToolTip}"
+                                    Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <ui:Button
+                                    Margin="{StaticResource Gap.Inline}"
+                                    Appearance="Primary"
                                     Command="{Binding OpenCommand}"
                                     Content="{markup:Tr Plugins.Open}"
-                                    IsEnabled="{Binding CanOpen}" />
+                                    IsEnabled="{Binding CanOpen}"
+                                    Visibility="{Binding HasUpdate, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
                             </StackPanel>
                         </Grid>
                     </ui:Card>

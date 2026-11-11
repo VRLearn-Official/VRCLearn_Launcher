@@ -13,7 +13,6 @@ public sealed class UnityProjectOpener(
     IUnityWindowActivator windows,
     ILauncherSettingsStore settings,
     GuiConfigStore configStore,
-    AutoBackupService autoBackups,
     ILogger<UnityProjectOpener> logger)
 {
     private static readonly TimeSpan HubTimeout = TimeSpan.FromSeconds(60);
@@ -119,8 +118,6 @@ public sealed class UnityProjectOpener(
             launcher.Launch(editor.ExecutablePath, projectPath, UnityLaunchArguments.For(projectPath, arguments));
 
             logger.LogInformation("启动 Unity：{Editor} 打开 {Project}", editor.ExecutablePath, projectPath);
-
-            autoBackups.ProjectStarted();
 
             return new UnityOpenOutcome(UnityOpenResult.Launched, hubResult, null);
         }

@@ -586,13 +586,9 @@ public sealed partial class ProjectDetailViewModel(
             return;
         }
 
-        var note = dialogs.ShowNote(
-            localization["Backups.Note.Title.New"],
-            "",
-            localization["Backups.Note.Start"],
-            localization["Backups.Note.Hint"]);
+        var options = dialogs.ShowBackupOptions();
 
-        if (note is null)
+        if (options is null)
         {
             return;
         }
@@ -602,15 +598,20 @@ public sealed partial class ProjectDetailViewModel(
             ProjectName,
             async () =>
             {
+                var skipped = new List<string>();
+
                 var record = await backupRunner.RunAsync(
                     ProjectPath,
                     ProjectName,
-                    note,
-                    auto: false,
+                    options.Note,
+                    options.IncludeLibrary,
+                    skipped,
                     CancellationToken.None);
 
                 ReloadBackups();
-                Status = localization.Format("ProjectDetail.BackupDone", record.FileName);
+                Status = skipped.Count == 0
+                    ? localization.Format("ProjectDetail.BackupDone", record.FileName)
+                    : localization.Format("ProjectDetail.BackupDoneSkipped", record.FileName, skipped.Count);
             },
             "ProjectDetail.BackupFailed");
     }

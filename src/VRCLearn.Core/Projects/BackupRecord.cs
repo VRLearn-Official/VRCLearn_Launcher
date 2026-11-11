@@ -10,10 +10,6 @@ public sealed class BackupRecord : IJsonOnDeserialized
 
     public DateTime CreatedAt { get; set; }
 
-    public bool IsArchive { get; set; }
-
-    public bool IsAuto { get; set; }
-
     public int Serial { get; set; }
 
     public string Note { get; set; } = "";
@@ -32,6 +28,4 @@ public sealed class BackupRecord : IJsonOnDeserialized
 public sealed record BackupCreateRequest(
     string ProjectName,
     DateTime CreatedAt,
-    bool IsArchive,
-    string? Note,
-    bool IsAuto = false);
+    string? Note);

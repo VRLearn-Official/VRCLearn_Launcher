@@ -15,6 +15,7 @@ namespace VRCLearn.App.ViewModels;
 public sealed partial class NewProjectViewModel(
     TemplatesViewModel templates,
     IUnityEditorLocator editors,
+    IUnityProjectTemplateManifest templateManifests,
     IFileIoFactory fileIo,
     ProjectsViewModel projects,
     ProjectDetailViewModel detail,
@@ -140,6 +141,24 @@ public sealed partial class NewProjectViewModel(
 
         try
         {
+            byte[]? defaultManifest = null;
+
+            if (plan.Source is null || !plan.Source.FileExists(UpmManifest.RelativePath))
+            {
+                var editor = editors.FindEditors().FirstOrDefault(x => x.Version == unityVersion);
+
+                defaultManifest = await templateManifests.FindAsync(
+                    unityVersion,
+                    editor?.ExecutablePath,
+                    CancellationToken.None);
+
+                if (defaultManifest is null)
+                {
+                    Status = localization.Format("Templates.Status.NoDefaultManifest", unityVersion);
+                    return false;
+                }
+            }
+
             Directory.CreateDirectory(target);
 
             await ProjectCreator.CreateAsync(
@@ -148,6 +167,7 @@ public sealed partial class NewProjectViewModel(
                 plan,
                 unityVersion,
                 name,
+                defaultManifest,
                 CancellationToken.None);
 
             await projects.AddAsync(target);

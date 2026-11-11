@@ -124,7 +124,7 @@ public sealed partial class PluginItemViewModel : ObservableObject
         }
     }
 
-    public bool CanOpen => _snapshot.CanOpen && !IsBusy;
+    public bool CanOpen => _snapshot.CanOpen && !IsBusy && !HasUpdate;
 
     public bool CanToggle => _snapshot.Manifest is not null && !IsBusy;
 
@@ -166,6 +166,7 @@ public sealed partial class PluginItemViewModel : ObservableObject
 
         OnPropertyChanged(nameof(Update));
         OnPropertyChanged(nameof(HasUpdate));
+        OnPropertyChanged(nameof(CanOpen));
         OnPropertyChanged(nameof(CanUpdate));
         OnPropertyChanged(nameof(UpdateToolTip));
 

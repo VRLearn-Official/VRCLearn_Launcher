@@ -4,7 +4,7 @@ namespace VRCLearn.Core.Projects;
 
 public sealed record ProjectFileFilter(bool ExcludeLibrary)
 {
-    public static ProjectFileFilter ForBackup() => new(ExcludeLibrary: true);
+    public static ProjectFileFilter ForBackup(bool includeLibrary = false) => new(ExcludeLibrary: !includeLibrary);
 }
 
 /// <summary>目录一并列出来，空目录也得留住。</summary>

@@ -145,7 +145,6 @@ public partial class App : Application
 
         _services.GetRequiredService<ThemeService>().Apply(config.Theme);
 
-        _services.GetRequiredService<AutoBackupService>().Start();
 
         _ = _services.GetRequiredService<IUnityEditorLocator>().RefreshFromHubAsync(CancellationToken.None);
 
