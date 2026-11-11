@@ -23,22 +23,6 @@ public sealed partial class ProjectItemViewModel(string projectPath) : Observabl
     [ObservableProperty]
     private bool _isUnityRunning;
 
-    [ObservableProperty]
-    private bool _isAutoBackupActive;
-
-    [ObservableProperty]
-    private string _autoBackupText = "";
-
-    [ObservableProperty]
-    private bool _isAutoBackupFailed;
-
-    public void SetAutoBackup(bool failed, string text)
-    {
-        IsAutoBackupFailed = failed;
-        AutoBackupText = text;
-        IsAutoBackupActive = text.Length > 0;
-    }
-
     public bool IsFavorite { get; private set; }
 
     public string FavoriteAction { get; private set; } = "";

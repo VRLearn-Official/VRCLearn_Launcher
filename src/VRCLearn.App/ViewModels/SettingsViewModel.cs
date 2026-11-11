@@ -39,7 +39,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly ILogger<SettingsViewModel> _logger;
     private readonly IReadOnlyList<Option> _buttonColors;
     private readonly IReadOnlyList<Option> _backupFormats;
-    private readonly IReadOnlyList<Option> _backupScopes;
     private readonly IReadOnlyList<Option> _hubAccessMethods;
 
     private bool _configBusy;
@@ -100,11 +99,6 @@ public sealed partial class SettingsViewModel : ObservableObject
             new("zip-store", () => localization["Settings.BackupFormat.Store"]),
             new("zip-best", () => localization["Settings.BackupFormat.Best"]),
         ];
-        _backupScopes =
-        [
-            new("config", () => localization["Settings.ManagerBackup.Config"]),
-            new("full", () => localization["Settings.ManagerBackup.Full"]),
-        ];
         _hubAccessMethods =
         [
             new("read-config", () => localization["Settings.UnityHubAccess.ReadConfig"]),
@@ -117,8 +111,6 @@ public sealed partial class SettingsViewModel : ObservableObject
 
         (_proxyScheme, _proxyHost, _proxyPort) = ProxyAddress.Split(_store.Current.ProxyUrl);
         _selectedBackupFormat = _store.Current.BackupFormat;
-        _selectedBackupScope = "config";
-        _experimentalFeatures = _store.Current.ExperimentalFeatures;
         _selectedLogLevel = _store.Current.LogsLevel;
         _logsRetentionCount = _store.Current.LogsRetentionCount;
         _showPrereleasePackages = _settings.Current.ShowPrereleasePackages;
@@ -135,7 +127,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             LocalizedOptions.Refresh(_buttonColors);
             LocalizedOptions.Refresh(_backupFormats);
-            LocalizedOptions.Refresh(_backupScopes);
             LocalizedOptions.Refresh(_hubAccessMethods);
         };
     }
@@ -145,41 +136,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     public IReadOnlyList<Option> ButtonColors => _buttonColors;
 
     public IReadOnlyList<Option> BackupFormats => _backupFormats;
-
-    public IReadOnlyList<Option> BackupScopes =>
-        ExperimentalFeatures ? _backupScopes : [_backupScopes[0]];
-
-    [ObservableProperty]
-    private bool _experimentalFeatures;
-
-    partial void OnExperimentalFeaturesChanged(bool value)
-    {
-        _store.Current.ExperimentalFeatures = value;
-        _store.Save();
-
-        if (!value && SelectedBackupScope == "full")
-        {
-            SelectedBackupScope = "config";
-        }
-
-        OnPropertyChanged(nameof(BackupScopes));
-
-        _logger.LogInformation("实验性功能：{Value}", value);
-    }
-
-    [ObservableProperty]
-    private string _selectedBackupScope;
-
-    partial void OnSelectedBackupScopeChanged(string value)
-    {
-        if (value == "full")
-        {
-            _dialogs.ShowNotice(
-                _localization["Settings.ManagerBackup.FullWarningTitle"],
-                _localization["Settings.ManagerBackup.FullWarning"],
-                _localization["Dialog.Confirm"]);
-        }
-    }
 
     public string DataDirectory => _paths.Root;
 
@@ -386,17 +342,14 @@ public sealed partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private async Task Backup()
     {
-        var scope = SelectedBackupScope == "full" ? BackupScope.Full : BackupScope.Config;
-        var full = scope == BackupScope.Full;
-
         _dialogs.ShowNotice(
             _localization["Settings.ConfigBackup"],
-            _localization[full ? "Settings.ManagerBackup.FullHint" : "Settings.ConfigBackupHint"],
+            _localization["Settings.ConfigBackupHint"],
             _localization["Dialog.Confirm"]);
 
         var path = _dialogs.PickSaveFile(
             _localization["Settings.ConfigBackup"],
-            $"VRCLearn-{(full ? "full" : "config")}-{DateTime.Now:yyyyMMdd-HHmmss}.zip",
+            $"VRCLearn-config-{DateTime.Now:yyyyMMdd-HHmmss}.zip",
             "*.zip|*.zip|*|*");
 
         if (path is null)
@@ -414,7 +367,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 
         try
         {
-            var result = await Task.Run(() => _configBackup.Backup(path, scope));
+            var result = await Task.Run(() => _configBackup.Backup(path));
 
             _toasts.Show(result.Files == 0
                 ? _localization["Settings.ConfigBackup.Empty"]
@@ -478,26 +431,7 @@ public sealed partial class SettingsViewModel : ObservableObject
 
         try
         {
-            string? managedRoot = null;
-
-            if (_configBackup.IsFullBackup(path))
-            {
-                _dialogs.ShowNotice(
-                    _localization["Settings.ConfigRestore.FullTitle"],
-                    _localization["Settings.ConfigRestore.FullHint"],
-                    _localization["Dialog.Confirm"]);
-
-                managedRoot = _dialogs.PickFolder(
-                    _localization["Settings.ConfigRestore.PickFolder"],
-                    Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments));
-
-                if (managedRoot is null)
-                {
-                    return;
-                }
-            }
-
-            var result = await Task.Run(() => _configBackup.Restore(path, managedRoot));
+            var result = await Task.Run(() => _configBackup.Restore(path));
 
             if (result.Files == 0 && result.Failed == 0)
             {
@@ -508,13 +442,6 @@ public sealed partial class SettingsViewModel : ObservableObject
             var message = result.Failed == 0
                 ? _localization.Format("Settings.ConfigRestore.Done", result.Files)
                 : _localization.Format("Settings.ConfigRestore.Partial", result.Files, result.Failed);
-
-            if (managedRoot is not null)
-            {
-                message += Environment.NewLine + _localization.Format(
-                    "Settings.ConfigRestore.ManagedPath",
-                    Path.Combine(managedRoot, ConfigBackupService.ManagedFolderName));
-            }
 
             if (_dialogs.ShowConfirm(
                     _localization["Settings.ConfigRestore.DoneTitle"],

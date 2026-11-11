@@ -25,16 +25,13 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
     private readonly GuiConfigStore _configStore;
     private readonly DialogService _dialogs;
     private readonly UnityProjectOpener _opener;
-    private readonly ProjectBackupService _backups;
     private readonly ProjectBackupRunner _backupRunner;
-    private readonly AutoBackupService _autoBackups;
     private readonly ProgressService _progress;
     private readonly ILogger<ProjectsViewModel> _logger;
     private readonly SemaphoreSlim _reloadGate = new(1, 1);
     private readonly ProjectRows _projects = new();
     private readonly IReadOnlyList<Option> _sortingKeys;
     private readonly IReadOnlyList<Option> _sortingDirections;
-    private readonly HashSet<string> _runningProjects = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<string> _refreshedAfterLaunch = new(StringComparer.OrdinalIgnoreCase);
 
     public ProjectsViewModel(
@@ -45,9 +42,7 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
         GuiConfigStore configStore,
         DialogService dialogs,
         UnityProjectOpener opener,
-        ProjectBackupService backups,
         ProjectBackupRunner backupRunner,
-        AutoBackupService autoBackups,
         ProgressService progress,
         ToastService toasts,
         ILogger<ProjectsViewModel> logger)
@@ -61,9 +56,7 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
         _configStore = configStore;
         _dialogs = dialogs;
         _opener = opener;
-        _backups = backups;
         _backupRunner = backupRunner;
-        _autoBackups = autoBackups;
         _progress = progress;
 
         _sortingKeys =
@@ -178,11 +171,6 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
 
             if (running)
             {
-                if (_runningProjects.Add(project.ProjectPath))
-                {
-                    _autoBackups.ProjectStarted();
-                }
-
                 if (!_refreshedAfterLaunch.Contains(project.ProjectPath)
                     && Directory.GetLastWriteTimeUtc(project.ProjectPath) != project.LastModified)
                 {
@@ -191,7 +179,6 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
             }
             else
             {
-                _runningProjects.Remove(project.ProjectPath);
                 _refreshedAfterLaunch.Remove(project.ProjectPath);
             }
         }
@@ -205,39 +192,7 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
 
             _ = ReloadAsync();
         }
-
-        var remaining = _autoBackups.TimeUntilNextBackup();
-
-        foreach (var project in Projects)
-        {
-            if (!project.IsUnityRunning)
-            {
-                project.SetAutoBackup(false, "");
-                continue;
-            }
-
-            if (_autoBackups.HasFailed(project.ProjectPath))
-            {
-                project.SetAutoBackup(true, _localization["Projects.AutoBackupFailed"]);
-                continue;
-            }
-
-            if (remaining is not { } value)
-            {
-                project.SetAutoBackup(false, "");
-                continue;
-            }
-
-            project.SetAutoBackup(
-                false,
-                _localization.Format("Projects.AutoBackup", CountdownText(value)));
-        }
     }
-
-    private static string CountdownText(TimeSpan remaining) =>
-        remaining.TotalHours >= 1
-            ? $"{(int)remaining.TotalHours}:{remaining.Minutes:00}:{remaining.Seconds:00}"
-            : $"{remaining.Minutes:00}:{remaining.Seconds:00}";
 
     public async Task AddAsync(string projectPath)
     {
@@ -326,69 +281,6 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
         };
 
     [RelayCommand]
-    private async Task Archive(ProjectItemViewModel project)
-    {
-        if (IsBusy)
-        {
-            return;
-        }
-
-        if (_opener.IsBusy(project.ProjectPath))
-        {
-            _dialogs.ShowNotice(
-                _localization["Projects.Archive.NoticeTitle"],
-                _localization["Projects.Archive.UnityBusy"],
-                _localization["Dialog.Confirm"]);
-
-            return;
-        }
-
-        if (!_dialogs.ShowConfirm(
-                _localization["Projects.Archive.ConfirmTitle"],
-                _localization.Format("Projects.Archive.ConfirmMessage", project.Name),
-                _localization["Projects.Archive.ConfirmButton"],
-                danger: true))
-        {
-            return;
-        }
-
-        ShowStatus(_localization.Format("Projects.Status.Archiving", project.Name));
-
-        await RunBusyAsync(
-            "归档项目失败：{Project}",
-            project.Name,
-            async () =>
-        {
-            var unityProject = await _service.OpenAsync(project.ProjectPath, CancellationToken.None);
-            var config = _configStore.Current;
-
-            var (record, status) = await _progress.RunAsync(
-                _localization["Progress.Archive"],
-                async reporter =>
-                {
-                    var backup = await _backups.CreateAsync(
-                        unityProject,
-                        project.Name,
-                        ProjectBackupService.ParseFormat(config.BackupFormat),
-                        DateTime.Now,
-                        reporter,
-                        CancellationToken.None,
-                        archive: true);
-
-                    return (backup, await Task.Run(() => _service.RemoveFromDisk(project.ProjectPath, reporter)));
-                });
-
-            ShowStatus(RemovalStatus(
-                project,
-                status,
-                _localization.Format("Projects.Status.Archived", record.FileName)));
-        },
-            "Projects.Status.BackupFailed");
-
-        _ = ReloadAsync();
-    }
-
-    [RelayCommand]
     private async Task Backup(ProjectItemViewModel project)
     {
         if (IsBusy)
@@ -396,13 +288,9 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
             return;
         }
 
-        var note = _dialogs.ShowNote(
-            _localization["Backups.Note.Title.New"],
-            "",
-            _localization["Backups.Note.Start"],
-            _localization["Backups.Note.Hint"]);
+        var options = _dialogs.ShowBackupOptions();
 
-        if (note is null)
+        if (options is null)
         {
             return;
         }
@@ -414,14 +302,19 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
             project.Name,
             async () =>
             {
+                var skipped = new List<string>();
+
                 var record = await _backupRunner.RunAsync(
                     project.ProjectPath,
                     project.Name,
-                    note,
-                    auto: false,
+                    options.Note,
+                    options.IncludeLibrary,
+                    skipped,
                     CancellationToken.None);
 
-                ShowStatus(_localization.Format("Projects.Status.BackedUp", record.FileName));
+                ShowStatus(skipped.Count == 0
+                    ? _localization.Format("Projects.Status.BackedUp", record.FileName)
+                    : _localization.Format("Projects.Status.BackedUpSkipped", record.FileName, skipped.Count));
             },
             "Projects.Status.BackupFailed");
     }
@@ -623,7 +516,6 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
     {
         var paths = Projects.Select(x => x.ProjectPath).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
-        _runningProjects.IntersectWith(paths);
         _refreshedAfterLaunch.IntersectWith(paths);
     }
 

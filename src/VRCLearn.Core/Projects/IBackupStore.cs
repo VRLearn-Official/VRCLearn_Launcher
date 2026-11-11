@@ -17,10 +17,6 @@ public interface IBackupStore
 
     void WriteNote(string absolutePath, string note);
 
-    void PruneAutoBackups(string projectName, int keep);
-
-    void LockAutoBackup(string absolutePath);
-
     int CountMigratable();
 
     BackupMigrationResult Migrate(

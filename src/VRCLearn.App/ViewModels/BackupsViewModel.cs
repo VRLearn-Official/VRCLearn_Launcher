@@ -30,7 +30,6 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
     private readonly ProgressService _progress;
     private readonly GuiConfigStore _configs;
     private readonly IReadOnlyList<Option> _sortOptions;
-    private readonly IReadOnlyList<Option> _filterOptions;
 
     private IReadOnlyList<BackupItemViewModel> _all = [];
     private TransientAction? _search;
@@ -68,26 +67,16 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
             new("oldest", () => localization["Backups.Sort.Oldest"]),
         ];
 
-        _filterOptions =
-        [
-            new("backup", () => localization["Backups.Filter.Backup"]),
-            new("archive", () => localization["Backups.Filter.Archive"]),
-        ];
-
         _selectedSort = configs.Current.BackupsSorting == "oldest" ? "oldest" : "newest";
-        _selectedFilter = configs.Current.BackupsFilter == "archive" ? "archive" : "backup";
 
         _localization.PropertyChanged += (_, _) =>
         {
             LocalizedOptions.Refresh(_sortOptions);
-            LocalizedOptions.Refresh(_filterOptions);
             Apply();
         };
     }
 
     public IReadOnlyList<Option> SortOptions => _sortOptions;
-
-    public IReadOnlyList<Option> FilterOptions => _filterOptions;
 
     [ObservableProperty]
     private string _selectedSort = "newest";
@@ -95,17 +84,6 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
     partial void OnSelectedSortChanged(string value)
     {
         _configs.Current.BackupsSorting = value;
-        _configs.Save();
-
-        Apply();
-    }
-
-    [ObservableProperty]
-    private string _selectedFilter = "backup";
-
-    partial void OnSelectedFilterChanged(string value)
-    {
-        _configs.Current.BackupsFilter = value;
         _configs.Save();
 
         Apply();
@@ -142,9 +120,6 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
         Directory.CreateDirectory(_store.Directory);
         ShellLauncher.OpenFolder(_store.Directory);
     }
-
-    [RelayCommand]
-    private void ConfigureAutoBackup() => _dialogs.ShowAutoBackup();
 
     [RelayCommand]
     private async Task Import()
@@ -225,7 +200,7 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
                     await using var source = File.OpenRead(path);
 
                     await _store.CreateAsync(
-                        new BackupCreateRequest(info.ProjectName, info.CreatedAt, info.IsArchive, null),
+                        new BackupCreateRequest(info.ProjectName, info.CreatedAt, null),
                         (destination, token) => source.CopyToAsync(destination, token),
                         CancellationToken.None);
 
@@ -251,13 +226,11 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
     private void Apply()
     {
         var query = SearchText.Trim();
-        var archive = SelectedFilter == "archive";
 
         var items = _all.Where(x =>
-            x.IsArchive == archive
-            && (query.Length == 0
-                || x.ProjectName.Contains(query, StringComparison.OrdinalIgnoreCase)
-                || x.FileName.Contains(query, StringComparison.OrdinalIgnoreCase)));
+            query.Length == 0
+            || x.ProjectName.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || x.FileName.Contains(query, StringComparison.OrdinalIgnoreCase));
 
         items = SelectedSort == "oldest"
             ? items.OrderBy(x => x.Time)
@@ -419,29 +392,6 @@ public sealed partial class BackupsViewModel : PageViewModelBase, IPageViewModel
     }
 
     [RelayCommand]
-    private void Lock(BackupItemViewModel item)
-    {
-        if (!item.IsAuto)
-        {
-            return;
-        }
-
-        if (!_dialogs.ShowConfirm(
-                _localization["Backups.Lock.Title"],
-                _localization.Format("Backups.Lock.Message", item.FileName),
-                _localization["Backups.Lock.Confirm"]))
-        {
-            return;
-        }
-
-        _store.LockAutoBackup(item.FilePath);
-
-        Status = _localization.Format("Backups.Status.Locked", item.FileName);
-
-        Reload();
-    }
-
-    [RelayCommand]
     private void Delete(BackupItemViewModel item)
     {
         if (!_dialogs.ShowConfirm(
@@ -527,8 +477,6 @@ public sealed class BackupItemViewModel
             : record.ProjectName;
         Time = record.CreatedAt;
         Note = string.IsNullOrWhiteSpace(record.Note) ? null : record.Note;
-        IsArchive = record.IsArchive;
-        IsAuto = record.IsAuto;
         IsAvailable = File.Exists(record.FilePath);
 
         var file = IsAvailable ? new FileInfo(record.FilePath) : null;
@@ -544,14 +492,6 @@ public sealed class BackupItemViewModel
     public string FilePath { get; }
 
     public string FileName { get; }
-
-    public bool IsArchive { get; }
-
-    public bool IsAuto { get; }
-
-    public bool CanEditNote => !IsArchive && !IsAuto;
-
-    public bool CanLock => IsAuto;
 
     public string ProjectName { get; }
 

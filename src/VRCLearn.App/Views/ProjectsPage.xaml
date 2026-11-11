@@ -143,47 +143,6 @@
                                         Symbol="Warning24"
                                         ToolTip="{Binding Summary}"
                                         Visibility="{Binding IsUnreadable, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    <Border
-                                        Margin="8,0,0,0"
-                                        Padding="7,2"
-                                        VerticalAlignment="Center"
-                                        CornerRadius="{StaticResource Radius.Control}"
-                                        Visibility="{Binding IsAutoBackupActive, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                        <Border.Style>
-                                            <Style TargetType="Border">
-                                                <Setter Property="Background" Value="{DynamicResource SystemFillColorSuccessBackgroundBrush}" />
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsAutoBackupFailed}" Value="True">
-                                                        <Setter Property="Background" Value="{DynamicResource SystemFillColorCriticalBackgroundBrush}" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </Border.Style>
-                                        <StackPanel Orientation="Horizontal">
-                                            <ui:SymbolIcon
-                                                x:Name="AutoBackupIcon"
-                                                Margin="0,0,5,0"
-                                                VerticalAlignment="Center"
-                                                FontSize="{StaticResource FontSize.Caption}">
-                                                <ui:SymbolIcon.Style>
-                                                    <Style TargetType="ui:SymbolIcon">
-                                                        <Setter Property="Foreground" Value="{DynamicResource SystemFillColorSuccessBrush}" />
-                                                        <Setter Property="Symbol" Value="ClockAlarm24" />
-                                                        <Style.Triggers>
-                                                            <DataTrigger Binding="{Binding IsAutoBackupFailed}" Value="True">
-                                                                <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCriticalBrush}" />
-                                                                <Setter Property="Symbol" Value="ErrorCircle24" />
-                                                            </DataTrigger>
-                                                        </Style.Triggers>
-                                                    </Style>
-                                                </ui:SymbolIcon.Style>
-                                            </ui:SymbolIcon>
-                                            <TextBlock
-                                                FontSize="{StaticResource FontSize.Caption}"
-                                                Foreground="{Binding Foreground, ElementName=AutoBackupIcon}"
-                                                Text="{Binding AutoBackupText}" />
-                                        </StackPanel>
-                                    </Border>
                                 </StackPanel>
 
                                 <StackPanel Margin="{StaticResource Gap.Tight}" Orientation="Horizontal">
@@ -229,7 +188,6 @@
                                             <MenuItem Click="OnOpenFolderClick" Header="{markup:Tr Projects.OpenFolder}" />
                                             <MenuItem Click="OnRenameClick" Header="{markup:Tr Projects.Rename}" />
                                             <MenuItem Click="OnRemoveClick" Header="{markup:Tr Projects.Remove}" />
-                                            <MenuItem Click="OnArchiveClick" Header="{markup:Tr Projects.Archive}" />
                                         </ContextMenu>
                                     </ui:Button.ContextMenu>
                                 </ui:Button>

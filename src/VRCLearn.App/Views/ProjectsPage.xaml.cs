@@ -106,8 +106,6 @@ public partial class ProjectsPage : UserControl
 
     private void OnRemoveClick(object sender, RoutedEventArgs e) => Execute(viewModel => viewModel.RemoveCommand);
 
-    private void OnArchiveClick(object sender, RoutedEventArgs e) => Execute(viewModel => viewModel.ArchiveCommand);
-
     private void Execute(Func<ProjectsViewModel, ICommand> pick)
     {
         if (_menuProject is { } project && DataContext is ProjectsViewModel viewModel)

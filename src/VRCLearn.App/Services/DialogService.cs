@@ -23,6 +23,8 @@ public enum ConfirmChoice
     Confirm,
 }
 
+public sealed record BackupOptionsResult(string Note, bool IncludeLibrary);
+
 public sealed class DialogService
 {
     private readonly IServiceProvider _services;
@@ -128,17 +130,6 @@ public sealed class DialogService
         dialog.ShowDialog();
 
         failure?.Throw();
-    }
-
-    public void ShowAutoBackup()
-    {
-        _logger.LogInformation("打开自动备份设置");
-
-        Show(new AutoBackupDialog(
-            _services.GetRequiredService<GuiConfigStore>(),
-            _services.GetRequiredService<AutoBackupService>(),
-            this,
-            _services.GetRequiredService<LocalizationService>()));
     }
 
     public ConfirmChoice ShowChoice(
@@ -301,6 +292,20 @@ public sealed class DialogService
         Prepare(dialog);
 
         return dialog.ShowDialog() == true ? dialog.Note : null;
+    }
+
+    public BackupOptionsResult? ShowBackupOptions()
+    {
+        var localization = _services.GetRequiredService<LocalizationService>();
+        var dialog = new BackupOptionsDialog(
+            localization["Backups.Options.Title"],
+            localization["Backups.Note.Start"]);
+
+        Prepare(dialog);
+
+        return dialog.ShowDialog() == true
+            ? new BackupOptionsResult(dialog.Note, dialog.IncludeLibrary)
+            : null;
     }
 
     /// <summary>改个名字；取消返回 null。</summary>
