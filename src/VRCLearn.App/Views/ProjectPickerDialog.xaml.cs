@@ -22,7 +22,9 @@ public partial class ProjectPickerDialog : DialogWindowBase
         ImportButton.Content = chrome.ConfirmText;
 
         ProjectList.ItemsSource = projects;
-        ProjectList.SelectedItem = projects.FirstOrDefault(x => x.IsSelectable);
+        ProjectList.SelectedItem =
+            projects.FirstOrDefault(x => x.IsSelectable && !x.IsRunning)
+            ?? projects.FirstOrDefault(x => x.IsSelectable);
     }
 
     public string? SelectedPath { get; private set; }

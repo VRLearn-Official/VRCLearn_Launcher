@@ -14,9 +14,14 @@ using VRCLearn.Infrastructure.Shell;
 
 namespace VRCLearn.App.ViewModels;
 
-public sealed record ProjectChoice(string Path, string Name, bool IsUsable, bool IsRunning = false)
+public sealed record ProjectChoice(
+    string Path,
+    string Name,
+    bool IsUsable,
+    bool IsRunning = false,
+    bool AllowRunning = false)
 {
-    public bool IsSelectable => IsUsable && !IsRunning;
+    public bool IsSelectable => IsUsable && (AllowRunning || !IsRunning);
 }
 
 public sealed partial class ResourcesViewModel : PageViewModelBase, IPageViewModel
@@ -271,7 +276,8 @@ public sealed partial class ResourcesViewModel : PageViewModelBase, IPageViewMod
                 x,
                 PathUtil.NameOf(x),
                 ProjectService.IsProject(x),
-                _opener.Status(x) != UnityProjectStatus.Closed))
+                _opener.Status(x) != UnityProjectStatus.Closed,
+                AllowRunning: true))
             .OrderByDescending(x => x.IsRunning)
             .ToList();
 
@@ -289,12 +295,6 @@ public sealed partial class ResourcesViewModel : PageViewModelBase, IPageViewMod
         if (!ProjectService.IsProject(path))
         {
             Status = _localization["Resources.Picker.Unreadable"];
-            return;
-        }
-
-        if (_opener.Status(path) != UnityProjectStatus.Closed)
-        {
-            Status = _localization["Resources.Import.Running"];
             return;
         }
 
@@ -337,6 +337,31 @@ public sealed partial class ResourcesViewModel : PageViewModelBase, IPageViewMod
             return;
         }
 
+        IReadOnlyList<ResourceImportConflict> conflicts;
+
+        try
+        {
+            conflicts = await _progress.RunAsync(
+                _localization["Resources.Import.Checking"],
+                reporter => Task.Run(() => ResourceImporter.FindExistingAsync(
+                    existing,
+                    project.Io,
+                    File.Exists,
+                    reporter,
+                    CancellationToken.None)));
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            _logger.LogWarning(exception, "检查导入冲突失败：{Path}", path);
+            Status = _localization.Format("Resources.Import.CheckFailed", exception.Message);
+            return;
+        }
+
+        if (conflicts.Count > 0 && !ConfirmOverwrite(conflicts, PathUtil.NameOf(path)))
+        {
+            return;
+        }
+
         var imported = 0;
         var failed = 0;
 
@@ -375,6 +400,39 @@ public sealed partial class ResourcesViewModel : PageViewModelBase, IPageViewMod
         Status = failed == 0
             ? _localization.Format("Resources.Import.Done", imported)
             : _localization.Format("Resources.Import.Partial", imported, failed);
+    }
+
+    private const int ConflictDetailLimit = 50;
+
+    private bool ConfirmOverwrite(IReadOnlyList<ResourceImportConflict> conflicts, string projectName)
+    {
+        var body = string.Join(
+            Environment.NewLine,
+            conflicts
+                .Take(ConflictDetailLimit)
+                .Select(x => x is { PathExists: false, MetaExists: true }
+                    ? _localization.Format("Resources.Import.Conflict.MetaOnlyItem", x.Path)
+                    : x.Path));
+
+        if (conflicts.Count > ConflictDetailLimit)
+        {
+            body += Environment.NewLine
+                + _localization.Format(
+                    "Resources.Import.Conflict.More",
+                    conflicts.Count - ConflictDetailLimit);
+        }
+
+        return _dialogs.ShowConfirm(
+            _localization["Resources.Import.Conflict.Title"],
+            _localization.Format(
+                "Resources.Import.Conflict.Message",
+                projectName,
+                conflicts.Count),
+            _localization["Resources.Import.Conflict.Confirm"],
+            danger: true,
+            detailTitle: _localization["Resources.Import.Conflict.DetailTitle"],
+            detailBody: body,
+            width: 560);
     }
 
     private void ApplyFilter()
