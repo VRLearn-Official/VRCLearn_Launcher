@@ -688,5 +688,6 @@
   "Backups.Options.Warning": "專案使用特殊或自訂著色器時，建議勾選此項；如不確定，請保持勾選。",
   "Projects.Status.BackedUpSkipped": "備份完成：{0}（{1} 個 Library 檔案被占用，已跳過）",
   "ProjectDetail.BackupDoneSkipped": "備份完成：{0}（{1} 個 Library 檔案被占用，已跳過）",
-  "Templates.Status.NoDefaultManifest": "找不到適用於 Unity {0} 的標準包清單。請確認該 Unity 安裝完整後重試。"
+  "Templates.Status.NoDefaultManifest": "找不到適用於 Unity {0} 的標準包清單。請確認該 Unity 安裝完整後重試。",
+  "Plugins.Update": "更新"
 }

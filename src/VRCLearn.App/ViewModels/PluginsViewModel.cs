@@ -634,6 +634,11 @@ public sealed partial class PluginsViewModel : PageViewModelBase
 
     private void OpenPlugin(PluginItemViewModel item)
     {
+        if (item.HasUpdate)
+        {
+            return;
+        }
+
         var error = _manager.Open(item.Id);
 
         if (error is null)

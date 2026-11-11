@@ -688,5 +688,6 @@
   "Backups.Options.Warning": "Check this option when the project uses special or custom shaders; if unsure, keep it checked.",
   "Projects.Status.BackedUpSkipped": "Backup complete: {0} ({1} Library files were in use and skipped)",
   "ProjectDetail.BackupDoneSkipped": "Backup complete: {0} ({1} Library files were in use and skipped)",
-  "Templates.Status.NoDefaultManifest": "No standard package manifest was found for Unity {0}. Check that the Unity installation is complete and try again."
+  "Templates.Status.NoDefaultManifest": "No standard package manifest was found for Unity {0}. Check that the Unity installation is complete and try again.",
+  "Plugins.Update": "Update"
 }

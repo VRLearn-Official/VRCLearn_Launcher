@@ -688,5 +688,6 @@
   "Backups.Options.Warning": "项目使用特殊或自定义着色器时，建议勾选此项；如不确定，请保持勾选。",
   "Projects.Status.BackedUpSkipped": "备份完成：{0}（{1} 个 Library 文件被占用，已跳过）",
   "ProjectDetail.BackupDoneSkipped": "备份完成：{0}（{1} 个 Library 文件被占用，已跳过）",
-  "Templates.Status.NoDefaultManifest": "找不到适用于 Unity {0} 的标准包清单。请确认该 Unity 安装完整后重试。"
+  "Templates.Status.NoDefaultManifest": "找不到适用于 Unity {0} 的标准包清单。请确认该 Unity 安装完整后重试。",
+  "Plugins.Update": "更新"
 }
