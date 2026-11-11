@@ -145,9 +145,18 @@ public static class PackageOperations
             ReportUnlockedCollisions(project, builder, resolved.Name);
         }
 
+        var alignedRoots = AlignRootDependencies(project, builder, resolution);
+
         foreach (var (name, conflicts) in resolution.Conflicts)
         {
-            builder.ConflictMultiple(name, conflicts);
+            IReadOnlyList<string> remaining = alignedRoots.Contains(name)
+                ? [.. conflicts.Where(x => !string.Equals(x, PackageResolver.Root, StringComparison.Ordinal))]
+                : conflicts;
+
+            if (remaining.Count > 0)
+            {
+                builder.ConflictMultiple(name, remaining);
+            }
         }
 
         foreach (var name in resolution.FoundLegacyPackages.Where(project.IsLocked))
@@ -159,6 +168,38 @@ public static class PackageOperations
             AddPackageStatus.Success,
             await builder.BuildResolveAsync(project, cancellationToken).ConfigureAwait(false),
             []);
+    }
+
+    private static HashSet<string> AlignRootDependencies(
+        UnityProject project,
+        PendingChangesBuilder builder,
+        PackageResolution resolution)
+    {
+        var resolved = new Dictionary<string, PackageInfo>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var package in resolution.NewPackages)
+        {
+            resolved[package.Name] = package;
+        }
+
+        var aligned = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var (name, conflicts) in resolution.Conflicts)
+        {
+            if (!conflicts.Contains(PackageResolver.Root, StringComparer.Ordinal)
+                || !resolved.TryGetValue(name, out var package)
+                || (builder.GetDependencies(name) ?? project.GetDependency(name)) is not { } declared
+                || declared.AsSingleVersion() is not { } floor
+                || package.Version >= floor)
+            {
+                continue;
+            }
+
+            builder.SetDependency(package.Name, DependencyRange.FromVersion(package.Version));
+            aligned.Add(name);
+        }
+
+        return aligned;
     }
 
     private static void ExpandDependents(

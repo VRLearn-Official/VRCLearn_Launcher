@@ -430,6 +430,7 @@
   "ProjectDetail.Change.RemoveLegacyAsset": "清理 {0}，「{1}」遺留的歷史檔案",
   "ProjectDetail.Conflict.Unity": "「{0}」與目前的 Unity 版本不相容。",
   "ProjectDetail.Conflict.Packages": "「{1}」相依於「{0}」，移除後「{1}」會缺少相依套件。",
+  "ProjectDetail.Conflict.Root": "專案清單 dependencies 對「{0}」的版本要求無法滿足。",
   "ProjectDetail.Conflict.Unlocked": "「{0}」是未登記的目錄，將被移走。",
   "Backups.Subtitle": "所有專案的備份。",
   "Backups.SearchPlaceholder": "搜尋專案名稱",

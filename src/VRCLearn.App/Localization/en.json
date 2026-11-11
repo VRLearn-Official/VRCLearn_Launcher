@@ -430,6 +430,7 @@
   "ProjectDetail.Change.RemoveLegacyAsset": "Clean up {0}: legacy files left by \"{1}\"",
   "ProjectDetail.Conflict.Unity": "\"{0}\" is not compatible with the current Unity version.",
   "ProjectDetail.Conflict.Packages": "\"{1}\" depends on \"{0}\"; removing \"{0}\" would leave \"{1}\" missing a dependency.",
+  "ProjectDetail.Conflict.Root": "The version requirement for \"{0}\" in the project manifest's dependencies cannot be satisfied.",
   "ProjectDetail.Conflict.Unlocked": "Unregistered folder \"{0}\" will be moved out of Packages, then deleted if possible after applying changes.",
   "Backups.Subtitle": "Backups from every project.",
   "Backups.SearchPlaceholder": "Search project names",

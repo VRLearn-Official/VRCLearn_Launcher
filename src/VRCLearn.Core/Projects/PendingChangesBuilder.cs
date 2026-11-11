@@ -30,6 +30,25 @@ public sealed class PendingChangesBuilder
         return this;
     }
 
+    public PendingChangesBuilder SetDependency(string name, DependencyRange version)
+    {
+        switch (_packageChanges.GetValueOrDefault(name))
+        {
+            case Install install:
+                install.ToDependencies = version;
+                break;
+
+            case Remove:
+                throw new InvalidOperationException($"{name} 已被标记移除，不能再设置依赖");
+
+            default:
+                _packageChanges[name] = new Install(null, addToLocked: false, version);
+                break;
+        }
+
+        return this;
+    }
+
     public PendingChangesBuilder InstallToLocked(PackageInfo package) =>
         SetInstall(package, addToLocked: true, allowReplace: false);
 
