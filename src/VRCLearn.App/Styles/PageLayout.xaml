@@ -451,7 +451,6 @@
         </Style.Triggers>
     </Style>
 
-    <!-- Tag carries the refresh state. The fixed slot keeps the label and neighboring controls in place. -->
     <Style
         x:Key="RefreshToolbarButton"
         BasedOn="{StaticResource ToolbarButton}"

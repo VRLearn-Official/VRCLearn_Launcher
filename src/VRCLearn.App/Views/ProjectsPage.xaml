@@ -55,7 +55,7 @@
                     Orientation="Horizontal">
                     <ui:Button
                         Style="{StaticResource RefreshToolbarButton}"
-                        Tag="{Binding IsBusy}"
+                        Tag="{Binding IsReloading}"
                         Appearance="Secondary"
                         Command="{Binding RefreshCommand}"
                         Content="{markup:Tr Projects.Refresh}" />
