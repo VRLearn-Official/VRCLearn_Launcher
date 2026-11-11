@@ -14,8 +14,6 @@ public sealed class GuiConfig : IJsonOnDeserialized
 
     public bool AnimationEnabled { get; set; } = true;
 
-    public bool ExperimentalFeatures { get; set; }
-
     public bool ProxyEnabled { get; set; }
 
     public string ProxyUrl { get; set; } = "";
@@ -44,10 +42,6 @@ public sealed class GuiConfig : IJsonOnDeserialized
     /// <summary><c>newest</c> / <c>oldest</c>。</summary>
     public string BackupsSorting { get; set; } = "newest";
 
-    /// <summary><c>backup</c> / <c>archive</c>。</summary>
-    public string BackupsFilter { get; set; } = "backup";
-
-
     /// <summary>取值是 <c>Microsoft.Extensions.Logging.LogLevel</c> 的名字。</summary>
     public string LogsLevel { get; set; } = "Information";
 
@@ -73,18 +67,12 @@ public sealed class GuiConfig : IJsonOnDeserialized
 
     public List<BackupRecord> BackupRecords { get; set; } = [];
 
-    public bool AutoBackupEnabled { get; set; }
-
-    public int AutoBackupIntervalMinutes { get; set; } = 30;
-
-    public int AutoBackupRetention { get; set; } = 5;
-
     public bool HideLocalUserPackages { get; set; }
 
     /// <summary>包缓存目录。空表示数据目录下的 <c>Repos</c>。</summary>
     public string CachePath { get; set; } = "";
 
-    /// <summary>全量恢复时用户指定的托管目录。空表示未做过全量恢复。</summary>
+    /// <summary>旧版全量恢复指定的托管目录；保留读取以兼容已有资源路径。</summary>
     public string ManagedDataDirectory { get; set; } = "";
 
     /// <summary>合法 JSON 里把某一项写成 <c>null</c> 是允许的，落到对象上不能留 null。</summary>
@@ -100,7 +88,6 @@ public sealed class GuiConfig : IJsonOnDeserialized
         ProjectSorting ??= "lastModified";
         PluginsSorting ??= "name";
         BackupsSorting ??= "newest";
-        BackupsFilter ??= "backup";
         LogsLevel ??= "Information";
         UnityHubAccessMethod ??= "read-config";
         CachePath ??= "";
@@ -111,7 +98,5 @@ public sealed class GuiConfig : IJsonOnDeserialized
         FavoriteProjects ??= [];
         BackupRecords ??= [];
         BackupRecords.RemoveAll(x => x is null || string.IsNullOrWhiteSpace(x.FilePath));
-        AutoBackupIntervalMinutes = Math.Clamp(AutoBackupIntervalMinutes, 15, 1440);
-        AutoBackupRetention = Math.Clamp(AutoBackupRetention, 1, 100);
     }
 }

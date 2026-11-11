@@ -79,18 +79,6 @@
                         <ui:ToggleSwitch IsChecked="{Binding AnimationEnabled}" />
                     </HeaderedContentControl>
 
-                    <HeaderedContentControl Style="{StaticResource FieldRow}">
-                        <HeaderedContentControl.Header>
-                            <StackPanel>
-                                <TextBlock Text="{markup:Tr Settings.Experimental}" />
-                                <TextBlock
-                                    Margin="{StaticResource Gap.Tight}"
-                                    Style="{StaticResource Caption}"
-                                    Text="{markup:Tr Settings.ExperimentalHint}" />
-                            </StackPanel>
-                        </HeaderedContentControl.Header>
-                        <ui:ToggleSwitch IsChecked="{Binding ExperimentalFeatures}" />
-                    </HeaderedContentControl>
                 </StackPanel>
             </ui:Card>
 
@@ -409,15 +397,8 @@
                             </StackPanel>
                         </HeaderedContentControl.Header>
                         <StackPanel Orientation="Horizontal">
-                            <ComboBox
-                                MinWidth="150"
-                                DisplayMemberPath="Display"
-                                ItemsSource="{Binding BackupScopes}"
-                                SelectedValue="{Binding SelectedBackupScope}"
-                                SelectedValuePath="Value" />
                             <ui:Button
                                 MinWidth="88"
-                                Margin="{StaticResource Gap.Inline}"
                                 Appearance="Secondary"
                                 Command="{Binding BackupCommand}"
                                 Content="{markup:Tr Settings.ManagerBackup.Backup}" />

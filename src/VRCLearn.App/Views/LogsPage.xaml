@@ -29,7 +29,8 @@
                     IsChecked="{Binding AutoRefresh}" />
 
                 <ui:Button
-                    Style="{StaticResource ToolbarButton}"
+                    Style="{StaticResource RefreshToolbarButton}"
+                    Tag="{Binding RefreshCommand.IsRunning}"
                     Appearance="Secondary"
                     Command="{Binding RefreshCommand}"
                     Content="{markup:Tr Logs.Refresh}" />

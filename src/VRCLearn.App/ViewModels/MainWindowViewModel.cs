@@ -38,12 +38,10 @@ public sealed partial class MainWindowViewModel : ObservableObject
         UpdateViewModel update,
         NavigationService navigation,
         LocalizationService localization,
-        ExperimentalFeaturesService experimental,
         ProgressService progress,
         ToastService toasts,
         ILogger<MainWindowViewModel> logger)
     {
-        Experimental = experimental;
         Progress = progress;
         Toasts = toasts;
         _logger = logger;
@@ -79,7 +77,6 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
-    public ExperimentalFeaturesService Experimental { get; }
 
     private void OnProjectDetailChanged(object? sender, PropertyChangedEventArgs e)
     {

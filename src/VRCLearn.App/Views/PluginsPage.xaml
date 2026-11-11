@@ -39,6 +39,8 @@
                 <ui:Button
                     Grid.Column="2"
                     Margin="{StaticResource Gap.Inline}"
+                    Style="{StaticResource RefreshToolbarButton}"
+                    Tag="{Binding IsCheckingUpdates}"
                     Appearance="Secondary"
                     Command="{Binding CheckUpdatesCommand}"
                     Content="{markup:Tr Plugins.CheckUpdates}"
@@ -58,8 +60,7 @@
                 <ui:ProgressRing
                     Grid.Column="5"
                     Margin="{StaticResource Gap.Inline}"
-                    Style="{StaticResource BusyRing}"
-                    Visibility="{Binding IsWorking, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                    Style="{StaticResource BusyRing}" />
             </Grid>
 
         <StackPanel Grid.Row="1" Margin="32,16,32,0">
@@ -189,20 +190,6 @@
                                     Padding="4"
                                     Appearance="Transparent"
                                     BorderThickness="0"
-                                    Command="{Binding UpdateCommand}"
-                                    IsEnabled="{Binding CanUpdate}"
-                                    ToolTip="{Binding UpdateToolTip}"
-                                    Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}">
-                                    <ui:SymbolIcon
-                                        FontSize="{StaticResource IconSize.Inline}"
-                                        Foreground="{DynamicResource TextFillColorSecondaryBrush}"
-                                        Symbol="ArrowCircleUp24" />
-                                </ui:Button>
-                                <ui:Button
-                                    Margin="{StaticResource Gap.Inline}"
-                                    Padding="4"
-                                    Appearance="Transparent"
-                                    BorderThickness="0"
                                     Command="{Binding OpenDataCommand}"
                                     IsEnabled="{Binding CanOpenData}"
                                     ToolTip="{markup:Tr Plugins.OpenData}">
@@ -224,9 +211,18 @@
                                 <ui:Button
                                     Margin="{StaticResource Gap.Inline}"
                                     Appearance="Primary"
+                                    Command="{Binding UpdateCommand}"
+                                    Content="{markup:Tr Plugins.Update}"
+                                    IsEnabled="{Binding CanUpdate}"
+                                    ToolTip="{Binding UpdateToolTip}"
+                                    Visibility="{Binding HasUpdate, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                <ui:Button
+                                    Margin="{StaticResource Gap.Inline}"
+                                    Appearance="Primary"
                                     Command="{Binding OpenCommand}"
                                     Content="{markup:Tr Plugins.Open}"
-                                    IsEnabled="{Binding CanOpen}" />
+                                    IsEnabled="{Binding CanOpen}"
+                                    Visibility="{Binding HasUpdate, Converter={StaticResource InverseBooleanToVisibilityConverter}}" />
                             </StackPanel>
                         </Grid>
                     </ui:Card>

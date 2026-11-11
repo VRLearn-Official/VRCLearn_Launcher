@@ -19,8 +19,6 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <ui:TextBox
@@ -36,41 +34,22 @@
                     SelectedValue="{Binding SelectedSort}"
                     SelectedValuePath="Value" />
 
-                <ComboBox
-                    Grid.Column="2"
-                    MinWidth="100"
-                    Margin="{StaticResource Gap.Inline}"
-                    DisplayMemberPath="Display"
-                    ItemsSource="{Binding FilterOptions}"
-                    SelectedValue="{Binding SelectedFilter}"
-                    SelectedValuePath="Value" />
-
                 <ui:Button
-                    Grid.Column="3"
+                    Grid.Column="2"
                     Margin="{StaticResource Gap.Inline}"
                     Appearance="Secondary"
                     Command="{Binding OpenDirectoryCommand}"
                     Content="{markup:Tr Backups.OpenDirectory}" />
 
                 <ui:Button
-                    Grid.Column="4"
+                    Grid.Column="3"
                     Margin="{StaticResource Gap.Inline}"
                     Appearance="Secondary"
                     Command="{Binding ImportCommand}"
                     Content="{markup:Tr Backups.Import}" />
 
-                <ui:Button
-                    Grid.Column="5"
-                    Margin="{StaticResource Gap.Inline}"
-                    Appearance="Secondary"
-                    Command="{Binding ConfigureAutoBackupCommand}"
-                    Content="{markup:Tr Backups.AutoBackup}"
-                    Icon="{ui:SymbolIcon Settings24}"
-                    ToolTip="{markup:Tr Backups.AutoBackupHint}"
-                    Visibility="{markup:ExperimentalVisibility}" />
-
                 <ui:ProgressRing
-                    Grid.Column="6"
+                    Grid.Column="4"
                     Margin="{StaticResource Gap.Inline}"
                     Style="{StaticResource BusyRing}" />
             </Grid>
@@ -139,18 +118,10 @@
                                     Style="{StaticResource RowButton}" />
                                 <ui:Button
                                     Appearance="Secondary"
-                                    Command="{markup:RowCommand LockCommand}"
-                                    CommandParameter="{Binding}"
-                                    Content="{markup:Tr Backups.Lock}"
-                                    Style="{StaticResource RowButton}"
-                                    Visibility="{Binding CanLock, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                <ui:Button
-                                    Appearance="Secondary"
                                     Command="{markup:RowCommand EditNoteCommand}"
                                     CommandParameter="{Binding}"
                                     Content="{markup:Tr Backups.Note}"
-                                    Style="{StaticResource RowButton}"
-                                    Visibility="{Binding CanEditNote, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    Style="{StaticResource RowButton}" />
                                 <ui:Button
                                     Appearance="Secondary"
                                     Command="{markup:RowCommand ExportCommand}"

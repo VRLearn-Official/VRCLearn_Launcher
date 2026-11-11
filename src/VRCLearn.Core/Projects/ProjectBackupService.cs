@@ -4,33 +4,43 @@ namespace VRCLearn.Core.Projects;
 
 public sealed class ProjectBackupService(IBackupStore store)
 {
-    public Task<BackupRecord> CreateAsync(
+    public async Task<BackupRecord> CreateAsync(
         UnityProject project,
         string projectName,
         BackupFormat format,
         DateTime timestamp,
         IProgress<FileProgress>? progress,
         CancellationToken cancellationToken,
-        bool archive = false,
+        bool includeLibrary = false,
         string? note = null,
-        bool auto = false)
+        ICollection<string>? skippedFiles = null)
     {
-        var content = ProjectFiles.Collect(project, ProjectFileFilter.ForBackup());
+        var content = await Task.Run(
+            () => ProjectFiles.Collect(project, ProjectFileFilter.ForBackup(includeLibrary)),
+            cancellationToken).ConfigureAwait(false);
 
-        DiskSpace.Ensure(store.Directory, EstimateBytes(project, content));
+        var estimated = await Task.Run(
+            () => EstimateBytes(project, content),
+            cancellationToken).ConfigureAwait(false);
 
-        var request = new BackupCreateRequest(projectName, timestamp, archive, note, auto);
+        DiskSpace.Ensure(store.Directory, estimated);
 
-        return store.CreateAsync(
+        var request = new BackupCreateRequest(projectName, timestamp, note);
+
+        return await store.CreateAsync(
             request,
-            (destination, token) => ProjectBackup.CreateAsync(
-                project.Io,
-                content,
-                destination,
-                format,
-                progress,
+            (destination, token) => Task.Run(
+                () => ProjectBackup.CreateAsync(
+                    project.Io,
+                    content,
+                    destination,
+                    format,
+                    progress,
+                    token,
+                    skipLockedLibraryFiles: includeLibrary,
+                    skippedFiles: skippedFiles),
                 token),
-            cancellationToken);
+            cancellationToken).ConfigureAwait(false);
     }
 
     private static long EstimateBytes(UnityProject project, ProjectContent content)

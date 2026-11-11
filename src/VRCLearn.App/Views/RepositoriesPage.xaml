@@ -127,35 +127,37 @@
             <CompositeCollection>
                 <StackPanel Margin="0,0,0,12">
                     <DockPanel Margin="{StaticResource Gap.Field}">
-                        <ui:Button
+                        <StackPanel
                             DockPanel.Dock="Right"
                             Margin="{StaticResource Gap.Inline}"
-                            Appearance="Primary"
-                            Command="{Binding AddCommand}"
-                            Content="{markup:Tr Repositories.Add}" />
+                            VerticalAlignment="Center"
+                            Orientation="Horizontal">
+                            <ui:Button
+                                Appearance="Primary"
+                                Command="{Binding AddCommand}"
+                                Content="{markup:Tr Repositories.Add}" />
+                            <ui:Button
+                                Margin="{StaticResource Gap.Inline}"
+                                Style="{StaticResource RefreshToolbarButton}"
+                                Tag="{Binding RefreshCommand.IsRunning}"
+                                Appearance="Secondary"
+                                Command="{Binding RefreshCommand}"
+                                Content="{markup:Tr Repositories.Refresh}" />
+                            <ui:Button
+                                Margin="{StaticResource Gap.Inline}"
+                                Appearance="Secondary"
+                                Command="{Binding ImportCommand}"
+                                Content="{markup:Tr Repositories.Import}" />
+                            <ui:Button
+                                Margin="{StaticResource Gap.Inline}"
+                                Appearance="Secondary"
+                                Click="OnExportClick"
+                                Content="{markup:Tr Repositories.Export}" />
+                        </StackPanel>
                         <ui:TextBox
                             PlaceholderText="{markup:Tr Repositories.UrlPlaceholder}"
                             Text="{Binding NewRepositoryUrl, UpdateSourceTrigger=PropertyChanged}" />
                     </DockPanel>
-
-                    <StackPanel Style="{StaticResource Toolbar}">
-                        <ui:Button
-                            Style="{StaticResource ToolbarButton}"
-                            Appearance="Secondary"
-                            Command="{Binding ImportCommand}"
-                            Content="{markup:Tr Repositories.ImportTitle}" />
-                        <ui:Button
-                            Style="{StaticResource ToolbarButton}"
-                            Appearance="Secondary"
-                            Click="OnExportClick"
-                            Content="{markup:Tr Repositories.Export}" />
-                        <ui:Button
-                            Style="{StaticResource ToolbarButton}"
-                            Appearance="Secondary"
-                            Command="{Binding RefreshCommand}"
-                            Content="{markup:Tr Repositories.Refresh}" />
-                        <ui:ProgressRing Margin="4,0,0,0" Style="{StaticResource BusyRing}" />
-                    </StackPanel>
 
                     <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr Repositories.List}" />
 
