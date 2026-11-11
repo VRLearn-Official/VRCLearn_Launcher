@@ -220,6 +220,7 @@
   "Repositories.Add": "Add",
   "Repositories.Refresh": "Refresh",
   "Repositories.ImportTitle": "Import repos",
+  "Repositories.Import": "Import",
   "Repositories.ImportHint": "Import repos from a repo list file.",
   "Repositories.ImportFromFile": "From file",
   "Repositories.ImportFromLink": "From link",

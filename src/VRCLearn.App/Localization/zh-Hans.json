@@ -220,6 +220,7 @@
   "Repositories.Add": "添加",
   "Repositories.Refresh": "刷新",
   "Repositories.ImportTitle": "导入仓库",
+  "Repositories.Import": "导入",
   "Repositories.ImportHint": "从仓库清单文件导入仓库。",
   "Repositories.ImportFromFile": "从文件",
   "Repositories.ImportFromLink": "从链接",
