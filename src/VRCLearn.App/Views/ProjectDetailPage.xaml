@@ -291,14 +291,22 @@
                                     Visibility="{Binding CanSelect, Converter={StaticResource BooleanToVisibilityConverter}}" />
 
                                 <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                                    <StackPanel Orientation="Horizontal">
+                                    <Grid HorizontalAlignment="Left">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+
                                         <TextBlock
+                                            Grid.Column="0"
                                             VerticalAlignment="Center"
                                             FontWeight="SemiBold"
                                             Text="{Binding DisplayName}"
                                             TextTrimming="CharacterEllipsis"
                                             ToolTip="{Binding DisplayName}" />
                                         <Border
+                                            Grid.Column="1"
                                             Margin="{StaticResource Gap.Inline}"
                                             Padding="6,1"
                                             VerticalAlignment="Center"
@@ -307,6 +315,7 @@
                                             <TextBlock FontSize="{StaticResource FontSize.Caption}" Text="{markup:Tr ProjectDetail.CustomTag}" />
                                         </Border>
                                         <ui:SymbolIcon
+                                            Grid.Column="2"
                                             Margin="{StaticResource Gap.Inline}"
                                             VerticalAlignment="Center"
                                             FontSize="{StaticResource IconSize.Inline}"
@@ -314,7 +323,7 @@
                                             Symbol="Warning24"
                                             ToolTip="{markup:Tr ProjectDetail.UnlockedHint}"
                                             Visibility="{Binding IsUnlocked, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    </StackPanel>
+                                    </Grid>
                                     <TextBlock
                                         Margin="0,2,0,0"
                                         Style="{StaticResource Caption}"
