@@ -42,6 +42,36 @@
                     </ScrollViewer>
 
                     <Border
+                        x:Name="WarningBlock"
+                        Margin="{StaticResource Gap.Small}"
+                        Padding="12"
+                        Background="{DynamicResource ControlFillColorSecondaryBrush}"
+                        BorderBrush="{DynamicResource SystemFillColorCautionBrush}"
+                        BorderThickness="1"
+                        CornerRadius="{StaticResource Radius.Control}"
+                        Visibility="Collapsed">
+                        <Grid>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="Auto" />
+                                <ColumnDefinition Width="*" />
+                            </Grid.ColumnDefinitions>
+
+                            <ui:SymbolIcon
+                                Margin="0,1,10,0"
+                                VerticalAlignment="Top"
+                                FontSize="20"
+                                Foreground="{DynamicResource SystemFillColorCautionBrush}"
+                                Symbol="Warning24" />
+
+                            <TextBlock
+                                x:Name="WarningText"
+                                Grid.Column="1"
+                                FontSize="{StaticResource FontSize.Body}"
+                                TextWrapping="Wrap" />
+                        </Grid>
+                    </Border>
+
+                    <Border
                         x:Name="DetailBlock"
                         Margin="{StaticResource Gap.Small}"
                         Padding="12,10"

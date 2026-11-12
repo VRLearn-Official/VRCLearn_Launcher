@@ -75,7 +75,8 @@ public sealed class DialogService
         string? detailBody = null,
         double width = 480,
         IReadOnlyList<Inline>? messageInlines = null,
-        IReadOnlyList<Inline>? detailBodyInlines = null)
+        IReadOnlyList<Inline>? detailBodyInlines = null,
+        string? warning = null)
     {
         Record(title, message);
 
@@ -88,7 +89,8 @@ public sealed class DialogService
             detailBody: detailBody,
             width: width,
             messageInlines: messageInlines,
-            detailBodyInlines: detailBodyInlines);
+            detailBodyInlines: detailBodyInlines,
+            warning: warning);
 
         Prepare(dialog, owner);
 

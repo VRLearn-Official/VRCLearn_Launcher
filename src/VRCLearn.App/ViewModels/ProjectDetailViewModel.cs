@@ -621,7 +621,9 @@ public sealed partial class ProjectDetailViewModel(
         if (!dialogs.ShowConfirm(
                 localization["ProjectDetail.Restore.ConfirmTitle"],
                 localization.Format("ProjectDetail.Restore.ConfirmPrompt", entry.Display),
-                localization["ProjectDetail.Restore.Confirm"]))
+                localization["ProjectDetail.Restore.Confirm"],
+                danger: true,
+                warning: localization["ProjectDetail.Restore.ConfirmWarning"]))
         {
             return;
         }
@@ -636,15 +638,11 @@ public sealed partial class ProjectDetailViewModel(
 
         try
         {
-            var config = configStore.Current;
-
             var outcome = await progress.RunAsync(
                 localization["Progress.Restore"],
                 reporter => restores.RestoreAsync(
                     _project,
-                    ProjectName,
                     entry.FilePath,
-                    ProjectBackupService.ParseFormat(config.BackupFormat),
                     DateTime.Now,
                     reporter,
                     CancellationToken.None));
@@ -652,10 +650,9 @@ public sealed partial class ProjectDetailViewModel(
             await LoadAsync();
 
             Status = outcome.Leftovers.Count == 0
-                ? localization.Format("ProjectDetail.Restore.Done", Path.GetFileName(outcome.SafetyBackup))
+                ? localization["ProjectDetail.Restore.Done"]
                 : localization.Format(
                     "ProjectDetail.Restore.DoneWithLeftover",
-                    Path.GetFileName(outcome.SafetyBackup),
                     string.Join("、", outcome.Leftovers));
         }
         catch (InsufficientDiskSpaceException exception)

@@ -7,16 +7,14 @@ using VRCLearn.Core.IO;
 
 namespace VRCLearn.Core.Projects;
 
-/// <param name="SafetyBackup">安全备份的绝对路径。</param>
 /// <param name="Leftovers">没能删掉的临时目录，删干净了就是空列表。</param>
-public sealed record RestoreOutcome(string SafetyBackup, IReadOnlyList<string> Leftovers);
+public sealed record RestoreOutcome(IReadOnlyList<string> Leftovers);
 
 /// <param name="Detail">恢复失败时的原因；成功但还有残留时为空。</param>
 public sealed record RestoreRecovery(string ProjectPath, bool Recovered, string? Detail = null);
 
 public sealed class ProjectRestoreService(
     IBackupStore store,
-    ProjectBackupService backups,
     IFileIoFactory ioFactory)
 {
     private const int NameAttempts = 100;
@@ -126,9 +124,7 @@ public sealed class ProjectRestoreService(
 
     public async Task<RestoreOutcome> RestoreAsync(
         UnityProject project,
-        string projectName,
         string backupFilePath,
-        BackupFormat format,
         DateTime timestamp,
         IProgress<FileProgress>? progress,
         CancellationToken cancellationToken)
@@ -152,16 +148,6 @@ public sealed class ProjectRestoreService(
         var parent = ioFactory.For(parentPath);
         var name = Path.GetFileName(projectDirectory);
         var stamp = timestamp.ToString(ProjectBackup.StampFormat);
-
-        var safety = await backups
-            .CreateAsync(
-                project,
-                projectName,
-                format,
-                timestamp,
-                progress,
-                cancellationToken)
-            .ConfigureAwait(false);
 
         var staging = FreeName(parent, $"{name}.restoring-{stamp}");
         var replaced = FreeName(parent, $"{name}.replaced-{stamp}");
@@ -245,7 +231,7 @@ public sealed class ProjectRestoreService(
         DeleteJournal(parent, name);
         TryDelete(parent, replaced, parentPath, leftovers);
 
-        return new RestoreOutcome(safety.FilePath, leftovers);
+        return new RestoreOutcome(leftovers);
     }
 
     /// <summary>启动时把上次没做完的目录交换恢复掉。</summary>
