@@ -132,8 +132,23 @@ public static class PluginPackageInspector
         PluginManifest manifest;
 
         using (var manifestStream = manifestEntry.Open())
+        using (var buffer = new MemoryStream())
         {
-            manifest = PluginManifestReader.Read(manifestStream);
+            var chunk = new byte[4096];
+            int read;
+
+            while ((read = manifestStream.Read(chunk, 0, chunk.Length)) > 0)
+            {
+                if (buffer.Length + read > MaxManifestBytes)
+                {
+                    throw new PluginPackageException("plugin.json is too large");
+                }
+
+                buffer.Write(chunk, 0, read);
+            }
+
+            buffer.Position = 0;
+            manifest = PluginManifestReader.Read(buffer);
         }
 
         return new PluginPackageInspection(
