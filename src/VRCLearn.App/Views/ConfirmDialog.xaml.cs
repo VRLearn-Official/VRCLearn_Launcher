@@ -17,7 +17,8 @@ public partial class ConfirmDialog : DialogWindowBase
         string? detailBody = null,
         double width = 480,
         IReadOnlyList<Inline>? messageInlines = null,
-        IReadOnlyList<Inline>? detailBodyInlines = null)
+        IReadOnlyList<Inline>? detailBodyInlines = null,
+        string? warning = null)
     {
         InitializeComponent();
 
@@ -59,6 +60,12 @@ public partial class ConfirmDialog : DialogWindowBase
             }
 
             DetailBlock.Visibility = Visibility.Visible;
+        }
+
+        if (warning is not null)
+        {
+            WarningText.Text = warning;
+            WarningBlock.Visibility = Visibility.Visible;
         }
 
         if (confirmDanger)

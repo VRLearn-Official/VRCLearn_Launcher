@@ -26,28 +26,13 @@ public static class ProjectBackup
         bool skipLockedLibraryFiles = false,
         ICollection<string>? skippedFiles = null)
     {
-        var total = content.Directories.Count + content.Files.Count;
+        var total = content.Files.Count;
         var done = 0;
-        var lastPercent = -1;
 
         void Advance()
         {
             done++;
-
-            if (progress is null)
-            {
-                return;
-            }
-
-            var percent = total == 0 ? 100 : done * 100 / total;
-
-            if (percent == lastPercent && done != total)
-            {
-                return;
-            }
-
-            lastPercent = percent;
-            progress.Report(new FileProgress(total, done));
+            progress?.Report(new FileProgress(total, done));
         }
 
         var level = format switch
@@ -64,7 +49,6 @@ public static class ProjectBackup
             cancellationToken.ThrowIfCancellationRequested();
 
             archive.CreateEntry($"{directory}/");
-            Advance();
         }
 
         foreach (var file in content.Files)

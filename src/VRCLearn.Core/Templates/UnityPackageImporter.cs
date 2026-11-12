@@ -6,6 +6,12 @@ using VRCLearn.Core.IO;
 
 namespace VRCLearn.Core.Templates;
 
+public sealed record UnityPackageTarget(
+    string Guid,
+    string Path,
+    bool IsDirectory,
+    bool HasMetadata);
+
 public static class UnityPackageImporter
 {
     private const long MaxTotalBytes = 2L * 1024 * 1024 * 1024;
@@ -15,7 +21,7 @@ public static class UnityPackageImporter
         Stream package,
         CancellationToken cancellationToken)
     {
-        var entries = await ReadAsync(package, cancellationToken).ConfigureAwait(false);
+        var entries = await ReadAsync(package, cancellationToken, readAssetContent: true).ConfigureAwait(false);
 
         foreach (var (_, entry) in entries)
         {
@@ -39,7 +45,29 @@ public static class UnityPackageImporter
         }
     }
 
-    private static async Task<Dictionary<string, Entry>> ReadAsync(Stream package, CancellationToken cancellationToken)
+    public static async Task<IReadOnlyList<UnityPackageTarget>> ReadTargetsAsync(
+        Stream package,
+        CancellationToken cancellationToken)
+    {
+        var entries = await ReadAsync(package, cancellationToken, readAssetContent: false).ConfigureAwait(false);
+
+        return
+        [
+            .. entries
+                .Select(x => new UnityPackageTarget(
+                    x.Key,
+                    x.Value.Pathname!,
+                    IsDirectory: !x.Value.HasAsset,
+                    HasMetadata: x.Value.Metadata is { Length: > 0 }))
+                .OrderBy(x => x.Path, StringComparer.OrdinalIgnoreCase)
+                .ThenBy(x => x.Guid, StringComparer.Ordinal),
+        ];
+    }
+
+    private static async Task<Dictionary<string, Entry>> ReadAsync(
+        Stream package,
+        CancellationToken cancellationToken,
+        bool readAssetContent)
     {
         var entries = new Dictionary<string, Entry>(StringComparer.Ordinal);
         var reader = new TarReader(new GZipStream(package, CompressionMode.Decompress), leaveOpen: false);
@@ -69,7 +97,8 @@ public static class UnityPackageImporter
                     entries[guid] = entry;
                 }
 
-                await ReadEntryAsync(entry, kind, tarEntry, guid, cancellationToken).ConfigureAwait(false);
+                await ReadEntryAsync(entry, kind, tarEntry, guid, readAssetContent, cancellationToken)
+                    .ConfigureAwait(false);
             }
         }
 
@@ -83,17 +112,28 @@ public static class UnityPackageImporter
         EntryKind kind,
         TarEntry tarEntry,
         string guid,
+        bool readAssetContent,
         CancellationToken cancellationToken)
     {
         switch (kind)
         {
             case EntryKind.Asset:
-                if (entry.Asset is not null)
+                if (entry.HasAsset)
                 {
                     throw new InvalidDataException($"unitypackage 里 {guid} 有两条 asset");
                 }
 
-                entry.Asset = await ReadAllAsync(tarEntry, cancellationToken).ConfigureAwait(false);
+                entry.HasAsset = true;
+
+                if (readAssetContent)
+                {
+                    entry.Asset = await ReadAllAsync(tarEntry, cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    await DrainAsync(tarEntry, cancellationToken).ConfigureAwait(false);
+                }
+
                 break;
 
             case EntryKind.Metadata:
@@ -129,6 +169,14 @@ public static class UnityPackageImporter
         return buffer.ToArray();
     }
 
+    private static async Task DrainAsync(TarEntry entry, CancellationToken cancellationToken)
+    {
+        if (entry.DataStream is { } stream)
+        {
+            await stream.CopyToAsync(Stream.Null, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
     private static string ParsePathname(byte[] bytes, string guid)
     {
         var pathname = Encoding.UTF8.GetString(bytes).Replace('\\', '/');
@@ -159,7 +207,7 @@ public static class UnityPackageImporter
                 throw new InvalidDataException($"unitypackage 里 {guid} 没有 pathname，不知道要铺到哪儿");
             }
 
-            if (entry.Asset is not null && entry.Metadata is not { Length: > 0 })
+            if (entry.HasAsset && entry.Metadata is not { Length: > 0 })
             {
                 throw new InvalidDataException($"unitypackage 里 {guid}（{entry.Pathname}）没有 asset.meta");
             }
@@ -228,6 +276,8 @@ public static class UnityPackageImporter
 
     private sealed class Entry
     {
+        public bool HasAsset { get; set; }
+
         public byte[]? Asset { get; set; }
 
         public byte[]? Metadata { get; set; }

@@ -119,7 +119,9 @@ public sealed class PluginPackageInstaller(
                 stream,
                 new PhysicalFileIo(paths.PluginsDirectory),
                 stagingName,
-                cancellationToken);
+                cancellationToken,
+                maxEntryBytes: PluginPackageInspector.MaxEntryUncompressedBytes,
+                maxTotalBytes: PluginPackageInspector.MaxTotalUncompressedBytes);
 
             var entryPath = Path.Combine(
                 staging,

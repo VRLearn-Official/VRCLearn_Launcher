@@ -1,5 +1,6 @@
-using VRCLearn.Core.IO;
+using System.Buffers;
 using System.IO.Compression;
+using VRCLearn.Core.IO;
 using VRCLearn.Core.Projects;
 
 namespace VRCLearn.Core.Archives;
@@ -36,7 +37,9 @@ public static class SafeZipExtractor
         IFileIo io,
         string destinationRelativePath,
         CancellationToken cancellationToken,
-        IProgress<FileProgress>? progress = null)
+        IProgress<FileProgress>? progress = null,
+        long maxEntryBytes = 0,
+        long maxTotalBytes = 0)
     {
         using var archive = new ZipArchive(zip, ZipArchiveMode.Read);
 
@@ -45,7 +48,9 @@ public static class SafeZipExtractor
                 io,
                 destinationRelativePath,
                 cancellationToken,
-                progress)
+                progress,
+                maxEntryBytes,
+                maxTotalBytes)
             .ConfigureAwait(false);
     }
 
@@ -108,10 +113,13 @@ public static class SafeZipExtractor
         IFileIo io,
         string destinationRelativePath,
         CancellationToken cancellationToken,
-        IProgress<FileProgress>? progress = null)
+        IProgress<FileProgress>? progress = null,
+        long maxEntryBytes = 0,
+        long maxTotalBytes = 0)
     {
         var total = plan.FileCount;
         var done = 0;
+        var writtenTotal = 0L;
 
         foreach (var item in plan.Entries)
         {
@@ -128,9 +136,67 @@ public static class SafeZipExtractor
             await using var source = item.Entry.Open();
             await using var target = await io.CreateAsync(path, cancellationToken).ConfigureAwait(false);
 
-            await source.CopyToAsync(target, cancellationToken).ConfigureAwait(false);
+            if (maxEntryBytes <= 0 && maxTotalBytes <= 0)
+            {
+                await source.CopyToAsync(target, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                writtenTotal += await CopyWithLimitsAsync(
+                        source,
+                        target,
+                        path,
+                        maxEntryBytes,
+                        maxTotalBytes,
+                        writtenTotal,
+                        cancellationToken)
+                    .ConfigureAwait(false);
+            }
 
             progress?.Report(new FileProgress(total, ++done));
         }
+    }
+
+    private static async Task<long> CopyWithLimitsAsync(
+        Stream source,
+        Stream target,
+        string path,
+        long maxEntryBytes,
+        long maxTotalBytes,
+        long writtenTotal,
+        CancellationToken cancellationToken)
+    {
+        var buffer = ArrayPool<byte>.Shared.Rent(81920);
+        var written = 0L;
+
+        try
+        {
+            int read;
+
+            while ((read = await source.ReadAsync(buffer, cancellationToken).ConfigureAwait(false)) > 0)
+            {
+                if (maxEntryBytes > 0 && written + read > maxEntryBytes)
+                {
+                    throw new InvalidDataException($"zip entry is too large: {path}");
+                }
+
+                if (maxTotalBytes > 0 && writtenTotal + written + read > maxTotalBytes)
+                {
+                    throw new InvalidDataException("zip extraction is too large");
+                }
+
+                await target
+                    .WriteAsync(buffer.AsMemory(0, read), cancellationToken)
+                    .ConfigureAwait(false);
+
+                written += read;
+            }
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+
+        return written;
     }
 }

@@ -183,21 +183,6 @@ public sealed partial class ProjectDetailViewModel(
     [ObservableProperty]
     private bool _areBackupsExpanded;
 
-    [ObservableProperty]
-    private BackupItemViewModel? _pendingRestore;
-
-    partial void OnPendingRestoreChanged(BackupItemViewModel? value)
-    {
-        OnPropertyChanged(nameof(HasPendingRestore));
-        OnPropertyChanged(nameof(RestorePrompt));
-    }
-
-    public bool HasPendingRestore => PendingRestore is not null;
-
-    public string RestorePrompt => PendingRestore is { } entry
-        ? localization.Format("ProjectDetail.Restore.ConfirmPrompt", entry.Display)
-        : "";
-
     public bool IsUnityRunning { get; private set; }
 
     public void RefreshUnityState() =>
@@ -330,7 +315,6 @@ public sealed partial class ProjectDetailViewModel(
 
         CopyDestination = null;
         UnityHubInstallLink = null;
-        PendingRestore = null;
         Packages.Clear();
         Backups.Clear();
         InstalledEditors.Clear();
@@ -368,7 +352,6 @@ public sealed partial class ProjectDetailViewModel(
         Backups.Clear();
         InstalledEditors.Clear();
         SelectedEditor = null;
-        PendingRestore = null;
         AreBackupsExpanded = false;
         CopyDestination = null;
         UnityHubInstallLink = null;
@@ -389,7 +372,6 @@ public sealed partial class ProjectDetailViewModel(
         var path = ProjectPath;
 
         OnPropertyChanged(nameof(EditorCaption));
-        OnPropertyChanged(nameof(RestorePrompt));
 
         IsBusy = true;
 
@@ -617,9 +599,31 @@ public sealed partial class ProjectDetailViewModel(
     }
 
     [RelayCommand]
-    private void Restore(BackupItemViewModel entry)
+    private async Task Restore(BackupItemViewModel entry)
     {
-        if (_project is null || entry.IsMissing)
+        if (_project is null || entry.IsMissing || IsBusy)
+        {
+            return;
+        }
+
+        if (!File.Exists(entry.FilePath))
+        {
+            Status = localization["Backups.FileMoved"];
+            ReloadBackups();
+            return;
+        }
+
+        if (UnityIsRunning())
+        {
+            return;
+        }
+
+        if (!dialogs.ShowConfirm(
+                localization["ProjectDetail.Restore.ConfirmTitle"],
+                localization.Format("ProjectDetail.Restore.ConfirmPrompt", entry.Display),
+                localization["ProjectDetail.Restore.Confirm"],
+                danger: true,
+                warning: localization["ProjectDetail.Restore.ConfirmWarning"]))
         {
             return;
         }
@@ -629,8 +633,48 @@ public sealed partial class ProjectDetailViewModel(
             return;
         }
 
-        Status = null;
-        PendingRestore = entry;
+        IsBusy = true;
+        Status = localization["ProjectDetail.Restore.Working"];
+
+        try
+        {
+            var outcome = await progress.RunAsync(
+                localization["Progress.Restore"],
+                reporter => restores.RestoreAsync(
+                    _project,
+                    entry.FilePath,
+                    DateTime.Now,
+                    reporter,
+                    CancellationToken.None));
+
+            await LoadAsync();
+
+            Status = outcome.Leftovers.Count == 0
+                ? localization["ProjectDetail.Restore.Done"]
+                : localization.Format(
+                    "ProjectDetail.Restore.DoneWithLeftover",
+                    string.Join("、", outcome.Leftovers));
+        }
+        catch (InsufficientDiskSpaceException exception)
+        {
+            logger.LogWarning(exception, "还原项目失败：{Project}", ProjectPath);
+
+            Status = localization.FormatDiskSpace(exception);
+
+            await LoadAsync();
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogWarning(exception, "还原项目失败：{Project}", ProjectPath);
+
+            Status = localization.Format("ProjectDetail.Restore.Failed", exception.Message);
+
+            await LoadAsync();
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     private bool UnityIsRunning()
@@ -644,84 +688,6 @@ public sealed partial class ProjectDetailViewModel(
 
         Status = localization["ProjectDetail.Restore.UnityRunning"];
         return true;
-    }
-
-    [RelayCommand]
-    private void CancelRestore() => PendingRestore = null;
-
-    [RelayCommand]
-    private async Task ConfirmRestore()
-    {
-        if (_project is null || PendingRestore is not { } entry || IsBusy)
-        {
-            return;
-        }
-
-        if (entry.IsMissing || !File.Exists(entry.FilePath))
-        {
-            PendingRestore = null;
-            Status = localization["Backups.FileMoved"];
-            ReloadBackups();
-            return;
-        }
-
-        if (UnityIsRunning())
-        {
-            PendingRestore = null;
-            return;
-        }
-
-        IsBusy = true;
-        Status = localization["ProjectDetail.Restore.Working"];
-
-        try
-        {
-            var config = configStore.Current;
-
-            var outcome = await progress.RunAsync(
-                localization["Progress.Restore"],
-                reporter => restores.RestoreAsync(
-                    _project,
-                    ProjectName,
-                    entry.FilePath,
-                    ProjectBackupService.ParseFormat(config.BackupFormat),
-                    DateTime.Now,
-                    reporter,
-                    CancellationToken.None));
-
-            PendingRestore = null;
-
-            await LoadAsync();
-
-            Status = outcome.Leftovers.Count == 0
-                ? localization.Format("ProjectDetail.Restore.Done", Path.GetFileName(outcome.SafetyBackup))
-                : localization.Format(
-                    "ProjectDetail.Restore.DoneWithLeftover",
-                    Path.GetFileName(outcome.SafetyBackup),
-                    string.Join("、", outcome.Leftovers));
-        }
-        catch (InsufficientDiskSpaceException exception)
-        {
-            logger.LogWarning(exception, "还原项目失败：{Project}", ProjectPath);
-
-            PendingRestore = null;
-            Status = localization.FormatDiskSpace(exception);
-
-            await LoadAsync();
-        }
-        catch (Exception exception) when (exception is not OperationCanceledException)
-        {
-            logger.LogWarning(exception, "还原项目失败：{Project}", ProjectPath);
-
-            PendingRestore = null;
-            Status = localization.Format("ProjectDetail.Restore.Failed", exception.Message);
-
-            await LoadAsync();
-        }
-        finally
-        {
-            IsBusy = false;
-        }
     }
 
     [RelayCommand]
@@ -786,12 +752,6 @@ public sealed partial class ProjectDetailViewModel(
             {
                 Backups.Add(entry);
             }
-        }
-
-        if (PendingRestore is { } pending
-            && Backups.All(x => !string.Equals(x.FilePath, pending.FilePath, StringComparison.OrdinalIgnoreCase)))
-        {
-            PendingRestore = null;
         }
 
         OnPropertyChanged(nameof(HasBackups));
