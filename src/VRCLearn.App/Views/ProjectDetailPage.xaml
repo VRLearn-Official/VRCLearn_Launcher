@@ -222,26 +222,6 @@
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-
-                    <StackPanel Visibility="{Binding HasPendingRestore, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <TextBlock
-                            Margin="{StaticResource Gap.Row}"
-                            FontSize="{StaticResource FontSize.Caption}"
-                            Foreground="{DynamicResource SystemFillColorCautionBrush}"
-                            Text="{Binding RestorePrompt}"
-                            TextWrapping="Wrap" />
-                        <StackPanel Margin="{StaticResource Gap.Large}" Orientation="Horizontal">
-                            <ui:Button
-                                Appearance="Primary"
-                                Command="{Binding ConfirmRestoreCommand}"
-                                Content="{markup:Tr ProjectDetail.Restore.Confirm}" />
-                            <ui:Button
-                                Margin="{StaticResource Gap.Inline}"
-                                Appearance="Secondary"
-                                Command="{Binding CancelRestoreCommand}"
-                                Content="{markup:Tr ProjectDetail.Cancel}" />
-                        </StackPanel>
-                    </StackPanel>
                 </StackPanel>
             </StackPanel>
 

@@ -326,6 +326,7 @@
   "ProjectDetail.Backups.Title": "Backups",
   "ProjectDetail.Restore": "Restore",
   "ProjectDetail.Restore.Confirm": "Confirm restore",
+  "ProjectDetail.Restore.ConfirmTitle": "Restore backup",
   "ProjectDetail.Restore.ConfirmPrompt": "Restoring to \"{0}\" replaces the whole project folder with the backup. The current state is backed up automatically and can still be restored.",
   "ProjectDetail.Restore.Working": "Restoring: backing up the current state first...",
   "ProjectDetail.Restore.UnityRunning": "Close Unity first. It holds files in Library and Temp, so the project folder cannot be replaced.",
