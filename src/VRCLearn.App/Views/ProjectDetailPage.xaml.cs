@@ -122,13 +122,15 @@ public partial class ProjectDetailPage : UserControl
 
         var selected = DialogService.Instance.PickFolder(
             LocalizationService.Instance["ProjectDetail.Copy.Title"],
-            Path.GetDirectoryName(viewModel.CopyDestination!) ?? "");
+            Path.GetDirectoryName(viewModel.CopyDestination ?? "") ?? "");
 
         if (selected is not null)
         {
             viewModel.CopyDestination = Path.Combine(
                 selected,
-                Path.GetFileName(viewModel.CopyDestination!));
+                Path.GetFileName(viewModel.CopyDestination ?? "") is { Length: > 0 } name
+                    ? name
+                    : viewModel.ProjectName);
         }
     }
 }
