@@ -35,8 +35,6 @@ public static partial class PluginManifestValidator
         ValidateText(manifest.Name, "name", required: true);
         ValidateText(manifest.Description, "description", required: false);
 
-        ParseVersion(manifest.Version.ToString(), "version");
-
         if (manifest.Author.Length > 128)
         {
             throw new PluginManifestException("author must be at most 128 characters");
@@ -156,8 +154,7 @@ public static partial class PluginManifestValidator
             throw new PluginManifestException($"{fieldName} is not a safe relative path: {path}");
         }
 
-        if (extensions.Length > 0
-            && !extensions.Contains(Path.GetExtension(normalized), StringComparer.OrdinalIgnoreCase))
+        if (!extensions.Contains(Path.GetExtension(normalized), StringComparer.OrdinalIgnoreCase))
         {
             throw new PluginManifestException($"{fieldName} has an unsupported extension: {path}");
         }

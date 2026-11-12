@@ -26,8 +26,6 @@ public sealed class LocalCachedRepository
 
     public string? Id => Repository.Id;
 
-    public string? Name => Repository.Name;
-
     public static LocalCachedRepository FromJson(JsonObject json)
     {
         if (json["repo"] is not JsonObject repoNode)

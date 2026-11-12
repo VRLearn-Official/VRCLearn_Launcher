@@ -53,7 +53,7 @@ public sealed class RemotePackages
         {
             return manifestObject.Deserialize<PackageManifest>(VpmJson.Options);
         }
-        catch (Exception exception) when (exception is JsonException or VersionParseException)
+        catch (JsonException)
         {
             return null;
         }

@@ -100,9 +100,8 @@ public sealed class UnityProject
             installedPackages);
     }
 
-    public Task SaveAsync(CancellationToken cancellationToken) => Task.WhenAll(
-        _manifest.SaveAsync(Io, cancellationToken),
-        _upmManifest.SaveAsync(Io, cancellationToken));
+    public Task SaveAsync(CancellationToken cancellationToken) =>
+        _manifest.SaveAsync(Io, cancellationToken);
 
     /// <summary>只重读清单；已装/未登记的包列表是加载时扫出来的，改过 Packages 目录后要重新 LoadAsync。</summary>
     internal Task ReloadManifestsAsync(CancellationToken cancellationToken) => Task.WhenAll(

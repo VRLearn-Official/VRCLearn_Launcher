@@ -496,6 +496,7 @@ public sealed partial class PluginsViewModel : PageViewModelBase
             {
                 var result = await _manager.InstallAsync(
                     path,
+                    manifest.Id,
                     sha256,
                     CancellationToken.None);
 
@@ -630,11 +631,6 @@ public sealed partial class PluginsViewModel : PageViewModelBase
 
     private void OpenPlugin(PluginItemViewModel item)
     {
-        if (item.HasUpdate)
-        {
-            return;
-        }
-
         var error = _manager.Open(item.Id);
 
         if (error is null)
@@ -672,18 +668,11 @@ public sealed partial class PluginsViewModel : PageViewModelBase
                 return;
             }
 
-            var result = await _manager.UninstallAsync(item.Id, deleteData: true);
+            var result = await _manager.UninstallAsync(item.Id);
 
             Status = result.Outcome == PluginUninstallOutcome.PendingRestart
                 ? _localization.Format("Plugins.UninstallPending", item.Name)
                 : _localization.Format("Plugins.UninstallDone", item.Name);
-        }
-        catch (Exception exception) when (
-            exception is IOException or UnauthorizedAccessException)
-        {
-            _logger.LogWarning(exception, "卸载插件失败：{Id}", item.Id);
-
-            Status = _localization.Format("Plugins.UninstallFailed", exception.Message);
         }
         catch (InvalidOperationException)
         {

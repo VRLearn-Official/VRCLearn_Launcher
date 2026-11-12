@@ -22,11 +22,7 @@ public static class PluginHubEndpoint
             return false;
         }
 
-        var builder = new UriBuilder(uri)
-        {
-            Query = "",
-            Fragment = "",
-        };
+        var builder = new UriBuilder(uri);
 
         if (!builder.Path.EndsWith('/'))
         {

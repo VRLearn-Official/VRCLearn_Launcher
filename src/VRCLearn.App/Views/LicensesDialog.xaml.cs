@@ -42,7 +42,7 @@ public partial class LicensesDialog : DialogWindowBase
     {
         var index = Sections.SelectedIndex;
 
-        if (index < 0 || index >= _sections.Count)
+        if (index < 0)
         {
             return;
         }

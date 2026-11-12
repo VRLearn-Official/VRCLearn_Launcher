@@ -34,13 +34,6 @@ public sealed class FileLoggerProvider : ILoggerProvider
         }
     }
 
-    internal FileLoggerProvider(LogLevelFilter filter, string path, TextWriter writer)
-    {
-        _filter = filter;
-        Path = path;
-        _writer = writer;
-    }
-
     /// <summary>本次启动写的日志文件路径。</summary>
     public string Path { get; }
 

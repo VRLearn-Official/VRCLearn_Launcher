@@ -217,9 +217,7 @@ public sealed class ProjectRestoreService(
 
             if (leftovers.Count > 0)
             {
-                throw new IOException(
-                    $"{moveException.Message}；临时目录删不掉，留在：{string.Join("、", leftovers)}",
-                    moveException);
+                throw WithLeftovers(moveException, leftovers);
             }
 
             throw;

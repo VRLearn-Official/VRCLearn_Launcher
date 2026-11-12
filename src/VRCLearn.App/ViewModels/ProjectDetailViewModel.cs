@@ -208,16 +208,8 @@ public sealed partial class ProjectDetailViewModel(
     public bool HasUnityHubInstallLink => UnityHubInstallLink is not null;
 
     [RelayCommand]
-    private void InstallInUnityHub()
-    {
-        if (UnityHubInstallLink is { } link)
-        {
-            ShellLauncher.OpenUrl(link);
-        }
-    }
+    private void InstallInUnityHub() => ShellLauncher.OpenUrl(UnityHubInstallLink!);
 
-
-    private IReadOnlyList<PackageInfo> _userPackages = [];
 
     private bool _allowPrerelease;
 
@@ -309,7 +301,6 @@ public sealed partial class ProjectDetailViewModel(
         }
 
         _project = null;
-        _userPackages = [];
         _customPackages.Clear();
         ForgetCatalogs();
 
@@ -406,9 +397,7 @@ public sealed partial class ProjectDetailViewModel(
             }
 
             _project = project;
-            _userPackages = loadedUserPackages;
             _allowPrerelease = settings.Current.ShowPrereleasePackages;
-            ForgetCatalogs();
             (_catalog, _offeredCatalog, _catalogComplete) = catalogsTask.Result;
             ReloadUnityArguments();
             ProjectType = _project.DetectProjectType();
@@ -816,13 +805,8 @@ public sealed partial class ProjectDetailViewModel(
 
     private async Task<PendingProjectChanges?> PlanResolveAsync()
     {
-        if (_project is null)
-        {
-            return null;
-        }
-
         var outcome = await PackageOperations.ResolveAsync(
-            _project,
+            _project!,
             Catalog(),
             _customPackages,
             CancellationToken.None);
@@ -1699,13 +1683,8 @@ public sealed partial class ProjectDetailViewModel(
             ?.Version.ToString();
     }
 
-    public async Task UpgradeToVersionAsync(PackageRowViewModel row)
-    {
-        if (row.NewerVersion is { } version)
-        {
-            await ChangeVersionAsync(row.Name, row.DisplayName, row.Version, version);
-        }
-    }
+    public Task UpgradeToVersionAsync(PackageRowViewModel row) =>
+        ChangeVersionAsync(row.Name, row.DisplayName, row.Version, row.NewerVersion!);
 
     private async Task ChangeVersionAsync(
         string name,

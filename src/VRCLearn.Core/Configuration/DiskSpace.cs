@@ -22,7 +22,7 @@ public static class DiskSpace
             {
                 var parent = Path.GetDirectoryName(full);
 
-                if (parent is null || parent == full)
+                if (parent is null)
                 {
                     break;
                 }

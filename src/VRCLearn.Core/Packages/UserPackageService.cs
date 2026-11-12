@@ -23,8 +23,6 @@ public enum AddUserPackageStatus
 public sealed record UserPackageFolder(string Path, PackageManifest? Manifest)
 {
     public bool IsReadable => Manifest is not null;
-
-    public string DisplayName => Manifest?.DisplayName ?? Manifest?.Name ?? Path;
 }
 
 /// <summary>每个目录里一个 <c>package.json</c>，与仓库包一起参与解析。</summary>

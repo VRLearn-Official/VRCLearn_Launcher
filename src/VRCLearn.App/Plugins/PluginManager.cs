@@ -207,16 +207,14 @@ public sealed class PluginManager : IDisposable
 
     public async Task<PluginInstallResult> InstallAsync(
         string path,
+        string id,
         string expectedSha256,
         CancellationToken cancellationToken)
     {
-        var (manifest, _) = await _installer
-            .InspectAsync(path, cancellationToken);
-
         var result = await _installer
             .InstallAsync(
                 path,
-                IsLoaded(manifest.Id),
+                IsLoaded(id),
                 cancellationToken,
                 expectedSha256);
 
@@ -277,7 +275,7 @@ public sealed class PluginManager : IDisposable
         return directory;
     }
 
-    public async Task<PluginUninstallResult> UninstallAsync(string id, bool deleteData)
+    public async Task<PluginUninstallResult> UninstallAsync(string id)
     {
         if (_states.IsEnabled(id))
         {
@@ -286,7 +284,7 @@ public sealed class PluginManager : IDisposable
 
         await UnloadRuntimeAsync(id);
 
-        return _installer.Uninstall(id, deleteData);
+        return _installer.Uninstall(id);
     }
 
     public void Shutdown()

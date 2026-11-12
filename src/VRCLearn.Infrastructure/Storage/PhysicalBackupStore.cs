@@ -91,9 +91,9 @@ public sealed class PhysicalBackupStore(
         {
             FileCleanup.TryDelete(tempPath);
 
-            if (moved && finalPath is not null)
+            if (moved)
             {
-                FileCleanup.TryDelete(finalPath);
+                FileCleanup.TryDelete(finalPath!);
             }
 
             throw;

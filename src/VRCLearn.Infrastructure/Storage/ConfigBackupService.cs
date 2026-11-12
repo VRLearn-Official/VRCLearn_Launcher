@@ -23,9 +23,7 @@ public sealed class ConfigBackupService(
 
     public ConfigBackupResult Backup(string destinationPath)
     {
-        var entries = Collect()
-            .Where(x => File.Exists(x.FullPath))
-            .ToList();
+        var entries = Collect().ToList();
 
         if (entries.Count == 0)
         {

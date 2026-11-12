@@ -173,7 +173,7 @@ public sealed class PluginPackageInstaller(
         return new PluginInstallResult(PluginInstallOutcome.Installed);
     }
 
-    public PluginUninstallResult Uninstall(string id, bool deleteData)
+    public PluginUninstallResult Uninstall(string id)
     {
         if (!PathUtil.IsSafePathSegment(id))
         {
@@ -219,14 +219,11 @@ public sealed class PluginPackageInstaller(
             states.Current.PendingRemovals.RemoveAll(x => string.Equals(x, id, StringComparison.Ordinal));
         }
 
-        if (deleteData)
-        {
-            var data = Path.Combine(paths.PluginDataDirectory, id);
+        var data = Path.Combine(paths.PluginDataDirectory, id);
 
-            if (Directory.Exists(data))
-            {
-                DirectoryCleanup.TryDelete(data);
-            }
+        if (Directory.Exists(data))
+        {
+            DirectoryCleanup.TryDelete(data);
         }
 
         states.Save();

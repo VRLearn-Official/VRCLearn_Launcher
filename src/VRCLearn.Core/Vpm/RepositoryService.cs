@@ -231,7 +231,10 @@ public sealed class RepositoryService
                     ? new LocalCachedRepository(result.Value.Repository, setting.Headers)
                     : cached.WithRepository(result.Value.Repository, result.Value.ETag);
 
-                refreshed.SetETag(result.Value.ETag);
+                if (cached is null)
+                {
+                    refreshed.SetETag(result.Value.ETag);
+                }
 
                 if (_cacheStore.Save(setting.LocalPath, refreshed))
                 {

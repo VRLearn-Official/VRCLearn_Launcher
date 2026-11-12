@@ -9,8 +9,6 @@ public sealed class PackageCatalog
     private readonly Dictionary<string, List<PackageInfo>> _byName = new(StringComparer.OrdinalIgnoreCase);
     private readonly HashSet<(string Name, PackageVersion Version)> _seen = new(SeenComparer.Instance);
 
-    private IReadOnlyList<PackageInfo>? _all;
-
     public static PackageCatalog FromRepositories(
         IEnumerable<LocalCachedRepository> repositories,
         IEnumerable<PackageInfo>? userPackages = null)
@@ -36,17 +34,12 @@ public sealed class PackageCatalog
         return catalog;
     }
 
-    public IReadOnlyList<PackageInfo> All => _all ??= [.. _byName.Values.SelectMany(x => x)];
-
     public IEnumerable<string> PackageNames => _byName.Keys;
 
     public bool HasName(string name) => _byName.ContainsKey(name);
 
     public IReadOnlyList<PackageInfo> GetVersions(string name) =>
         _byName.TryGetValue(name, out var versions) ? versions : [];
-
-    public PackageInfo? Find(string name, PackageVersion version) =>
-        GetVersions(name).FirstOrDefault(x => x.Version == version);
 
     public PackageInfo? Find(string name, VersionSelector selector) =>
         GetVersions(name).Where(x => selector.Satisfies(x.Manifest)).MaxBy(x => x.Version);

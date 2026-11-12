@@ -5,9 +5,7 @@ using VRCLearn.Core.Hashing;
 
 namespace VRCLearn.Core.Plugins;
 
-public sealed record PluginPackageInspection(
-    PluginManifest Manifest,
-    IReadOnlyList<string> Entries);
+public sealed record PluginPackageInspection(PluginManifest Manifest);
 
 public static class PluginPackageInspector
 {
@@ -50,10 +48,8 @@ public static class PluginPackageInspector
         }
 
         var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        var entries = new List<string>();
         var manifests = new List<ZipArchiveEntry>();
         long totalUncompressed = 0;
-        long totalCompressed = 0;
 
         foreach (var entry in archive.Entries)
         {
@@ -74,8 +70,6 @@ public static class PluginPackageInspector
                 throw new PluginPackageException($"duplicate zip entry: {normalized}");
             }
 
-            entries.Add(normalized);
-
             if (entry.FullName.EndsWith('/') || entry.FullName.EndsWith('\\'))
             {
                 continue;
@@ -87,7 +81,6 @@ public static class PluginPackageInspector
             }
 
             totalUncompressed += entry.Length;
-            totalCompressed += entry.CompressedLength;
 
             if (entry.Length > MaxEntryUncompressedBytes)
             {
@@ -148,7 +141,7 @@ public static class PluginPackageInspector
             manifest = PluginManifestReader.Read(buffer);
         }
 
-        return new PluginPackageInspection(manifest, entries);
+        return new PluginPackageInspection(manifest);
     }
 
     public static async Task<string> ComputeSha256Async(string path, CancellationToken cancellationToken)

@@ -32,12 +32,12 @@ internal static class LoosePackageManifest
 
     private static bool IsParsable(string key, JsonNode? node) => key switch
     {
-        "displayName" or "description" or "zipSHA256" => Parses<string>(node),
+        "displayName" or "zipSHA256" => Parses<string>(node),
         "unity" => Parses<PartialUnityVersion>(node),
-        "url" or "changelogUrl" or "documentationUrl" => Parses<Uri>(node),
+        "url" => Parses<Uri>(node),
         "vpmDependencies" => Parses<OrderedDictionary<string, VersionRange>>(node),
         "legacyFolders" or "legacyFiles" => Parses<OrderedDictionary<string, string?>>(node),
-        "legacyPackages" or "keywords" => Parses<List<string>>(node),
+        "legacyPackages" => Parses<List<string>>(node),
         "headers" => Parses<OrderedDictionary<string, string>>(node),
         "vrc-get" => Parses<VrcGetMeta>(node),
 
