@@ -37,16 +37,6 @@ public sealed class UpmManifest
         dependencies[name] = version.ToString();
     }
 
-    public void RemoveDependency(string name)
-    {
-        var raw = _controller.AsMutable();
-
-        if (raw["dependencies"] is JsonObject dependencies)
-        {
-            dependencies.Remove(name);
-        }
-    }
-
     public Task SaveAsync(IFileIo io, CancellationToken cancellationToken) =>
         _controller.SaveAsync(
             raw => ProjectJson.SaveAsync(io, RelativePath, raw, cancellationToken));

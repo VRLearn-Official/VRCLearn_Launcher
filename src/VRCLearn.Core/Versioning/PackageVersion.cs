@@ -3,7 +3,7 @@ using System.Globalization;
 
 namespace VRCLearn.Core.Versioning;
 
-/// <summary>比较与相等性忽略 build metadata，需要连 build 比较时用 <see cref="StrictEquals"/>。</summary>
+/// <summary>比较与相等性忽略 build metadata。</summary>
 public sealed class PackageVersion : IComparable<PackageVersion>, IEquatable<PackageVersion>
 {
     public PackageVersion(long major, long minor, long patch)
@@ -38,8 +38,6 @@ public sealed class PackageVersion : IComparable<PackageVersion>, IEquatable<Pac
     public bool IsStable => Pre.IsEmpty;
 
     public bool IsPre => !IsStable;
-
-    public PackageVersion BaseVersion => new(Major, Minor, Patch);
 
     public static PackageVersion Parse(string text)
     {
@@ -120,9 +118,6 @@ public sealed class PackageVersion : IComparable<PackageVersion>, IEquatable<Pac
         ordering = Patch.CompareTo(other.Patch);
         return ordering != 0 ? ordering : Pre.CompareTo(other.Pre);
     }
-
-    public bool StrictEquals(PackageVersion? other) =>
-        other is not null && Equals(other) && Build.Equals(other.Build);
 
     public bool Equals(PackageVersion? other) =>
         other is not null
