@@ -4,8 +4,6 @@ namespace VRCLearn.Core.Unity;
 
 public static class UnityReleaseCatalog
 {
-    internal const string EditorHash = "887be4894c44";
-
     private static readonly UnityVersion Stable = new(2022, 3, 22, ReleaseType.Normal, 1);
 
     public static IReadOnlyList<UnityVersion> SupportedVersions { get; } =

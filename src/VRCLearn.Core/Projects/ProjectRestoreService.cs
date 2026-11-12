@@ -210,9 +210,6 @@ public sealed class ProjectRestoreService(
             }
             catch (Exception rollbackException)
             {
-                leftovers.Add(Path.Combine(parentPath, replaced));
-                leftovers.Add(Path.Combine(parentPath, staging));
-
                 throw new IOException(
                     $"恢复失败，原项目目录也无法移回，已保留在：{Path.Combine(parentPath, replaced)}",
                     rollbackException);
@@ -254,8 +251,7 @@ public sealed class ProjectRestoreService(
             var parent = ioFactory.For(parentPath);
             var journalName = JournalName(name);
 
-            if (!parent.FileExists(journalName)
-                || await parent.ReadAllBytesOrNullAsync(journalName, cancellationToken).ConfigureAwait(false) is not { } bytes)
+            if (await parent.ReadAllBytesOrNullAsync(journalName, cancellationToken).ConfigureAwait(false) is not { } bytes)
             {
                 continue;
             }
@@ -310,7 +306,7 @@ public sealed class ProjectRestoreService(
 
                 recoveries.Add(new RestoreRecovery(projectPath, recovered, leftover));
             }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
             {
                 recoveries.Add(new RestoreRecovery(projectPath, false, exception.Message));
             }

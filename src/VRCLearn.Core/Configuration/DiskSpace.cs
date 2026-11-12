@@ -55,7 +55,7 @@ public static class DiskSpace
 
         var margin = Math.Max(MinimumMargin, requiredBytes / 20);
 
-        if (available <= margin || requiredBytes > available - margin)
+        if (requiredBytes > available - margin)
         {
             throw new InsufficientDiskSpaceException(requiredBytes, available);
         }

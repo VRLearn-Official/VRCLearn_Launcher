@@ -23,7 +23,10 @@ public sealed class PluginManager : IDisposable
     private readonly PluginServiceRegistry _services = new();
     private readonly Dictionary<string, PluginRuntime> _runtimes = new(StringComparer.Ordinal);
     private IReadOnlyList<PluginSnapshot> _snapshots = [];
-    private PluginResolution _resolution = new([], new Dictionary<string, string>(), new Dictionary<string, IReadOnlyList<string>>(), new Dictionary<string, IReadOnlyList<string>>(), []);
+    private PluginResolution _resolution = new(
+        new Dictionary<string, IReadOnlyList<string>>(),
+        new Dictionary<string, IReadOnlyList<string>>(),
+        []);
 
     public PluginManager(
         AppPaths paths,
@@ -330,7 +333,6 @@ public sealed class PluginManager : IDisposable
                 PluginStatus.Faulted,
                 [],
                 false,
-                false,
                 installed.Error);
         }
 
@@ -366,7 +368,6 @@ public sealed class PluginManager : IDisposable
             status,
             missing,
             pendingInstall,
-            pendingRemoval,
             _runtimes.TryGetValue(manifest.Id, out var current) ? current.Error : null);
     }
 

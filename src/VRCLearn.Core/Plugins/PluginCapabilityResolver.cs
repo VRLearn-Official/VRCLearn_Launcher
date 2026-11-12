@@ -10,8 +10,6 @@ public sealed record PluginResolutionNode(
     IReadOnlyList<PluginRequirement> Requires);
 
 public sealed record PluginResolution(
-    IReadOnlyList<string> LoadOrder,
-    IReadOnlyDictionary<string, string> Providers,
     IReadOnlyDictionary<string, IReadOnlyList<string>> Dependencies,
     IReadOnlyDictionary<string, IReadOnlyList<string>> Missing,
     IReadOnlyList<string> Cycles);
@@ -25,8 +23,6 @@ public static class PluginCapabilityResolver
             .OrderBy(x => x.Id, StringComparer.Ordinal)
             .ToList();
 
-        var byId = enabled.ToDictionary(x => x.Id, StringComparer.Ordinal);
-        var providers = new Dictionary<string, string>(StringComparer.Ordinal);
         var missing = new Dictionary<string, IReadOnlyList<string>>(StringComparer.Ordinal);
         var dependencies = enabled.ToDictionary(
             x => x.Id,
@@ -55,7 +51,6 @@ public static class PluginCapabilityResolver
                     continue;
                 }
 
-                providers.TryAdd(requirement.Capability, provider.Node.Id);
                 dependencies[node.Id].Add(provider.Node.Id);
             }
 
@@ -140,6 +135,6 @@ public static class PluginCapabilityResolver
             x => (IReadOnlyList<string>)[.. x.Value.OrderBy(value => value, StringComparer.Ordinal)],
             StringComparer.Ordinal);
 
-        return new PluginResolution(ordered, providers, dependenciesById, missing, cycles);
+        return new PluginResolution(dependenciesById, missing, cycles);
     }
 }

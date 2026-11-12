@@ -42,28 +42,6 @@ public sealed class RemotePackages
         return new RemotePackages(versions);
     }
 
-    public PackageManifest? GetVersion(PackageVersion version) => _versions.GetValueOrDefault(version);
-
-    public PackageManifest? GetLatest(VersionSelector selector) =>
-        selector.AsSpecificVersion() is { } specific
-            ? _versions.GetValueOrDefault(specific)
-            : LatestMatching(selector);
-
-    private PackageManifest? LatestMatching(VersionSelector selector)
-    {
-        PackageManifest? latest = null;
-
-        foreach (var manifest in _versions.Values)
-        {
-            if (selector.Satisfies(manifest) && (latest is null || manifest.Version.CompareTo(latest.Version) > 0))
-            {
-                latest = manifest;
-            }
-        }
-
-        return latest;
-    }
-
     private static PackageManifest? TryParseManifest(JsonNode? node)
     {
         if (node is not JsonObject manifestObject)

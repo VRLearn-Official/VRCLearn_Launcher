@@ -511,12 +511,6 @@ public static class PackageOperations
             []);
     }
 
-    public static Task<ResolveOutcome> ResolveAsync(
-        UnityProject project,
-        PackageCatalog catalog,
-        CancellationToken cancellationToken) =>
-        ResolveAsync(project, catalog, null, cancellationToken);
-
     public static async Task<ResolveOutcome> ResolveAsync(
         UnityProject project,
         PackageCatalog catalog,

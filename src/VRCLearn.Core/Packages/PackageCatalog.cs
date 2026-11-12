@@ -62,11 +62,6 @@ public sealed class PackageCatalog
             ? latest
             : null;
 
-    public PackageInfo? GetLatest(string name) =>
-        GetVersions(name)
-            .Where(x => !x.Manifest.IsYanked)
-            .MaxBy(x => x.Version);
-
     private sealed class SeenComparer : IEqualityComparer<(string Name, PackageVersion Version)>
     {
         public static readonly SeenComparer Instance = new();

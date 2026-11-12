@@ -268,7 +268,7 @@ public sealed class ConfigBackupService(
                 Rest(relative, $"{AppPaths.RepositoriesFolderName}/").Replace('/', Path.DirectorySeparatorChar));
         }
 
-        return Path.Combine(paths.Root, relative.Replace('/', Path.DirectorySeparatorChar));
+        throw new InvalidOperationException($"unexpected config file: {relative}");
     }
 
     private static bool IsConfigFile(string relative)

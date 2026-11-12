@@ -42,50 +42,34 @@ internal static class PeImage
 
     private static string? ReadVersionString(string executablePath, string field)
     {
-        try
-        {
-            var size = GetFileVersionInfoSize(executablePath, out _);
+        var size = GetFileVersionInfoSize(executablePath, out _);
 
-            if (size == 0)
-            {
-                return null;
-            }
-
-            var info = new byte[size];
-
-            if (!GetFileVersionInfo(executablePath, 0, size, info) || !QueryValue(info, field, out var value))
-            {
-                return null;
-            }
-
-            return value;
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        if (size == 0)
         {
             return null;
         }
+
+        var info = new byte[size];
+
+        if (!GetFileVersionInfo(executablePath, 0, size, info) || !QueryValue(info, field, out var value))
+        {
+            return null;
+        }
+
+        return value;
     }
 
     private static bool QueryValue(byte[] info, string field, out string? value)
     {
         value = null;
 
-        var pinned = GCHandle.Alloc(info, GCHandleType.Pinned);
-
-        try
+        if (!VerQueryValue(info, field, out var pointer, out var length) || pointer == nint.Zero || length == 0)
         {
-            if (!VerQueryValue(info, field, out var pointer, out var length) || pointer == nint.Zero || length == 0)
-            {
-                return false;
-            }
+            return false;
+        }
 
-            value = Marshal.PtrToStringUni(pointer, (int)length).TrimEnd('\0');
-            return true;
-        }
-        finally
-        {
-            pinned.Free();
-        }
+        value = Marshal.PtrToStringUni(pointer, (int)length).TrimEnd('\0');
+        return true;
     }
 
     [DllImport("version.dll", EntryPoint = "GetFileVersionInfoSizeW", CharSet = CharSet.Unicode, SetLastError = true)]

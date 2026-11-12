@@ -14,11 +14,7 @@ public enum PluginInstallOutcome
     PendingRestart,
 }
 
-public sealed record PluginInstallResult(
-    PluginManifest Manifest,
-    string Sha256,
-    PluginInstallOutcome Outcome,
-    bool Replaced);
+public sealed record PluginInstallResult(PluginInstallOutcome Outcome);
 
 public enum PluginUninstallOutcome
 {
@@ -27,7 +23,7 @@ public enum PluginUninstallOutcome
     PendingRestart,
 }
 
-public sealed record PluginUninstallResult(PluginUninstallOutcome Outcome, bool DataRemoved);
+public sealed record PluginUninstallResult(PluginUninstallOutcome Outcome);
 
 public sealed class PluginPackageInstaller(
     AppPaths paths,
@@ -141,7 +137,7 @@ public sealed class PluginPackageInstaller(
 
         if (isLoaded && Directory.Exists(target))
         {
-            return StagePendingInstall(manifest, sha256, staging, target);
+            return StagePendingInstall(manifest, staging);
         }
 
         var replaced = Directory.Exists(target);
@@ -161,7 +157,7 @@ public sealed class PluginPackageInstaller(
         {
             logger.LogWarning(exception, "替换插件失败，改为下次启动安装：{Id}", manifest.Id);
 
-            return StagePendingInstall(manifest, sha256, staging, target);
+            return StagePendingInstall(manifest, staging);
         }
 
         RemovePendingInstall(manifest.Id);
@@ -174,7 +170,7 @@ public sealed class PluginPackageInstaller(
 
         states.Save();
 
-        return new PluginInstallResult(manifest, sha256, PluginInstallOutcome.Installed, replaced);
+        return new PluginInstallResult(PluginInstallOutcome.Installed);
     }
 
     public PluginUninstallResult Uninstall(string id, bool deleteData)
@@ -223,23 +219,20 @@ public sealed class PluginPackageInstaller(
             states.Current.PendingRemovals.RemoveAll(x => string.Equals(x, id, StringComparison.Ordinal));
         }
 
-        var dataRemoved = false;
-
         if (deleteData)
         {
             var data = Path.Combine(paths.PluginDataDirectory, id);
 
             if (Directory.Exists(data))
             {
-                dataRemoved = DirectoryCleanup.TryDelete(data);
+                DirectoryCleanup.TryDelete(data);
             }
         }
 
         states.Save();
 
         return new PluginUninstallResult(
-            restart ? PluginUninstallOutcome.PendingRestart : PluginUninstallOutcome.Removed,
-            dataRemoved);
+            restart ? PluginUninstallOutcome.PendingRestart : PluginUninstallOutcome.Removed);
     }
 
     public void ApplyPendingActions()
@@ -328,9 +321,7 @@ public sealed class PluginPackageInstaller(
 
     private PluginInstallResult StagePendingInstall(
         PluginManifest manifest,
-        string sha256,
-        string staging,
-        string target)
+        string staging)
     {
         if (!Directory.Exists(staging))
         {
@@ -351,11 +342,7 @@ public sealed class PluginPackageInstaller(
         states.Current.PendingInstalls[manifest.Id] = pending;
         states.Save();
 
-        return new PluginInstallResult(
-            manifest,
-            sha256,
-            PluginInstallOutcome.PendingRestart,
-            Directory.Exists(target));
+        return new PluginInstallResult(PluginInstallOutcome.PendingRestart);
     }
 
     private void RemovePendingInstall(string id)

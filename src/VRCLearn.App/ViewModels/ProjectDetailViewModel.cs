@@ -929,11 +929,11 @@ public sealed partial class ProjectDetailViewModel(
         await RemovePackagesAsync([row.Name]);
     }
 
-    private async Task<bool> RemovePackagesAsync(IReadOnlyList<string> names)
+    private async Task RemovePackagesAsync(IReadOnlyList<string> names)
     {
         if (_project is null || IsBusy)
         {
-            return false;
+            return;
         }
 
         Status = null;
@@ -948,7 +948,7 @@ public sealed partial class ProjectDetailViewModel(
                 Join(outcome.NotInstalled));
 
             Status = localization.Format("ProjectDetail.NotInstalled", Join(outcome.NotInstalled));
-            return false;
+            return;
         }
 
         var changes = outcome.Changes!;
@@ -984,7 +984,7 @@ public sealed partial class ProjectDetailViewModel(
                 detailTitle: detailTitle,
                 detailBody: detailBody))
         {
-            return false;
+            return;
         }
 
         IsBusy = true;
@@ -1000,14 +1000,12 @@ public sealed partial class ProjectDetailViewModel(
             Status = localization.Format("ProjectDetail.ApplyFailed", exception.Message);
 
             await LoadAsync();
-            return false;
+            return;
         }
         finally
         {
             IsBusy = false;
         }
-
-        return true;
     }
 
     public bool HasSelected => Packages.Any(x => x.IsSelected);
@@ -1207,7 +1205,8 @@ public sealed partial class ProjectDetailViewModel(
 
     private List<string> ConflictLines(
         PendingProjectChanges changes,
-        IReadOnlyCollection<string>? explained = null)
+        IReadOnlyCollection<string>? explained = null,
+        bool includeUnlocked = true)
     {
         var skip = explained is null
             ? null
@@ -1218,29 +1217,16 @@ public sealed partial class ProjectDetailViewModel(
         foreach (var (name, conflict) in changes.Conflicts)
         {
             AppendConflictLines(lines, name, conflict, skip);
+
+            if (!includeUnlocked)
+            {
+                continue;
+            }
 
             foreach (var unlocked in conflict.UnlockedNames)
             {
                 lines.Add(localization.Format("ProjectDetail.Conflict.Unlocked", unlocked));
             }
-        }
-
-        return lines;
-    }
-
-    private List<string> BlockingConflicts(
-        PendingProjectChanges changes,
-        IReadOnlyCollection<string>? explained = null)
-    {
-        var skip = explained is null
-            ? null
-            : new HashSet<string>(explained, StringComparer.OrdinalIgnoreCase);
-
-        var lines = new List<string>();
-
-        foreach (var (name, conflict) in changes.Conflicts)
-        {
-            AppendConflictLines(lines, name, conflict, skip);
         }
 
         return lines;
@@ -1793,7 +1779,7 @@ public sealed partial class ProjectDetailViewModel(
 
             var explained = affected.Select(x => x.Name).ToList();
 
-            if (BlockingConflicts(changes, explained) is { Count: > 0 } blocking)
+            if (ConflictLines(changes, explained, includeUnlocked: false) is { Count: > 0 } blocking)
             {
                 dialogs.ShowNotice(
                     localization["ProjectDetail.VersionChange.ConflictTitle"],
@@ -1817,7 +1803,7 @@ public sealed partial class ProjectDetailViewModel(
                             _project,
                             cascade,
                             _allowPrerelease).Count > 0
-                        || BlockingConflicts(cascade) is { Count: > 0 }))
+                        || ConflictLines(cascade, includeUnlocked: false) is { Count: > 0 }))
                 {
                     cascade = null;
                 }

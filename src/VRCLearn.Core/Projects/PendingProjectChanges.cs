@@ -17,8 +17,6 @@ public enum RemoveReason
 public abstract class PackageChange
 {
     public Install? AsInstall => this as Install;
-
-    public Remove? AsRemove => this as Remove;
 }
 
 /// <summary>装一个包。<see cref="Package"/> 为 null 表示只往清单里加个依赖，装哪个版本交给解析定。</summary>

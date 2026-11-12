@@ -4,8 +4,6 @@ namespace VRCLearn.Core.Plugins.Hub;
 
 public sealed class PluginHubIndex
 {
-    public int SchemaVersion { get; init; }
-
     public IReadOnlyList<PluginHubEntry> Plugins { get; init; } = [];
 }
 
@@ -40,8 +38,6 @@ public sealed class PluginHubRelease
     public PackageVersion Version { get; init; } = new(0, 0, 0);
 
     public long Size { get; init; }
-
-    public DateTimeOffset? PublishedAt { get; init; }
 
     public string Url { get; init; } = "";
 

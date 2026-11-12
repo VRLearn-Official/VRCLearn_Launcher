@@ -22,8 +22,6 @@ public sealed class UpmManifest
     private static Task<JsonObject> ReadAsync(IFileIo io, CancellationToken cancellationToken) =>
         ProjectJson.LoadOrDefaultAsync(io, RelativePath, static () => new JsonObject(), cancellationToken);
 
-    public IEnumerable<string> Dependencies => DependenciesObject()?.Select(x => x.Key) ?? [];
-
     public bool HasDependency(string name) => DependenciesObject()?.ContainsKey(name) ?? false;
 
     public void AddDependency(string name, Versioning.PackageVersion version)

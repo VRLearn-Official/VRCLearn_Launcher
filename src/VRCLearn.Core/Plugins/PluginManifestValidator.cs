@@ -18,8 +18,7 @@ public static partial class PluginManifestValidator
 
     public static bool IsValidId(string id) =>
         IdPattern().IsMatch(id)
-        && PathUtil.IsSafePathSegment(id)
-        && id.Length <= 64;
+        && PathUtil.IsSafePathSegment(id);
 
     public static void Validate(PluginManifest manifest)
     {

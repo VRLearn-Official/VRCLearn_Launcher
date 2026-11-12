@@ -7,10 +7,7 @@ namespace VRCLearn.Core.Plugins;
 
 public sealed record PluginPackageInspection(
     PluginManifest Manifest,
-    string ManifestEntryName,
-    IReadOnlyList<string> Entries,
-    long UncompressedBytes,
-    long CompressedBytes);
+    IReadOnlyList<string> Entries);
 
 public static class PluginPackageInspector
 {
@@ -151,12 +148,7 @@ public static class PluginPackageInspector
             manifest = PluginManifestReader.Read(buffer);
         }
 
-        return new PluginPackageInspection(
-            manifest,
-            manifestEntry.FullName,
-            entries,
-            totalUncompressed,
-            totalCompressed);
+        return new PluginPackageInspection(manifest, entries);
     }
 
     public static async Task<string> ComputeSha256Async(string path, CancellationToken cancellationToken)

@@ -25,7 +25,6 @@ public sealed record PluginSnapshot(
     PluginStatus Status,
     IReadOnlyList<string> Missing,
     bool PendingInstall,
-    bool PendingRemoval,
     string? Error)
 {
     public PluginManifest? Manifest => Installed.Manifest;

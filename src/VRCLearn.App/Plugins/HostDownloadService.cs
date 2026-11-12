@@ -388,10 +388,7 @@ public sealed class HostDownloadService : IDownloadService, IDisposable
     {
         try
         {
-            if (File.Exists(path))
-            {
-                File.Delete(path);
-            }
+            File.Delete(path);
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {

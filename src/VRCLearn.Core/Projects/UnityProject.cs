@@ -225,8 +225,6 @@ public sealed class UnityProject
 
     public bool HasUpmPackage(string name) => _upmManifest.HasDependency(name);
 
-    public void RemoveUpmDependency(string name) => _upmManifest.RemoveDependency(name);
-
     /// <summary>只改清单，不真正装包。</summary>
     public void AddDependencyRaw(string name, DependencyRange version) => _manifest.AddDependency(name, version);
 

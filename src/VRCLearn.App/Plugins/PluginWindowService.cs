@@ -23,12 +23,6 @@ public sealed class PluginWindowService
 
     public void Show(string id, string title, FrameworkElement content, PluginWindowOptions options)
     {
-        if (_windows.TryGetValue(id, out var existing))
-        {
-            existing.Activate();
-            return;
-        }
-
         var window = new PluginWindow(title, content, options);
 
         if (Application.Current.MainWindow is { IsVisible: true } main)

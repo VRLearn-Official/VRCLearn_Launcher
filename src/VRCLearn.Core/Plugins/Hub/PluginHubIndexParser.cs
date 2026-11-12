@@ -71,7 +71,7 @@ public static class PluginHubIndexParser
             }
         }
 
-        index = new PluginHubIndex { SchemaVersion = schemaVersion, Plugins = entries };
+        index = new PluginHubIndex { Plugins = entries };
 
         return true;
     }
@@ -166,19 +166,10 @@ public static class PluginHubIndexParser
             return null;
         }
 
-        DateTimeOffset? publishedAt = null;
-
-        if (JsonText.Of(version["publishedAt"]) is { Length: > 0 } publishedText
-            && DateTimeOffset.TryParse(publishedText, out var parsedDate))
-        {
-            publishedAt = parsedDate;
-        }
-
         return new PluginHubRelease
         {
             Version = parsed,
             Size = size,
-            PublishedAt = publishedAt,
             Url = url,
             Sha256 = string.IsNullOrEmpty(sha256) ? null : sha256.ToLowerInvariant(),
         };
