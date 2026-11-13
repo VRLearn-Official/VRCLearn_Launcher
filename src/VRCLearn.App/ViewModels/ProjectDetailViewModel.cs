@@ -1189,13 +1189,33 @@ public sealed partial class ProjectDetailViewModel(
 
     private async Task ApplyChangesAsync(PendingProjectChanges changes, string successMessage)
     {
-        var leftover = await progress.RunAsync(
-            localization["Progress.Apply"],
-            _ => ProjectChangesApplier.ApplyAsync(_project!, installer, changes, CancellationToken.None));
+        IReadOnlyList<string>? leftover = null;
+
+        try
+        {
+            leftover = await progress.RunAsync(
+                localization["Progress.Apply"],
+                (reporter, cancellationToken) => ProjectChangesApplier.ApplyAsync(
+                    _project!,
+                    installer,
+                    changes,
+                    cancellationToken,
+                    reporter),
+                showHint: false);
+        }
+        catch (OperationCanceledException) when (progress.WasCancelled)
+        {
+            Status = localization["ProjectDetail.Cancelled"];
+        }
 
         _project = await projects.OpenAsync(ProjectPath, CancellationToken.None);
 
         ReloadPackages();
+
+        if (leftover is null)
+        {
+            return;
+        }
 
         Status = leftover.Count > 0
             ? localization.Format("ProjectDetail.AppliedWithLeftovers", leftover.Count)
@@ -1732,7 +1752,7 @@ public sealed partial class ProjectDetailViewModel(
 
         displayName = string.IsNullOrWhiteSpace(displayName) ? name : displayName;
 
-        var applied = await ConfirmAndApplyAsync(
+        await ConfirmAndApplyAsync(
             upgradeDependents => PlanSwitchVersionAsync(
                 name,
                 targetVersion,
@@ -1742,20 +1762,15 @@ public sealed partial class ProjectDetailViewModel(
                 upgrading ? "ProjectDetail.Upgrade.Done" : "ProjectDetail.SwitchVersion.Done",
                 displayName,
                 targetVersion));
-
-        if (!applied)
-        {
-            ReloadPackages();
-        }
     }
 
-    private async Task<bool> ConfirmAndApplyAsync(
+    private async Task ConfirmAndApplyAsync(
         Func<bool, Task<PendingProjectChanges?>> plan,
         string successMessage)
     {
         if (_project is null || IsBusy || _changingPackages)
         {
-            return false;
+            return;
         }
 
         _changingPackages = true;
@@ -1771,7 +1786,7 @@ public sealed partial class ProjectDetailViewModel(
                     && changes.RemoveLegacyFiles.Count == 0
                     && changes.RemoveLegacyFolders.Count == 0))
             {
-                return false;
+                return;
             }
 
             var affected = PackageOperations.FindAffectedDependents(
@@ -1791,7 +1806,7 @@ public sealed partial class ProjectDetailViewModel(
                         + string.Join(Environment.NewLine, blocking),
                     localization["Dialog.Confirm"]);
 
-                return false;
+                return;
             }
 
             PendingProjectChanges? cascade = null;
@@ -1837,7 +1852,7 @@ public sealed partial class ProjectDetailViewModel(
                         messageInlines: messageInlines,
                         detailBodyInlines: detailBodyInlines))
                 {
-                    return false;
+                    return;
                 }
             }
             else
@@ -1855,7 +1870,7 @@ public sealed partial class ProjectDetailViewModel(
 
                 if (choice == ConfirmChoice.Cancel)
                 {
-                    return false;
+                    return;
                 }
 
                 if (choice == ConfirmChoice.Extra)
@@ -1869,7 +1884,6 @@ public sealed partial class ProjectDetailViewModel(
             try
             {
                 await ApplyChangesAsync(applied, successMessage);
-                return true;
             }
             catch (Exception exception) when (exception is not OperationCanceledException)
             {
@@ -1878,7 +1892,6 @@ public sealed partial class ProjectDetailViewModel(
                 Status = localization.Format("ProjectDetail.ApplyFailed", exception.Message);
 
                 await LoadAsync();
-                return false;
             }
             finally
             {
