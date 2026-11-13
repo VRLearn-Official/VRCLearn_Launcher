@@ -10,10 +10,6 @@ public static class VpmJson
 {
     public static JsonSerializerOptions Options { get; } = Create();
 
-    public static PackageManifest ReadManifest(string json) =>
-        JsonSerializer.Deserialize<PackageManifest>(json, Options)
-        ?? throw new JsonException("package manifest is null");
-
     private static JsonSerializerOptions Create()
     {
         var options = new JsonSerializerOptions(JsonDefaults.Indented);

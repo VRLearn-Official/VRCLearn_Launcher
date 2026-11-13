@@ -20,7 +20,6 @@
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
                     <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
                 <ui:TextBox
@@ -55,11 +54,6 @@
                     Appearance="Primary"
                     Command="{Binding NewResourceCommand}"
                     Content="{markup:Tr Resources.New}" />
-
-                <ui:ProgressRing
-                    Grid.Column="5"
-                    Margin="{StaticResource Gap.Inline}"
-                    Style="{StaticResource BusyRing}" />
             </Grid>
 
         <TextBlock

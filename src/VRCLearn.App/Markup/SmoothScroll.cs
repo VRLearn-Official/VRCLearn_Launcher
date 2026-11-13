@@ -37,9 +37,6 @@ public static class SmoothScroll
     public static void SetIsEnabled(DependencyObject element, bool value) =>
         element.SetValue(IsEnabledProperty, value);
 
-    public static bool GetIsEnabled(DependencyObject element) =>
-        (bool)element.GetValue(IsEnabledProperty);
-
     private static void OnIsEnabledChanged(DependencyObject element, DependencyPropertyChangedEventArgs e)
     {
         if (element is ScrollViewer viewer)

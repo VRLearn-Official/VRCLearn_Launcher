@@ -88,13 +88,6 @@ public sealed class BackupDirectoryViewModel(
                 localization["Progress.BackupMigration"],
                 reporter => Task.Run(() => backups.Migrate(destination, reporter)));
 
-            if (result.Status is BackupMigrationStatus.OverlappingPaths)
-            {
-                Status = localization["Settings.BackupPath.Overlapping"];
-
-                return;
-            }
-
             if (result.Status is BackupMigrationStatus.Failed)
             {
                 logger.LogWarning("迁移备份失败：{Destination} {Error}", destination, result.Error);

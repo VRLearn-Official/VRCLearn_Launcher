@@ -72,8 +72,7 @@ public static class ResourceImporter
                 {
                     throw;
                 }
-                catch (Exception exception) when (
-                    exception is not OperationCanceledException and not OutOfMemoryException)
+                catch (Exception exception) when (exception is not OutOfMemoryException)
                 {
                 }
             }
@@ -123,8 +122,7 @@ public static class ResourceImporter
                 {
                     throw;
                 }
-                catch (Exception exception) when (
-                    exception is not OperationCanceledException and not OutOfMemoryException)
+                catch (Exception exception) when (exception is not OutOfMemoryException)
                 {
                     failed.Add(path);
                 }

@@ -38,7 +38,6 @@ public sealed class RepositoryCacheStore(AppPaths paths, GuiConfigStore configs,
             }
             catch (Exception exception) when (exception is IOException or JsonException or RepositoryParseException)
             {
-                cached = null;
             }
 
             _parsed[relativePath] = cached;

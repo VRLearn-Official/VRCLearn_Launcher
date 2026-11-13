@@ -81,10 +81,6 @@ public sealed class UnityProjectTemplateManifest(ILogger<UnityProjectTemplateMan
 
                 return manifest;
             }
-            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-            {
-                throw;
-            }
             catch (Exception exception) when (
                 exception is IOException
                     or UnauthorizedAccessException

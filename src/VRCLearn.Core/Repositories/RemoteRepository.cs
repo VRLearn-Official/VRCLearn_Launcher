@@ -103,12 +103,7 @@ public sealed class RemoteRepository
         SetIdIfMissing(effective.AbsoluteUri);
     }
 
-    public RemotePackages? GetPackage(string package) => Packages.GetValueOrDefault(package);
-
     public IEnumerable<RemotePackages> GetPackages() => Packages.Values;
-
-    public IEnumerable<PackageManifest> GetVersionsOf(string package) =>
-        Packages.TryGetValue(package, out var packages) ? packages.AllVersions : [];
 
     public JsonObject ToRawJson() => (JsonObject)_raw.DeepClone();
 

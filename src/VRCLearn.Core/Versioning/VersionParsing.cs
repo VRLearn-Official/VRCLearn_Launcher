@@ -10,8 +10,6 @@ public enum VersionParseError
 public sealed class VersionParseException(VersionParseError error)
     : Exception(Describe(error))
 {
-    public VersionParseError Error { get; } = error;
-
     private static string Describe(VersionParseError error) => error switch
     {
         VersionParseError.TooBig => "version segment too big",

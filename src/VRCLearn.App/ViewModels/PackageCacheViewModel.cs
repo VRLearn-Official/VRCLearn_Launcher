@@ -92,13 +92,6 @@ public sealed partial class PackageCacheViewModel(
                 localization["Progress.Cache"],
                 reporter => Task.Run(() => repositories.MigratePackageCache(destination, reporter)));
 
-            if (result.Status is PackageCacheMigrationStatus.UnsafeDestination)
-            {
-                Status = localization["Settings.CachePath.Unsafe"];
-
-                return;
-            }
-
             if (result.Status is PackageCacheMigrationStatus.OverlappingPaths)
             {
                 Status = localization["Settings.CachePath.Overlapping"];

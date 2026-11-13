@@ -122,7 +122,6 @@ public sealed partial class ResourcesViewModel : PageViewModelBase, IPageViewMod
 
         OnPropertyChanged(nameof(HasResources));
         OnPropertyChanged(nameof(EmptyText));
-        OnPropertyChanged(nameof(SelectedCount));
         ImportSelectedCommand.NotifyCanExecuteChanged();
     }
 
@@ -266,7 +265,7 @@ public sealed partial class ResourcesViewModel : PageViewModelBase, IPageViewMod
 
     private async Task ImportAsync(IReadOnlyList<ResourceDefinition> definitions)
     {
-        if (IsBusy || definitions.Count == 0)
+        if (definitions.Count == 0)
         {
             return;
         }
@@ -475,7 +474,6 @@ public sealed partial class ResourcesViewModel : PageViewModelBase, IPageViewMod
 
         OnPropertyChanged(nameof(HasResources));
         OnPropertyChanged(nameof(EmptyText));
-        OnPropertyChanged(nameof(SelectedCount));
         ImportSelectedCommand.NotifyCanExecuteChanged();
     }
 
@@ -486,7 +484,6 @@ public sealed partial class ResourcesViewModel : PageViewModelBase, IPageViewMod
             return;
         }
 
-        OnPropertyChanged(nameof(SelectedCount));
         ImportSelectedCommand.NotifyCanExecuteChanged();
     }
 }

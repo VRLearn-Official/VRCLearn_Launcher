@@ -50,8 +50,6 @@ public sealed class VersionSelector
         PrereleaseAcceptance acceptance) =>
         new(Kind.Ranges, projectUnity: unityVersion, ranges: ranges, acceptance: acceptance);
 
-    public PackageVersion? AsSpecificVersion() => _kind == Kind.Specific ? _specific : null;
-
     public bool Satisfies(PackageManifest package) => _kind switch
     {
         Kind.Specific => _specific == package.Version,

@@ -23,7 +23,10 @@ public sealed class PluginManager : IDisposable
     private readonly PluginServiceRegistry _services = new();
     private readonly Dictionary<string, PluginRuntime> _runtimes = new(StringComparer.Ordinal);
     private IReadOnlyList<PluginSnapshot> _snapshots = [];
-    private PluginResolution _resolution = new([], new Dictionary<string, string>(), new Dictionary<string, IReadOnlyList<string>>(), new Dictionary<string, IReadOnlyList<string>>(), []);
+    private PluginResolution _resolution = new(
+        new Dictionary<string, IReadOnlyList<string>>(),
+        new Dictionary<string, IReadOnlyList<string>>(),
+        []);
 
     public PluginManager(
         AppPaths paths,
@@ -204,16 +207,14 @@ public sealed class PluginManager : IDisposable
 
     public async Task<PluginInstallResult> InstallAsync(
         string path,
+        string id,
         string expectedSha256,
         CancellationToken cancellationToken)
     {
-        var (manifest, _) = await _installer
-            .InspectAsync(path, cancellationToken);
-
         var result = await _installer
             .InstallAsync(
                 path,
-                IsLoaded(manifest.Id),
+                IsLoaded(id),
                 cancellationToken,
                 expectedSha256);
 
@@ -274,7 +275,7 @@ public sealed class PluginManager : IDisposable
         return directory;
     }
 
-    public async Task<PluginUninstallResult> UninstallAsync(string id, bool deleteData)
+    public async Task<PluginUninstallResult> UninstallAsync(string id)
     {
         if (_states.IsEnabled(id))
         {
@@ -283,7 +284,7 @@ public sealed class PluginManager : IDisposable
 
         await UnloadRuntimeAsync(id);
 
-        return _installer.Uninstall(id, deleteData);
+        return _installer.Uninstall(id);
     }
 
     public void Shutdown()
@@ -330,7 +331,6 @@ public sealed class PluginManager : IDisposable
                 PluginStatus.Faulted,
                 [],
                 false,
-                false,
                 installed.Error);
         }
 
@@ -366,7 +366,6 @@ public sealed class PluginManager : IDisposable
             status,
             missing,
             pendingInstall,
-            pendingRemoval,
             _runtimes.TryGetValue(manifest.Id, out var current) ? current.Error : null);
     }
 

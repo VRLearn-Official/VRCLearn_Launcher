@@ -12,8 +12,6 @@ public static class TemplateFormat
     /// <summary>ALCOM 那套，导入旧模板时用到。</summary>
     public const string LegacyExtension = ".alcomtemplate";
 
-    public const string LegacyMagic = "com.anatawa12.vrc-get.custom-template";
-
     public const string LegacyNamespace = "com.anatawa12.vrc-get";
 
     public static string NewAnonymousId() => Guid.NewGuid().ToString("N");

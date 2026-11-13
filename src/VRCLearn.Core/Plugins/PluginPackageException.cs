@@ -6,9 +6,4 @@ public sealed class PluginPackageException : Exception
         : base(message)
     {
     }
-
-    public PluginPackageException(string message, Exception innerException)
-        : base(message, innerException)
-    {
-    }
 }

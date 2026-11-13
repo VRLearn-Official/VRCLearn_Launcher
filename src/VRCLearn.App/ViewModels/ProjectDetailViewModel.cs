@@ -167,6 +167,25 @@ public sealed partial class ProjectDetailViewModel(
 
     public bool NeedsResolve => _project?.ShouldResolve(_customPackages) ?? false;
 
+    public string ResolveMessage
+    {
+        get
+        {
+            if (_project is null)
+            {
+                return "";
+            }
+
+            var packages = _project.UnresolvedPackages(_customPackages);
+
+            return packages.Count == 0
+                ? ""
+                : localization.Format(
+                    "ProjectDetail.NeedsResolve",
+                    string.Join("\n", packages.Select(x => $"- {x}")));
+        }
+    }
+
     public ProjectType ProjectType { get; private set; }
 
     [ObservableProperty]
@@ -208,16 +227,8 @@ public sealed partial class ProjectDetailViewModel(
     public bool HasUnityHubInstallLink => UnityHubInstallLink is not null;
 
     [RelayCommand]
-    private void InstallInUnityHub()
-    {
-        if (UnityHubInstallLink is { } link)
-        {
-            ShellLauncher.OpenUrl(link);
-        }
-    }
+    private void InstallInUnityHub() => ShellLauncher.OpenUrl(UnityHubInstallLink!);
 
-
-    private IReadOnlyList<PackageInfo> _userPackages = [];
 
     private bool _allowPrerelease;
 
@@ -309,7 +320,6 @@ public sealed partial class ProjectDetailViewModel(
         }
 
         _project = null;
-        _userPackages = [];
         _customPackages.Clear();
         ForgetCatalogs();
 
@@ -321,6 +331,7 @@ public sealed partial class ProjectDetailViewModel(
         NotifySelectionChanged();
         OnPropertyChanged(nameof(HeaderSubtitle));
         OnPropertyChanged(nameof(NeedsResolve));
+        OnPropertyChanged(nameof(ResolveMessage));
     }
 
     private string Join(IEnumerable<string> names) =>
@@ -364,6 +375,7 @@ public sealed partial class ProjectDetailViewModel(
         OnPropertyChanged(nameof(ProjectName));
         OnPropertyChanged(nameof(HeaderSubtitle));
         OnPropertyChanged(nameof(NeedsResolve));
+        OnPropertyChanged(nameof(ResolveMessage));
     }
 
     public async Task LoadAsync()
@@ -406,9 +418,7 @@ public sealed partial class ProjectDetailViewModel(
             }
 
             _project = project;
-            _userPackages = loadedUserPackages;
             _allowPrerelease = settings.Current.ShowPrereleasePackages;
-            ForgetCatalogs();
             (_catalog, _offeredCatalog, _catalogComplete) = catalogsTask.Result;
             ReloadUnityArguments();
             ProjectType = _project.DetectProjectType();
@@ -450,6 +460,7 @@ public sealed partial class ProjectDetailViewModel(
         }
 
         OnPropertyChanged(nameof(NeedsResolve));
+        OnPropertyChanged(nameof(ResolveMessage));
 
         if (_resolveAfterLoad && _project is not null)
         {
@@ -816,13 +827,8 @@ public sealed partial class ProjectDetailViewModel(
 
     private async Task<PendingProjectChanges?> PlanResolveAsync()
     {
-        if (_project is null)
-        {
-            return null;
-        }
-
         var outcome = await PackageOperations.ResolveAsync(
-            _project,
+            _project!,
             Catalog(),
             _customPackages,
             CancellationToken.None);
@@ -929,11 +935,11 @@ public sealed partial class ProjectDetailViewModel(
         await RemovePackagesAsync([row.Name]);
     }
 
-    private async Task<bool> RemovePackagesAsync(IReadOnlyList<string> names)
+    private async Task RemovePackagesAsync(IReadOnlyList<string> names)
     {
         if (_project is null || IsBusy)
         {
-            return false;
+            return;
         }
 
         Status = null;
@@ -948,7 +954,7 @@ public sealed partial class ProjectDetailViewModel(
                 Join(outcome.NotInstalled));
 
             Status = localization.Format("ProjectDetail.NotInstalled", Join(outcome.NotInstalled));
-            return false;
+            return;
         }
 
         var changes = outcome.Changes!;
@@ -984,7 +990,7 @@ public sealed partial class ProjectDetailViewModel(
                 detailTitle: detailTitle,
                 detailBody: detailBody))
         {
-            return false;
+            return;
         }
 
         IsBusy = true;
@@ -1000,14 +1006,12 @@ public sealed partial class ProjectDetailViewModel(
             Status = localization.Format("ProjectDetail.ApplyFailed", exception.Message);
 
             await LoadAsync();
-            return false;
+            return;
         }
         finally
         {
             IsBusy = false;
         }
-
-        return true;
     }
 
     public bool HasSelected => Packages.Any(x => x.IsSelected);
@@ -1207,7 +1211,8 @@ public sealed partial class ProjectDetailViewModel(
 
     private List<string> ConflictLines(
         PendingProjectChanges changes,
-        IReadOnlyCollection<string>? explained = null)
+        IReadOnlyCollection<string>? explained = null,
+        bool includeUnlocked = true)
     {
         var skip = explained is null
             ? null
@@ -1218,29 +1223,16 @@ public sealed partial class ProjectDetailViewModel(
         foreach (var (name, conflict) in changes.Conflicts)
         {
             AppendConflictLines(lines, name, conflict, skip);
+
+            if (!includeUnlocked)
+            {
+                continue;
+            }
 
             foreach (var unlocked in conflict.UnlockedNames)
             {
                 lines.Add(localization.Format("ProjectDetail.Conflict.Unlocked", unlocked));
             }
-        }
-
-        return lines;
-    }
-
-    private List<string> BlockingConflicts(
-        PendingProjectChanges changes,
-        IReadOnlyCollection<string>? explained = null)
-    {
-        var skip = explained is null
-            ? null
-            : new HashSet<string>(explained, StringComparer.OrdinalIgnoreCase);
-
-        var lines = new List<string>();
-
-        foreach (var (name, conflict) in changes.Conflicts)
-        {
-            AppendConflictLines(lines, name, conflict, skip);
         }
 
         return lines;
@@ -1627,6 +1619,7 @@ public sealed partial class ProjectDetailViewModel(
         }
 
         OnPropertyChanged(nameof(NeedsResolve));
+        OnPropertyChanged(nameof(ResolveMessage));
         NotifySelectionChanged();
         PackageView.Refresh();
     }
@@ -1713,13 +1706,8 @@ public sealed partial class ProjectDetailViewModel(
             ?.Version.ToString();
     }
 
-    public async Task UpgradeToVersionAsync(PackageRowViewModel row)
-    {
-        if (row.NewerVersion is { } version)
-        {
-            await ChangeVersionAsync(row.Name, row.DisplayName, row.Version, version);
-        }
-    }
+    public Task UpgradeToVersionAsync(PackageRowViewModel row) =>
+        ChangeVersionAsync(row.Name, row.DisplayName, row.Version, row.NewerVersion!);
 
     private async Task ChangeVersionAsync(
         string name,
@@ -1793,7 +1781,7 @@ public sealed partial class ProjectDetailViewModel(
 
             var explained = affected.Select(x => x.Name).ToList();
 
-            if (BlockingConflicts(changes, explained) is { Count: > 0 } blocking)
+            if (ConflictLines(changes, explained, includeUnlocked: false) is { Count: > 0 } blocking)
             {
                 dialogs.ShowNotice(
                     localization["ProjectDetail.VersionChange.ConflictTitle"],
@@ -1817,7 +1805,7 @@ public sealed partial class ProjectDetailViewModel(
                             _project,
                             cascade,
                             _allowPrerelease).Count > 0
-                        || BlockingConflicts(cascade) is { Count: > 0 }))
+                        || ConflictLines(cascade, includeUnlocked: false) is { Count: > 0 }))
                 {
                     cascade = null;
                 }

@@ -96,8 +96,5 @@ public sealed class AmbiguousUnityProjectRootException : UnityProjectRootExcepti
         : base(
             $"备份里有多个 Unity 项目根目录，无法确定要还原哪一个：{string.Join('、', candidates.Select(UnityProjectRootLocator.DisplayName))}。请整理压缩包后重试。")
     {
-        Candidates = candidates;
     }
-
-    public IReadOnlyList<string> Candidates { get; }
 }

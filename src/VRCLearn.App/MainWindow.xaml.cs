@@ -330,11 +330,6 @@ public partial class MainWindow : FluentWindow
 
     private bool IsDropValid(string[] paths)
     {
-        if (ReferenceEquals(paths, _lastDropPaths))
-        {
-            return _lastDropValid;
-        }
-
         if (_lastDropPaths is not null
             && paths.Length == _lastDropPaths.Length
             && paths.SequenceEqual(_lastDropPaths, StringComparer.OrdinalIgnoreCase))

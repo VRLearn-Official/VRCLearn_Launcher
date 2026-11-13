@@ -100,9 +100,8 @@ public sealed class UnityProject
             installedPackages);
     }
 
-    public Task SaveAsync(CancellationToken cancellationToken) => Task.WhenAll(
-        _manifest.SaveAsync(Io, cancellationToken),
-        _upmManifest.SaveAsync(Io, cancellationToken));
+    public Task SaveAsync(CancellationToken cancellationToken) =>
+        _manifest.SaveAsync(Io, cancellationToken);
 
     /// <summary>只重读清单；已装/未登记的包列表是加载时扫出来的，改过 Packages 目录后要重新 LoadAsync。</summary>
     internal Task ReloadManifestsAsync(CancellationToken cancellationToken) => Task.WhenAll(
@@ -162,8 +161,15 @@ public sealed class UnityProject
     }
 
     /// <param name="customPackages">不要求安装或版本对齐的锁定包，仓库目录里没有它们。</param>
-    public bool ShouldResolve(IReadOnlySet<string>? customPackages = null)
+    public bool ShouldResolve(IReadOnlySet<string>? customPackages = null) =>
+        UnresolvedPackages(customPackages).Count > 0;
+
+    /// <summary>清单要求安装、但实际缺失或版本不符的包名。</summary>
+    /// <param name="customPackages">不要求安装或版本对齐的锁定包，仓库目录里没有它们。</param>
+    public IReadOnlyList<string> UnresolvedPackages(IReadOnlySet<string>? customPackages = null)
     {
+        var unresolved = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var installedOrSuperseded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var locked in LockedPackages)
@@ -178,12 +184,14 @@ public sealed class UnityProject
                     continue;
                 }
 
-                return true;
+                Add(locked.Name);
+
+                continue;
             }
 
             if (!custom && !installed.Version.Equals(locked.Version))
             {
-                return true;
+                Add(locked.Name);
             }
 
             installedOrSuperseded.Add(locked.Name);
@@ -204,15 +212,34 @@ public sealed class UnityProject
             installedOrSuperseded.Add(manifest.Name);
         }
 
-        if (_manifest.Dependencies.Any(x => !installedOrSuperseded.Contains(x.Key)))
+        foreach (var dependency in _manifest.Dependencies)
         {
-            return true;
+            if (!installedOrSuperseded.Contains(dependency.Key))
+            {
+                Add(dependency.Key);
+            }
         }
 
-        return _unlockedPackages
-            .Select(x => x.Manifest)
-            .OfType<PackageManifest>()
-            .Any(manifest => manifest.VpmDependencies.Keys.Any(x => !installedOrSuperseded.Contains(x)));
+        foreach (var manifest in _unlockedPackages.Select(x => x.Manifest).OfType<PackageManifest>())
+        {
+            foreach (var dependency in manifest.VpmDependencies.Keys)
+            {
+                if (!installedOrSuperseded.Contains(dependency))
+                {
+                    Add(dependency);
+                }
+            }
+        }
+
+        return unresolved;
+
+        void Add(string name)
+        {
+            if (seen.Add(name))
+            {
+                unresolved.Add(name);
+            }
+        }
     }
 
     public LockedDependencyInfo? GetLocked(string name) => _manifest.GetLocked(name);
@@ -224,8 +251,6 @@ public sealed class UnityProject
     public PackageManifest? GetInstalledPackage(string name) => _installedPackages.GetValueOrDefault(name);
 
     public bool HasUpmPackage(string name) => _upmManifest.HasDependency(name);
-
-    public void RemoveUpmDependency(string name) => _upmManifest.RemoveDependency(name);
 
     /// <summary>只改清单，不真正装包。</summary>
     public void AddDependencyRaw(string name, DependencyRange version) => _manifest.AddDependency(name, version);

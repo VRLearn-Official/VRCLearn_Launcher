@@ -121,11 +121,7 @@ public sealed class DialogService
             finally
             {
                 allowClose = true;
-
-                if (dialog.IsVisible)
-                {
-                    dialog.Close();
-                }
+                dialog.Close();
             }
         };
 

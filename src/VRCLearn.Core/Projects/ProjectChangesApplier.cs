@@ -186,11 +186,7 @@ public static class ProjectChangesApplier
 
         foreach (var asset in folders)
         {
-            Try(failed, asset.Path, () =>
-            {
-                io.DeleteDirectory(asset.Path);
-                return true;
-            });
+            Try(failed, asset.Path, () => io.DeleteDirectory(asset.Path));
 
             Try(failed, asset.Path, () => io.DeleteFile(asset.Path + ".meta"));
         }
@@ -198,7 +194,7 @@ public static class ProjectChangesApplier
         return [.. failed];
     }
 
-    private static void Try(HashSet<string> failed, string path, Func<bool> remove)
+    private static void Try(HashSet<string> failed, string path, Action remove)
     {
         try
         {

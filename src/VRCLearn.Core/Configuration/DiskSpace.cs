@@ -22,7 +22,7 @@ public static class DiskSpace
             {
                 var parent = Path.GetDirectoryName(full);
 
-                if (parent is null || parent == full)
+                if (parent is null)
                 {
                     break;
                 }
@@ -55,7 +55,7 @@ public static class DiskSpace
 
         var margin = Math.Max(MinimumMargin, requiredBytes / 20);
 
-        if (available <= margin || requiredBytes > available - margin)
+        if (requiredBytes > available - margin)
         {
             throw new InsufficientDiskSpaceException(requiredBytes, available);
         }

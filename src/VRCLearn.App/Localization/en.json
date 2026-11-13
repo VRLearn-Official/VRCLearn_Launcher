@@ -428,7 +428,7 @@
   "ProjectDetail.Copy.Done": "Copied to {0} and added to the project list.",
   "ProjectDetail.Copy.Failed": "Copy failed: {0}",
   "ProjectDetail.BackupFailed": "Backup failed: {0}",
-  "ProjectDetail.NeedsResolve": "The manifest and what is installed disagree: packages are missing, or installed content does not match the manifest.",
+  "ProjectDetail.NeedsResolve": "The manifest and what is installed disagree. Try installing these manually:\n{0}",
   "ProjectDetail.Resolve": "Fix mismatch",
   "ProjectDetail.MissingDependencies": "Not in any repo: {0}",
   "ProjectDetail.NotInstalled": "Not in the manifest: {0}",

@@ -18,8 +18,7 @@ public static partial class PluginManifestValidator
 
     public static bool IsValidId(string id) =>
         IdPattern().IsMatch(id)
-        && PathUtil.IsSafePathSegment(id)
-        && id.Length <= 64;
+        && PathUtil.IsSafePathSegment(id);
 
     public static void Validate(PluginManifest manifest)
     {
@@ -35,8 +34,6 @@ public static partial class PluginManifestValidator
 
         ValidateText(manifest.Name, "name", required: true);
         ValidateText(manifest.Description, "description", required: false);
-
-        ParseVersion(manifest.Version.ToString(), "version");
 
         if (manifest.Author.Length > 128)
         {
@@ -157,8 +154,7 @@ public static partial class PluginManifestValidator
             throw new PluginManifestException($"{fieldName} is not a safe relative path: {path}");
         }
 
-        if (extensions.Length > 0
-            && !extensions.Contains(Path.GetExtension(normalized), StringComparer.OrdinalIgnoreCase))
+        if (!extensions.Contains(Path.GetExtension(normalized), StringComparer.OrdinalIgnoreCase))
         {
             throw new PluginManifestException($"{fieldName} has an unsupported extension: {path}");
         }

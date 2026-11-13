@@ -161,7 +161,7 @@ public static class SearchBox
     }
 
     private static bool Matches(object? item, string text) =>
-        text.Length == 0 || (TextOf(null, item) is { } value && value.Contains(text, StringComparison.OrdinalIgnoreCase));
+        text.Length == 0 || TextOf(null, item).Contains(text, StringComparison.OrdinalIgnoreCase);
 
     private static string TextOf(ComboBox? combo, object? item)
     {

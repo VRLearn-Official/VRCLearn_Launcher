@@ -15,9 +15,6 @@ public sealed class PackageManifest : IJsonOnDeserialized
     [JsonPropertyName("displayName")]
     public string? DisplayName { get; init; }
 
-    [JsonPropertyName("description")]
-    public string? Description { get; init; }
-
     [JsonPropertyName("unity")]
     public PartialUnityVersion? Unity { get; init; }
 
@@ -42,23 +39,11 @@ public sealed class PackageManifest : IJsonOnDeserialized
     [JsonPropertyName("headers")]
     public OrderedDictionary<string, string> Headers { get; set; } = [];
 
-    [JsonPropertyName("changelogUrl")]
-    public Uri? ChangelogUrl { get; init; }
-
-    [JsonPropertyName("documentationUrl")]
-    public Uri? DocumentationUrl { get; init; }
-
-    [JsonPropertyName("keywords")]
-    public List<string> Keywords { get; set; } = [];
-
     [JsonPropertyName("vrc-get")]
     public VrcGetMeta VrcGet { get; set; } = new();
 
     [JsonIgnore]
     public bool IsYanked => VrcGet.Yanked.IsYanked;
-
-    [JsonIgnore]
-    public IReadOnlyList<string> Aliases => VrcGet.Aliases;
 
     void IJsonOnDeserialized.OnDeserialized()
     {
@@ -67,7 +52,6 @@ public sealed class PackageManifest : IJsonOnDeserialized
         LegacyFiles ??= [];
         LegacyPackages ??= [];
         Headers ??= [];
-        Keywords ??= [];
         VrcGet ??= new VrcGetMeta();
     }
 }
@@ -77,12 +61,8 @@ public sealed class VrcGetMeta : IJsonOnDeserialized
     [JsonPropertyName("yanked")]
     public YankState Yanked { get; set; } = YankState.NotYanked;
 
-    [JsonPropertyName("aliases")]
-    public List<string> Aliases { get; set; } = [];
-
     void IJsonOnDeserialized.OnDeserialized()
     {
         Yanked ??= YankState.NotYanked;
-        Aliases ??= [];
     }
 }

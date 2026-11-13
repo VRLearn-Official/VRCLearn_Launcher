@@ -8,18 +8,14 @@ namespace VRCLearn.Core.Archives;
 public sealed class ZipExtractionPlan
 {
     internal ZipExtractionPlan(
-        string? rootPrefix,
         IReadOnlyList<PlannedZipEntry> entries,
         int fileCount,
         long uncompressedBytes)
     {
-        RootPrefix = rootPrefix;
         Entries = entries;
         FileCount = fileCount;
         UncompressedBytes = uncompressedBytes;
     }
-
-    public string? RootPrefix { get; }
 
     public int FileCount { get; }
 
@@ -105,7 +101,7 @@ public static class SafeZipExtractor
             }
         }
 
-        return new ZipExtractionPlan(prefix, entries, fileCount, uncompressedBytes);
+        return new ZipExtractionPlan(entries, fileCount, uncompressedBytes);
     }
 
     public static async Task ExtractAsync(

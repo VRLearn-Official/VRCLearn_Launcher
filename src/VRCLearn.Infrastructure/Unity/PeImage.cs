@@ -42,28 +42,21 @@ internal static class PeImage
 
     private static string? ReadVersionString(string executablePath, string field)
     {
-        try
-        {
-            var size = GetFileVersionInfoSize(executablePath, out _);
+        var size = GetFileVersionInfoSize(executablePath, out _);
 
-            if (size == 0)
-            {
-                return null;
-            }
-
-            var info = new byte[size];
-
-            if (!GetFileVersionInfo(executablePath, 0, size, info) || !QueryValue(info, field, out var value))
-            {
-                return null;
-            }
-
-            return value;
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        if (size == 0)
         {
             return null;
         }
+
+        var info = new byte[size];
+
+        if (!GetFileVersionInfo(executablePath, 0, size, info) || !QueryValue(info, field, out var value))
+        {
+            return null;
+        }
+
+        return value;
     }
 
     private static bool QueryValue(byte[] info, string field, out string? value)

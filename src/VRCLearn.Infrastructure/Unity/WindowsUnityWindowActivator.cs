@@ -79,8 +79,7 @@ public sealed class WindowsUnityWindowActivator : IUnityWindowActivator
         return matches.Count == 1 ? matches[0].Window : null;
     }
 
-    internal static bool IsEditorWindow(string className, bool visible, bool hasMenu) =>
-        visible && hasMenu && className == EditorWindowClass;
+    internal static bool IsEditorWindow(string className) => className == EditorWindowClass;
 
     private static bool IsEditorWindow(nint window)
     {
@@ -94,7 +93,7 @@ public sealed class WindowsUnityWindowActivator : IUnityWindowActivator
         var buffer = new StringBuilder(64);
         var length = GetClassNameW(window, buffer, buffer.Capacity);
 
-        return length > 0 && IsEditorWindow(buffer.ToString(), visible, hasMenu: true);
+        return length > 0 && IsEditorWindow(buffer.ToString());
     }
 
     private static string Title(nint window)

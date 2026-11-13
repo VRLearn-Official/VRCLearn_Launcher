@@ -4,9 +4,6 @@ namespace VRCLearn.Infrastructure.Logging;
 
 public sealed record LogLine(LogLevel Level, string Text)
 {
-    public static LogLine Parse(string line) =>
-        new(LevelOf(line) ?? LogLevel.Information, line);
-
     /// <summary>找不到 <c>[级别]</c>（异常的续行）时返回 null。</summary>
     internal static LogLevel? LevelOf(string line)
     {

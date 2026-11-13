@@ -428,7 +428,7 @@
   "ProjectDetail.Copy.Done": "已複製到 {0}，並加入專案列表。",
   "ProjectDetail.Copy.Failed": "複製失敗：{0}",
   "ProjectDetail.BackupFailed": "備份失敗：{0}",
-  "ProjectDetail.NeedsResolve": "清單和實際安裝內容不一致：有套件沒安裝，或已安裝的內容與清單不符。",
+  "ProjectDetail.NeedsResolve": "清單和實際安裝內容不一致，請嘗試手動安裝：\n{0}",
   "ProjectDetail.Resolve": "重新對齊",
   "ProjectDetail.MissingDependencies": "倉庫裡沒有這些套件：{0}",
   "ProjectDetail.NotInstalled": "這些套件不在清單裡：{0}",

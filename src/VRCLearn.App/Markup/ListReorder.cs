@@ -38,9 +38,6 @@ public static class ListReorder
     public static void SetIsEnabled(DependencyObject element, bool value) =>
         element.SetValue(IsEnabledProperty, value);
 
-    public static bool GetIsEnabled(DependencyObject element) =>
-        (bool)element.GetValue(IsEnabledProperty);
-
     public static void SetHandle(DependencyObject element, bool value) =>
         element.SetValue(HandleProperty, value);
 

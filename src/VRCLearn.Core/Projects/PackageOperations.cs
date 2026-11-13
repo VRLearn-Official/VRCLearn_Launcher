@@ -11,8 +11,6 @@ public enum AddPackageStatus
 
     NotInstalled,
 
-    NotADowngrade,
-
     VersionNotFound,
 }
 
@@ -27,9 +25,6 @@ public enum AddPackageOperation
 
     /// <summary>只升级，降级不算数。</summary>
     UpgradeLocked,
-
-    /// <summary>只降级，升级不算数。</summary>
-    Downgrade,
 }
 
 public enum ResolveStatus
@@ -352,17 +347,16 @@ public static class PackageOperations
 
                 return comparison == 0
                     ? MarkForReinstall(package, toInstall)
-                    : Downgrade(project, builder, package, locked, toInstall);
+                    : Downgrade(project, builder, package, toInstall);
 
             case AddPackageOperation.UpgradeLocked when locked is null:
-            case AddPackageOperation.Downgrade when locked is null:
                 return AddPackageStatus.NotInstalled;
 
             case AddPackageOperation.UpgradeLocked:
                 return UpgradeLocked(project, package, toInstall);
 
             default:
-                return Downgrade(project, builder, package, locked!, toInstall);
+                throw new ArgumentOutOfRangeException(nameof(operation), operation, "unknown add package operation");
         }
     }
 
@@ -396,14 +390,8 @@ public static class PackageOperations
         UnityProject project,
         PendingChangesBuilder builder,
         PackageInfo package,
-        LockedDependencyInfo locked,
         List<PackageInfo> toInstall)
     {
-        if (locked.Version < package.Version)
-        {
-            return AddPackageStatus.NotADowngrade;
-        }
-
         if (project.GetDependency(package.Name) is { } declared && !declared.Matches(package.Version))
         {
             builder.AddToDependencies(package.Name, DependencyRange.FromVersion(package.Version));
@@ -510,12 +498,6 @@ public static class PackageOperations
             await builder.BuildResolveAsync(project, cancellationToken).ConfigureAwait(false),
             []);
     }
-
-    public static Task<ResolveOutcome> ResolveAsync(
-        UnityProject project,
-        PackageCatalog catalog,
-        CancellationToken cancellationToken) =>
-        ResolveAsync(project, catalog, null, cancellationToken);
 
     public static async Task<ResolveOutcome> ResolveAsync(
         UnityProject project,

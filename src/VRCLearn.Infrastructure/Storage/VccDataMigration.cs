@@ -28,11 +28,6 @@ public static class VccDataMigration
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
             OldFolder);
 
-        if (PathUtil.SamePath(oldRoot, paths.Root))
-        {
-            return;
-        }
-
         try
         {
             Migrate(paths, oldRoot, configs, logger);
