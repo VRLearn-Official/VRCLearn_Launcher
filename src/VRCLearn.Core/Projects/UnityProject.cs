@@ -161,8 +161,15 @@ public sealed class UnityProject
     }
 
     /// <param name="customPackages">不要求安装或版本对齐的锁定包，仓库目录里没有它们。</param>
-    public bool ShouldResolve(IReadOnlySet<string>? customPackages = null)
+    public bool ShouldResolve(IReadOnlySet<string>? customPackages = null) =>
+        UnresolvedPackages(customPackages).Count > 0;
+
+    /// <summary>清单要求安装、但实际缺失或版本不符的包名。</summary>
+    /// <param name="customPackages">不要求安装或版本对齐的锁定包，仓库目录里没有它们。</param>
+    public IReadOnlyList<string> UnresolvedPackages(IReadOnlySet<string>? customPackages = null)
     {
+        var unresolved = new List<string>();
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var installedOrSuperseded = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
 
         foreach (var locked in LockedPackages)
@@ -177,12 +184,14 @@ public sealed class UnityProject
                     continue;
                 }
 
-                return true;
+                Add(locked.Name);
+
+                continue;
             }
 
             if (!custom && !installed.Version.Equals(locked.Version))
             {
-                return true;
+                Add(locked.Name);
             }
 
             installedOrSuperseded.Add(locked.Name);
@@ -203,15 +212,34 @@ public sealed class UnityProject
             installedOrSuperseded.Add(manifest.Name);
         }
 
-        if (_manifest.Dependencies.Any(x => !installedOrSuperseded.Contains(x.Key)))
+        foreach (var dependency in _manifest.Dependencies)
         {
-            return true;
+            if (!installedOrSuperseded.Contains(dependency.Key))
+            {
+                Add(dependency.Key);
+            }
         }
 
-        return _unlockedPackages
-            .Select(x => x.Manifest)
-            .OfType<PackageManifest>()
-            .Any(manifest => manifest.VpmDependencies.Keys.Any(x => !installedOrSuperseded.Contains(x)));
+        foreach (var manifest in _unlockedPackages.Select(x => x.Manifest).OfType<PackageManifest>())
+        {
+            foreach (var dependency in manifest.VpmDependencies.Keys)
+            {
+                if (!installedOrSuperseded.Contains(dependency))
+                {
+                    Add(dependency);
+                }
+            }
+        }
+
+        return unresolved;
+
+        void Add(string name)
+        {
+            if (seen.Add(name))
+            {
+                unresolved.Add(name);
+            }
+        }
     }
 
     public LockedDependencyInfo? GetLocked(string name) => _manifest.GetLocked(name);

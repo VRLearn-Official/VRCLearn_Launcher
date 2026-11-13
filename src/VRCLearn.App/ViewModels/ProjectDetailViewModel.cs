@@ -167,6 +167,25 @@ public sealed partial class ProjectDetailViewModel(
 
     public bool NeedsResolve => _project?.ShouldResolve(_customPackages) ?? false;
 
+    public string ResolveMessage
+    {
+        get
+        {
+            if (_project is null)
+            {
+                return "";
+            }
+
+            var packages = _project.UnresolvedPackages(_customPackages);
+
+            return packages.Count == 0
+                ? ""
+                : localization.Format(
+                    "ProjectDetail.NeedsResolve",
+                    string.Join("\n", packages.Select(x => $"- {x}")));
+        }
+    }
+
     public ProjectType ProjectType { get; private set; }
 
     [ObservableProperty]
@@ -312,6 +331,7 @@ public sealed partial class ProjectDetailViewModel(
         NotifySelectionChanged();
         OnPropertyChanged(nameof(HeaderSubtitle));
         OnPropertyChanged(nameof(NeedsResolve));
+        OnPropertyChanged(nameof(ResolveMessage));
     }
 
     private string Join(IEnumerable<string> names) =>
@@ -355,6 +375,7 @@ public sealed partial class ProjectDetailViewModel(
         OnPropertyChanged(nameof(ProjectName));
         OnPropertyChanged(nameof(HeaderSubtitle));
         OnPropertyChanged(nameof(NeedsResolve));
+        OnPropertyChanged(nameof(ResolveMessage));
     }
 
     public async Task LoadAsync()
@@ -439,6 +460,7 @@ public sealed partial class ProjectDetailViewModel(
         }
 
         OnPropertyChanged(nameof(NeedsResolve));
+        OnPropertyChanged(nameof(ResolveMessage));
 
         if (_resolveAfterLoad && _project is not null)
         {
@@ -1597,6 +1619,7 @@ public sealed partial class ProjectDetailViewModel(
         }
 
         OnPropertyChanged(nameof(NeedsResolve));
+        OnPropertyChanged(nameof(ResolveMessage));
         NotifySelectionChanged();
         PackageView.Refresh();
     }

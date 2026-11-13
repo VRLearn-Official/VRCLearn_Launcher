@@ -82,7 +82,7 @@
                 Margin="{StaticResource Gap.Row}"
                 IsClosable="False"
                 IsOpen="{Binding NeedsResolve, Mode=OneWay}"
-                Message="{markup:Tr ProjectDetail.NeedsResolve}"
+                Message="{Binding ResolveMessage}"
                 Severity="Warning">
                 <ui:Button
                     Margin="0,10,0,0"
