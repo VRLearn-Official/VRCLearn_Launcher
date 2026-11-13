@@ -18,11 +18,12 @@ Get-FileHash .\VRCLearnLauncher-<版本>-win-x64-Setup.exe -Algorithm SHA256
 
 ## 本次更新
 
-- 资源导入支持运行中的项目，覆盖已有文件前二次确认
-- 还原改为弹窗确认并警示无法撤销，不再预先备份
-- 修复插件包解压限制可被伪造元数据绕过
-- 备份进度与还原保持一致
-- 修正详情页标签与图标对齐
+- 修复详情页包名过长不省略
+- 清单不一致时提示列出需手动安装的包
+- 修复复制项目时目标路径为空会复制进所选文件夹
+- 修复配置备份遇外部删除文件时整次失败
+- 修复读取程序版本信息时内存未固定
+- 清理无用代码与冗余兜底
 
 安装包暂未签名，首次运行时 Windows SmartScreen 可能提示；选择「更多信息」→「仍要运行」。
 
@@ -54,10 +55,11 @@ sha256sum -c VRCLearnLauncher-<version>-win-x64-Setup.exe.sha256
 
 ## What's new
 
-- Resource import now works with running projects and asks for confirmation before overwriting existing files
-- Restore now asks for confirmation in a dialog and warns that it cannot be undone; no pre-restore backup is made
-- Fixed plugin archive size limits being bypassable via forged metadata
-- Backup progress updates at the same rate as restore
-- Fixed alignment of tags and icons in project details
+- Fixed long package names not being ellipsized in project details
+- Added the packages that need manual installation when the manifest does not match installed packages
+- Fixed copying a project into the selected folder when the target path is empty
+- Fixed configuration backup failing entirely when an externally deleted file is encountered
+- Fixed memory not being pinned while reading executable version information
+- Removed unused code and redundant fallbacks
 
 The installer is not code-signed yet, so Windows SmartScreen may warn on first run. Choose "More info" and then "Run anyway".
