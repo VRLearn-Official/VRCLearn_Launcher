@@ -18,6 +18,8 @@ Get-FileHash .\VRCLearnLauncher-<版本>-win-x64-Setup.exe -Algorithm SHA256
 
 ## 本次更新
 
+- 应用包变更支持取消，进度显示当前处理的包
+- 应用包变更的进度不显示操作提示
 - 修复详情页包名过长不省略
 - 清单不一致时提示列出需手动安装的包
 - 修复复制项目时目标路径为空会复制进所选文件夹
@@ -55,6 +57,8 @@ sha256sum -c VRCLearnLauncher-<version>-win-x64-Setup.exe.sha256
 
 ## What's new
 
+- Package changes can now be cancelled, with the current package shown in the progress view
+- The progress view for package changes no longer shows the hint
 - Fixed long package names not being ellipsized in project details
 - Added the packages that need manual installation when the manifest does not match installed packages
 - Fixed copying a project into the selected folder when the target path is empty

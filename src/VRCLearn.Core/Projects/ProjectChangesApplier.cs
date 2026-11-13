@@ -15,7 +15,8 @@ public static class ProjectChangesApplier
         UnityProject project,
         IPackageInstaller installer,
         PendingProjectChanges changes,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IProgress<FileProgress>? progress = null)
     {
         var io = project.Io;
         var installs = new List<PackageInfo>();
@@ -54,20 +55,21 @@ public static class ProjectChangesApplier
 
         try
         {
-            await ExtractAsync(io, installer, context.InstallDirectory, installs, cancellationToken)
+            await ExtractAsync(io, installer, context.InstallDirectory, installs, cancellationToken, progress)
                 .ConfigureAwait(false);
 
             context.MoveUninstallPackages(io, uninstallNames);
             context.MoveInstallPackages(io, installs);
 
+            cancellationToken.ThrowIfCancellationRequested();
+
             UpdateManifest(project, changes, removeNames);
 
-            await project.SaveAsync(cancellationToken).ConfigureAwait(false);
+            await project.SaveAsync(CancellationToken.None).ConfigureAwait(false);
         }
         catch (Exception exception)
         {
-            await RollbackAsync(project, context, transactionDirectory, exception, cancellationToken)
-                .ConfigureAwait(false);
+            await RollbackAsync(project, context, transactionDirectory, exception).ConfigureAwait(false);
 
             throw;
         }
@@ -113,8 +115,7 @@ public static class ProjectChangesApplier
         UnityProject project,
         InstallContext context,
         string transactionDirectory,
-        Exception originalError,
-        CancellationToken cancellationToken)
+        Exception originalError)
     {
         try
         {
@@ -132,7 +133,7 @@ public static class ProjectChangesApplier
 
         try
         {
-            await project.ReloadManifestsAsync(cancellationToken).ConfigureAwait(false);
+            await project.ReloadManifestsAsync(CancellationToken.None).ConfigureAwait(false);
             project.Io.DeleteDirectory(TempBase);
         }
         catch
@@ -145,10 +146,19 @@ public static class ProjectChangesApplier
         IPackageInstaller installer,
         string installDirectory,
         IReadOnlyList<PackageInfo> packages,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IProgress<FileProgress>? progress)
     {
         using var abort = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
         Exception? failure = null;
+
+        var remaining = new List<PackageInfo>(packages);
+        var total = packages.Count;
+
+        if (total > 0)
+        {
+            progress?.Report(new FileProgress(total, 0, Label(remaining[0])));
+        }
 
         await Task.WhenAll(packages.Select(async package =>
         {
@@ -157,6 +167,16 @@ public static class ProjectChangesApplier
                 await installer
                     .InstallPackageAsync(io, package, $"{installDirectory}/{package.Name}", abort.Token)
                     .ConfigureAwait(false);
+
+                lock (remaining)
+                {
+                    remaining.Remove(package);
+
+                    progress?.Report(new FileProgress(
+                        total,
+                        total - remaining.Count,
+                        remaining.Count == 0 ? null : Label(remaining[0])));
+                }
             }
             catch (Exception exception)
             {
@@ -165,11 +185,16 @@ public static class ProjectChangesApplier
             }
         })).ConfigureAwait(false);
 
-        if (failure is not null)
+        if (failure is null)
         {
-            ExceptionDispatchInfo.Capture(failure).Throw();
+            return;
         }
+
+        ExceptionDispatchInfo.Capture(failure).Throw();
     }
+
+    private static string Label(PackageInfo package) =>
+        package.Manifest.DisplayName is { Length: > 0 } displayName ? displayName : package.Name;
 
     private static IReadOnlyList<string> RemoveLegacyAssets(
         IFileIo io,

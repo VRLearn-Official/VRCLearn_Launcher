@@ -28,6 +28,13 @@
             <Setter Property="FontSize" Value="{StaticResource FontSize.Title}" />
         </Style>
 
+        <Style x:Key="ProgressDetail" TargetType="TextBlock">
+            <Setter Property="Margin" Value="{StaticResource Gap.Field}" />
+            <Setter Property="FontSize" Value="{StaticResource FontSize.Body}" />
+            <Setter Property="Foreground" Value="{DynamicResource TextFillColorSecondaryBrush}" />
+            <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        </Style>
+
         <Style x:Key="ProgressHint" TargetType="TextBlock">
             <Setter Property="Margin" Value="{StaticResource Gap.Row}" />
             <Setter Property="FontSize" Value="{StaticResource FontSize.Subtitle}" />
@@ -374,7 +381,24 @@
 
                 <TextBlock Style="{StaticResource ProgressCount}" Text="{Binding Progress.CountText}" />
 
-                <TextBlock Style="{StaticResource ProgressHint}" Text="{markup:Tr Progress.Hint}" />
+                <TextBlock
+                    Style="{StaticResource ProgressDetail}"
+                    Text="{Binding Progress.Detail}"
+                    Visibility="{Binding Progress.HasDetail, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                <TextBlock
+                    Style="{StaticResource ProgressHint}"
+                    Text="{markup:Tr Progress.Hint}"
+                    Visibility="{Binding Progress.ShowHint, Converter={StaticResource BooleanToVisibilityConverter}}" />
+
+                <ui:Button
+                    MinWidth="96"
+                    Margin="{StaticResource Gap.Row}"
+                    HorizontalAlignment="Right"
+                    Appearance="Secondary"
+                    Command="{Binding Progress.CancelCommand}"
+                    Content="{markup:Tr Dialog.Cancel}"
+                    Visibility="{Binding Progress.IsCancellable, Converter={StaticResource BooleanToVisibilityConverter}}" />
             </StackPanel>
         </Grid>
 

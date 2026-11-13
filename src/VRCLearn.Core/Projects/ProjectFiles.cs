@@ -10,7 +10,7 @@ public sealed record ProjectFileFilter(bool ExcludeLibrary)
 /// <summary>目录一并列出来，空目录也得留住。</summary>
 public sealed record ProjectContent(IReadOnlyList<string> Directories, IReadOnlyList<string> Files);
 
-public sealed record FileProgress(int Total, int Done);
+public sealed record FileProgress(int Total, int Done, string? Label = null);
 
 public static class ProjectFiles
 {
