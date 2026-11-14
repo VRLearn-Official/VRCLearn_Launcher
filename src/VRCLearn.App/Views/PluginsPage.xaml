@@ -39,11 +39,11 @@
                 <ui:Button
                     Grid.Column="2"
                     Margin="{StaticResource Gap.Inline}"
-                    Style="{StaticResource RefreshToolbarButton}"
-                    Tag="{Binding IsCheckingUpdates}"
+                    Style="{StaticResource ToolbarButton}"
                     Appearance="Secondary"
                     Command="{Binding CheckUpdatesCommand}"
                     Content="{markup:Tr Plugins.CheckUpdates}"
+                    Icon="{ui:SymbolIcon ArrowClockwise24}"
                     IsEnabled="{Binding CanCheckUpdates}" />
                 <ui:Button
                     Grid.Column="3"

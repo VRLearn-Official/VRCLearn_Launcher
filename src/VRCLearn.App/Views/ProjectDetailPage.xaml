@@ -16,11 +16,11 @@
                     Icon="{ui:SymbolIcon ArrowLeft24}" />
                 <ui:Button
                     Margin="{StaticResource Gap.Wrapped}"
-                    Style="{StaticResource RefreshToolbarButton}"
-                    Tag="{Binding RefreshCommand.IsRunning}"
+                    Style="{StaticResource ToolbarButton}"
                     Appearance="Secondary"
                     Command="{Binding RefreshCommand}"
-                    Content="{markup:Tr ProjectDetail.Refresh}" />
+                    Content="{markup:Tr ProjectDetail.Refresh}"
+                    Icon="{ui:SymbolIcon ArrowClockwise24}" />
                 <ui:Button
                     Margin="{StaticResource Gap.Wrapped}"
                     Style="{StaticResource ToolbarButton}"

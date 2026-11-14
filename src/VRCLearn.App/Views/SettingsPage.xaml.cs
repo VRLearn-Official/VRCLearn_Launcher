@@ -40,8 +40,6 @@ public partial class SettingsPage : UserControl
                 return;
             }
 
-            viewModel.Cache.RefreshSize();
-
             if (viewModel.ConsumeProxyFocus())
             {
                 Dispatcher.BeginInvoke(ScrollToNetwork, System.Windows.Threading.DispatcherPriority.ContextIdle);

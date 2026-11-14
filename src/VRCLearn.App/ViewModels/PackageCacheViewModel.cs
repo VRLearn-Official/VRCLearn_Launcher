@@ -1,4 +1,3 @@
-using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using VRCLearn.App.Services;
@@ -8,7 +7,7 @@ using VRCLearn.Infrastructure.Storage;
 
 namespace VRCLearn.App.ViewModels;
 
-/// <summary>包缓存的位置、大小与搬迁流程。</summary>
+/// <summary>包缓存的位置、清理与搬迁流程。</summary>
 public sealed partial class PackageCacheViewModel(
     AppPaths paths,
     GuiConfigStore configs,
@@ -22,11 +21,6 @@ public sealed partial class PackageCacheViewModel(
     public string Current => PackageCachePath.Effective(configs.Current, paths);
 
     public bool HasCustom => !string.IsNullOrWhiteSpace(configs.Current.CachePath);
-
-    [ObservableProperty]
-    private string _size = "";
-
-    public void RefreshSize() => Size = SizeText.Format(repositories.PackageCacheSize());
 
     public Task ChangeAsync(string destination) => MoveAsync(
         destination,
@@ -45,7 +39,9 @@ public sealed partial class PackageCacheViewModel(
     {
         if (!dialogs.ShowConfirm(
                 localization["Settings.Cache.ClearTitle"],
-                localization["Settings.Cache.ClearMessage"],
+                localization.Format(
+                    "Settings.Cache.ClearMessage",
+                    SizeText.Format(repositories.PackageCacheSize())),
                 localization["Settings.Cache.Clear"],
                 danger: true))
         {
@@ -53,8 +49,6 @@ public sealed partial class PackageCacheViewModel(
         }
 
         repositories.ClearPackageCache();
-
-        RefreshSize();
     }
 
     protected override ILogger Logger => logger;
@@ -116,7 +110,6 @@ public sealed partial class PackageCacheViewModel(
 
             OnPropertyChanged(nameof(Current));
             OnPropertyChanged(nameof(HasCustom));
-            RefreshSize();
 
             Status = localization.Format("Settings.CachePath.Migrated", SizeText.Format(result.Bytes));
         }

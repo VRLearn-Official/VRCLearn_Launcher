@@ -456,13 +456,8 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
         await ReloadAsync();
     }
 
-    [ObservableProperty]
-    private bool _isReloading;
-
     public async Task ReloadAsync()
     {
-        IsReloading = true;
-
         await _reloadGate.WaitAsync();
 
         try
@@ -472,7 +467,6 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
         finally
         {
             _reloadGate.Release();
-            IsReloading = false;
         }
     }
 

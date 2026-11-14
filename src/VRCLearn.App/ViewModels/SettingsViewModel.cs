@@ -27,7 +27,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly MutableProxy _proxy;
     private readonly ConfigBackupService _configBackup;
     private readonly ILauncherSettingsStore _settings;
-    private readonly WindowsProtocolRegistration _protocols;
     private readonly SetupViewModel _setup;
     private readonly NavigationService _navigation;
     private readonly IUnityEditorLocator _editors;
@@ -53,7 +52,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         BackupDirectoryViewModel backups,
         ConfigBackupService configBackup,
         ILauncherSettingsStore settings,
-        WindowsProtocolRegistration protocols,
         SetupViewModel setup,
         UpdateViewModel update,
         AnimationService animations,
@@ -80,7 +78,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         Backups = backups;
         _configBackup = configBackup;
         _settings = settings;
-        _protocols = protocols;
         _setup = setup;
         Update = update;
         _animations = animations;
@@ -89,7 +86,6 @@ public sealed partial class SettingsViewModel : ObservableObject
 
         Shared = shared;
 
-        _protocols.Applied += (_, _) => RefreshProtocolState();
         _settings.Changed += OnSettingsChanged;
 
         _buttonColors = LocalizedOptions.ButtonColors(localization);
@@ -114,8 +110,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         _selectedLogLevel = _store.Current.LogsLevel;
         _logsRetentionCount = _store.Current.LogsRetentionCount;
         _showPrereleasePackages = _settings.Current.ShowPrereleasePackages;
-        _actualProtocolCommand = WindowsProtocolRegistration.Describe(WindowsProtocolRegistration.VccScheme);
-        _actualTemplateProgId = WindowsProtocolRegistration.DescribeFileType();
         _defaultUnityArguments = string.Join(Environment.NewLine, _store.Current.DefaultUnityArguments);
         _unityHubAccessMethod = HubAccessMethods.Any(x => x.Value == _store.Current.UnityHubAccessMethod)
             ? _store.Current.UnityHubAccessMethod
@@ -138,6 +132,9 @@ public sealed partial class SettingsViewModel : ObservableObject
     public IReadOnlyList<Option> BackupFormats => _backupFormats;
 
     public string DataDirectory => _paths.Root;
+
+    [RelayCommand]
+    private void OpenDataDirectory() => ShellLauncher.OpenFolder(_paths.Root);
 
     // ---- 包缓存 ----
 
@@ -193,6 +190,13 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             ReloadUnityEditors();
         }
+    }
+
+    [RelayCommand]
+    private async Task RefreshUnityHub()
+    {
+        await _editors.RefreshFromHubAsync(CancellationToken.None);
+        Shared.RefreshUnityHubPath();
     }
 
     [RelayCommand]
@@ -313,22 +317,6 @@ public sealed partial class SettingsViewModel : ObservableObject
 
         _logger.LogInformation("备份压缩格式：{Format}", value);
     }
-
-    [ObservableProperty]
-    private string _actualProtocolCommand = "";
-
-    public bool HasProtocolCommand => ActualProtocolCommand.Length > 0;
-
-    partial void OnActualProtocolCommandChanged(string value) =>
-        OnPropertyChanged(nameof(HasProtocolCommand));
-
-    [ObservableProperty]
-    private string _actualTemplateProgId = "";
-
-    public bool HasTemplateProgId => ActualTemplateProgId.Length > 0;
-
-    partial void OnActualTemplateProgIdChanged(string value) =>
-        OnPropertyChanged(nameof(HasTemplateProgId));
 
     public UpdateViewModel Update { get; }
 
@@ -515,12 +503,6 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     [RelayCommand]
     private static void OpenRepository() => ShellLauncher.OpenUrl(Links.Repository);
-
-    private void RefreshProtocolState()
-    {
-        ActualProtocolCommand = WindowsProtocolRegistration.Describe(WindowsProtocolRegistration.VccScheme);
-        ActualTemplateProgId = WindowsProtocolRegistration.DescribeFileType();
-    }
 
     private void OnSettingsChanged(object? sender, EventArgs e)
     {

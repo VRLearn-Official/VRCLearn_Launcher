@@ -137,12 +137,11 @@
                                 Command="{Binding AddCommand}"
                                 Content="{markup:Tr Repositories.Add}" />
                             <ui:Button
-                                Margin="{StaticResource Gap.Inline}"
-                                Style="{StaticResource RefreshToolbarButton}"
-                                Tag="{Binding RefreshCommand.IsRunning}"
+                                Style="{StaticResource RowButton}"
                                 Appearance="Secondary"
                                 Command="{Binding RefreshCommand}"
-                                Content="{markup:Tr Repositories.Refresh}" />
+                                Content="{markup:Tr Repositories.Refresh}"
+                                Icon="{ui:SymbolIcon ArrowClockwise24}" />
                             <ui:Button
                                 Margin="{StaticResource Gap.Inline}"
                                 Appearance="Secondary"
