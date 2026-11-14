@@ -72,9 +72,7 @@ public partial class MainWindow : FluentWindow
             {
                 CaptionHeight = CaptionHeight,
                 CornerRadius = default,
-                GlassFrameThickness = WindowBackdropType == WindowBackdropType.None
-                    ? new Thickness(0.00001)
-                    : new Thickness(-1),
+                GlassFrameThickness = new Thickness(0.00001),
                 ResizeBorderThickness = ResizeMode == ResizeMode.NoResize
                     ? default
                     : new Thickness(4),

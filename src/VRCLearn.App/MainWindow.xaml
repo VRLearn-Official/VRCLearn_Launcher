@@ -13,8 +13,7 @@
     MinHeight="560"
     WindowStartupLocation="CenterScreen"
     ExtendsContentIntoTitleBar="True"
-    TextOptions.TextFormattingMode="Display"
-    WindowBackdropType="Mica">
+    TextOptions.TextFormattingMode="Display">
 
     <ui:FluentWindow.Resources>
         <Style x:Key="ProgressTitle" TargetType="TextBlock">

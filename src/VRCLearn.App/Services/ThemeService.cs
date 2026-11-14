@@ -8,8 +8,6 @@ namespace VRCLearn.App.Services;
 
 public sealed class ThemeService
 {
-    private const WindowBackdropType Backdrop = WindowBackdropType.Mica;
-
     /// <summary>点亮态使用强调色的控件键。</summary>
     private static readonly string[] AccentKeys =
     [
@@ -75,7 +73,7 @@ public sealed class ThemeService
 
         if (Application.Current?.MainWindow is { } window)
         {
-            SystemThemeWatcher.Watch(window, Backdrop, true);
+            SystemThemeWatcher.Watch(window, WindowBackdropType.None, true);
             _watched = window;
         }
 
@@ -148,5 +146,5 @@ public sealed class ThemeService
             : ApplicationTheme.Light;
 
     private static void ApplyTheme(ApplicationTheme theme) =>
-        ApplicationThemeManager.Apply(theme, Backdrop, updateAccent: true);
+        ApplicationThemeManager.Apply(theme, WindowBackdropType.None, updateAccent: true);
 }
