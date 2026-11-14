@@ -89,7 +89,7 @@ public partial class LogsPage : UserControl
 
         var target = DialogService.Instance.PickSaveFile(
             LocalizationService.Instance["Logs.Export"],
-            $"vrl-{DateTime.Now:yyyy-MM-dd-HHmmss}.log",
+            $"vcl-{DateTime.Now:yyyy-MM-dd-HHmmss}.log",
             "*.log|*.log|*.*|*.*");
 
         if (target is not null)
