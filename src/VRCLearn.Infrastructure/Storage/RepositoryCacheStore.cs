@@ -28,7 +28,10 @@ public sealed class RepositoryCacheStore(AppPaths paths, GuiConfigStore configs,
                 return cached;
             }
 
-            var path = Resolve(relativePath);
+            if (!TryResolve(relativePath, out var path))
+            {
+                return null;
+            }
 
             try
             {
@@ -68,7 +71,12 @@ public sealed class RepositoryCacheStore(AppPaths paths, GuiConfigStore configs,
     {
         lock (_gate)
         {
-            var path = Resolve(relativePath);
+            if (!TryResolve(relativePath, out var path))
+            {
+                _parsed.Remove(relativePath);
+
+                return;
+            }
 
             try
             {
@@ -158,4 +166,18 @@ public sealed class RepositoryCacheStore(AppPaths paths, GuiConfigStore configs,
     /// 入参可能是绝对路径，原样使用。
     public string Resolve(string relativePath) =>
         Path.Combine(paths.DataDirectory, relativePath.Replace('/', Path.DirectorySeparatorChar));
+
+    private bool TryResolve(string relativePath, out string path)
+    {
+        path = Resolve(relativePath);
+
+        if (PathUtil.IsUnder(path, paths.DataDirectory))
+        {
+            return true;
+        }
+
+        logger.LogWarning("仓库缓存路径不在数据目录下，已忽略：{Path}", path);
+
+        return false;
+    }
 }

@@ -106,7 +106,7 @@
                     <DockPanel Margin="{StaticResource Gap.Row}" Style="{StaticResource BrowseRow}">
                         <ui:Button
                             DockPanel.Dock="Right"
-                            Click="OnBrowseCopyDestinationClick"
+                            Command="{Binding BrowseCopyDestinationCommand}"
                             Content="{markup:Tr ProjectDetail.Browse}"
                             Style="{StaticResource BrowseButton}" />
                         <TextBox Text="{Binding CopyDestination, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" />

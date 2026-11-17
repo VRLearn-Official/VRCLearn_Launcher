@@ -42,6 +42,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     private bool _configBusy;
 
+    private string[] _editorPaths = [];
+
     public SettingsViewModel(
         AppPaths paths,
         GuiConfigStore store,
@@ -136,6 +138,65 @@ public sealed partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private void OpenDataDirectory() => ShellLauncher.OpenFolder(_paths.Root);
 
+    [RelayCommand]
+    private void BrowseUnityEditor()
+    {
+        var selected = _dialogs.PickFile(
+            _localization["Settings.UnityEditors"],
+            "Unity.exe|Unity.exe|*.exe|*.*");
+
+        if (selected is not null)
+        {
+            AddUnityEditor(selected);
+        }
+    }
+
+    [RelayCommand]
+    private void BrowseUnityHub()
+    {
+        var selected = _dialogs.PickFile(
+            _localization["Settings.UnityHub"],
+            "Unity Hub.exe|Unity Hub.exe|*.exe|*.*");
+
+        if (selected is not null)
+        {
+            Shared.UnityHubPath = selected;
+        }
+    }
+
+    [RelayCommand]
+    private void BrowseProjectDirectory()
+    {
+        var selected = _dialogs.PickFolder(_localization["Settings.ProjectPath"], Shared.ActualProjectDirectory);
+
+        if (selected is not null)
+        {
+            Shared.ProjectDirectory = selected;
+        }
+    }
+
+    [RelayCommand]
+    private async Task BrowseBackupDirectory()
+    {
+        var selected = _dialogs.PickFolder(_localization["Settings.BackupDirectory"], Backups.Current);
+
+        if (selected is not null)
+        {
+            await Backups.ChangeAsync(selected);
+        }
+    }
+
+    [RelayCommand]
+    private async Task BrowseCacheDirectory()
+    {
+        var selected = _dialogs.PickFolder(_localization["Settings.CachePath"], Cache.Current);
+
+        if (selected is not null)
+        {
+            await Cache.ChangeAsync(selected);
+        }
+    }
+
     // ---- 包缓存 ----
 
     public PackageCacheViewModel Cache { get; }
@@ -218,6 +279,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             ManualUnityEditors.Add(new UnityEditorItem(_editors.Probe(path), path));
         }
+
+        _editorPaths = [.. _settings.Current.UnityEditors];
 
         OnPropertyChanged(nameof(HasNoManualUnityEditors));
     }
@@ -515,7 +578,11 @@ public sealed partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        ReloadUnityEditors();
+        if (!_settings.Current.UnityEditors.SequenceEqual(_editorPaths, StringComparer.OrdinalIgnoreCase))
+        {
+            ReloadUnityEditors();
+        }
+
         Backups.Refresh();
     }
 

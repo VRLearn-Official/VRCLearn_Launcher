@@ -16,5 +16,4 @@
     <InternalsVisibleTo Include="VRCLearn.Infrastructure.Tests" />
   </ItemGroup>
 
-  <!-- 内置工程模板，随程序发布。README 只给仓库看，不进输出目录 -->
 </Project>

@@ -62,7 +62,7 @@
                     <ui:Button
                         Style="{StaticResource ToolbarButton}"
                         Appearance="Secondary"
-                        Click="OnAddClick"
+                        Command="{Binding AddProjectCommand}"
                         Content="{markup:Tr Projects.Add}" />
                     <ui:Button
                         Margin="0"

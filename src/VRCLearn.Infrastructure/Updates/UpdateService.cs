@@ -52,7 +52,7 @@ public sealed class UpdateService(HttpClient http, UpdateStateStore states, ILog
         }
 
         var remote = await RemoteTextFile.GetAsync(
-            http, VersionUrl(), CancellationToken.None, HeadersFor(state.ETag));
+            http, DefaultReleaseApiUrl, CancellationToken.None, HeadersFor(state.ETag));
 
         if (remote.Outcome == RemoteTextOutcome.NotModified && state.Tag.Length > 0)
         {
@@ -106,7 +106,7 @@ public sealed class UpdateService(HttpClient http, UpdateStateStore states, ILog
         {
             logger.LogInformation("发现新版本：{Latest}，当前 {Current}", latest, current);
 
-            return new UpdateStatus(UpdateKind.UpdateAvailable, latest.ToString(), DownloadUrl());
+            return new UpdateStatus(UpdateKind.UpdateAvailable, latest.ToString(), DefaultDownloadUrl);
         }
 
         logger.LogInformation("已是最新版本：{Current}", current);
@@ -149,16 +149,6 @@ public sealed class UpdateService(HttpClient http, UpdateStateStore states, ILog
         && Version.TryParse(text, out var version)
             ? version
             : null;
-
-    private static string VersionUrl() =>
-        Environment.GetEnvironmentVariable("VRCL_VERSION_URL") is { Length: > 0 } custom
-            ? custom
-            : DefaultReleaseApiUrl;
-
-    private static string DownloadUrl() =>
-        Environment.GetEnvironmentVariable("VRCL_DOWNLOAD_URL") is { Length: > 0 } custom
-            ? custom
-            : DefaultDownloadUrl;
 
     private sealed class GitHubRelease
     {

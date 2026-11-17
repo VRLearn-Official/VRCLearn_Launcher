@@ -13,6 +13,7 @@ public sealed partial class SetupViewModel : ObservableObject
     private readonly GuiConfigStore _guiConfigStore;
     private readonly LocalizationService _localization;
     private readonly NavigationService _navigation;
+    private readonly DialogService _dialogs;
     private readonly MutableProxy _proxy;
 
     public SetupViewModel(
@@ -20,14 +21,38 @@ public sealed partial class SetupViewModel : ObservableObject
         SharedSettingsViewModel shared,
         LocalizationService localization,
         NavigationService navigation,
+        DialogService dialogs,
         MutableProxy proxy)
     {
         _guiConfigStore = guiConfigStore;
         _localization = localization;
         _navigation = navigation;
+        _dialogs = dialogs;
         _proxy = proxy;
         Shared = shared;
         _localization.PropertyChanged += (_, _) => OnPropertyChanged(nameof(StepCaption));
+    }
+
+    [RelayCommand]
+    private void BrowseProjectDirectory()
+    {
+        var selected = _dialogs.PickFolder(_localization["Settings.ProjectPath"], Shared.ActualProjectDirectory);
+
+        if (selected is not null)
+        {
+            Shared.ProjectDirectory = selected;
+        }
+    }
+
+    [RelayCommand]
+    private void BrowseBackupDirectory()
+    {
+        var selected = _dialogs.PickFolder(_localization["Settings.BackupDirectory"], Shared.BackupDirectory);
+
+        if (selected is not null)
+        {
+            Shared.BackupDirectory = selected;
+        }
     }
 
     public SharedSettingsViewModel Shared { get; }

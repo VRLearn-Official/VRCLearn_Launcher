@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
@@ -112,15 +113,28 @@ public partial class App : Application
             startupLogger.LogWarning(exception, "应用待处理的插件操作失败");
         }
 
+        _ = ContinueStartupAsync(e.Args, paths, config, localization, startupLogger);
+    }
+
+    private async Task ContinueStartupAsync(
+        string[] args,
+        AppPaths paths,
+        GuiConfig config,
+        LocalizationService localization,
+        ILogger<App> startupLogger)
+    {
+        var services = _services!;
+
         try
         {
-            var recoveries = _services
+            var stopwatch = Stopwatch.StartNew();
+            var recoveries = await services
                 .GetRequiredService<ProjectRestoreService>()
                 .RecoverInterruptedAsync(
-                    _services.GetRequiredService<ProjectService>().List(),
-                    CancellationToken.None)
-                .GetAwaiter()
-                .GetResult();
+                    services.GetRequiredService<ProjectService>().List(),
+                    CancellationToken.None);
+
+            startupLogger.LogInformation("项目还原中断恢复完成，用时 {Elapsed} ms", stopwatch.ElapsedMilliseconds);
 
             foreach (var recovery in recoveries)
             {
@@ -130,26 +144,19 @@ public partial class App : Application
                     recovery.Recovered,
                     recovery.Detail ?? "");
             }
-        }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
-        {
-            startupLogger.LogWarning(exception, "检查未完成的项目还原失败");
-        }
 
-        MainWindow = _services.GetRequiredService<MainWindow>();
+            MainWindow = services.GetRequiredService<MainWindow>();
 
-        _services.GetRequiredService<WindowsProtocolRegistration>()
-            .Apply(config.UseForVccProtocol, config.UseForAlcomTemplateFiles);
+            services.GetRequiredService<WindowsProtocolRegistration>()
+                .Apply(config.UseForVccProtocol, config.UseForAlcomTemplateFiles);
 
-        MainWindow.Show();
+            MainWindow.Show();
 
-        _services.GetRequiredService<ThemeService>().Apply(config.Theme);
+            services.GetRequiredService<ThemeService>().Apply(config.Theme);
 
+            _ = services.GetRequiredService<IUnityEditorLocator>().RefreshFromHubAsync(CancellationToken.None);
 
-        _ = _services.GetRequiredService<IUnityEditorLocator>().RefreshFromHubAsync(CancellationToken.None);
-
-        _services.GetRequiredService<ILogger<App>>()
-            .LogInformation(
+            startupLogger.LogInformation(
                 "VRCLearn Launcher {Version} started. OS: {OS}, language: {Language}, log level: {Level}, root: {Root}, config: {Config}, data: {Data}",
                 typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",
                 Environment.OSVersion.VersionString,
@@ -159,19 +166,32 @@ public partial class App : Application
                 paths.ConfigDirectory,
                 paths.DataDirectory);
 
-        _singleInstance.StartListening(HonourArguments);
+            _singleInstance!.StartListening(HonourArguments);
 
-        var update = _services.GetRequiredService<UpdateViewModel>();
-        var updateTask = update.InitializeAsync();
+            var update = services.GetRequiredService<UpdateViewModel>();
+            var updateTask = update.InitializeAsync();
 
-        if (!ShowDeepLink(e.Args))
-        {
-            _services.GetRequiredService<MainWindowViewModel>().Start();
+            if (!ShowDeepLink(args))
+            {
+                services.GetRequiredService<MainWindowViewModel>().Start();
+            }
+
+            _ = ShowStartupUpdatePromptAsync(update, updateTask);
+
+            InheritAlcomTemplates(services, paths, startupLogger);
         }
+        catch (Exception exception)
+        {
+            startupLogger.LogError(exception, "启动失败");
 
-        _ = ShowStartupUpdatePromptAsync(update, updateTask);
+            MessageBox.Show(
+                localization["Dialog.UnhandledMessage"],
+                localization["Dialog.UnhandledTitle"],
+                MessageBoxButton.OK,
+                MessageBoxImage.Error);
 
-        InheritAlcomTemplates(_services, paths, startupLogger);
+            Shutdown();
+        }
     }
 
     private async Task ShowStartupUpdatePromptAsync(UpdateViewModel update, Task updateTask)

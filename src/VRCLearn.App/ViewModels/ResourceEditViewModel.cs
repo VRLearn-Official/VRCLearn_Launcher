@@ -31,15 +31,18 @@ public sealed partial class ResourceEditViewModel : ObservableObject
     private readonly string _coverPath;
     private readonly DateTime _createdAt;
     private readonly LocalizationService _localization;
+    private readonly DialogService _dialogs;
 
     private byte[]? _coverPng;
 
     public ResourceEditViewModel(
         ResourceDefinition? existing,
         IReadOnlyList<string> tags,
-        LocalizationService localization)
+        LocalizationService localization,
+        DialogService dialogs)
     {
         _localization = localization;
+        _dialogs = dialogs;
         _id = existing?.Id ?? Guid.NewGuid().ToString("N");
         _coverPath = existing?.CoverPath ?? "";
         _createdAt = existing?.CreatedAt ?? DateTime.UtcNow;
@@ -134,6 +137,55 @@ public sealed partial class ResourceEditViewModel : ObservableObject
         }
 
         OnPropertyChanged(nameof(HasPackages));
+    }
+
+    [RelayCommand]
+    private void AddPackagesFromDialog()
+    {
+        var files = _dialogs.PickFiles(
+            _localization["Resources.Edit.PackagesAdd"],
+            "unitypackage (*.unitypackage)|*.unitypackage|*|*");
+
+        if (files.Length > 0)
+        {
+            AddPackages(files);
+        }
+    }
+
+    [RelayCommand]
+    private void PickManual()
+    {
+        var file = _dialogs.PickFile(
+            _localization["Resources.Edit.ManualPick"],
+            "*.pdf;*.md;*.txt;*.doc;*.docx;*.rtf;*.odt;*.html;*.htm|*.pdf;*.md;*.txt;*.doc;*.docx;*.rtf;*.odt;*.html;*.htm|*|*");
+
+        if (file is not null)
+        {
+            Manual = file;
+        }
+    }
+
+    [RelayCommand]
+    private void PickCover()
+    {
+        var file = _dialogs.PickFile(
+            _localization["Resources.Edit.CoverPick"],
+            "图片 (*.png;*.jpg;*.jpeg;*.bmp;*.webp)|*.png;*.jpg;*.jpeg;*.bmp;*.webp|*|*");
+
+        if (file is null)
+        {
+            return;
+        }
+
+        try
+        {
+            SetCover(CoverImageScaler.RenderSquare(file));
+        }
+        catch (Exception exception) when (
+            exception is IOException or UnauthorizedAccessException or FormatException or NotSupportedException)
+        {
+            Status = _localization.Format("Resources.Edit.CoverInvalid", exception.Message);
+        }
     }
 
     [RelayCommand]

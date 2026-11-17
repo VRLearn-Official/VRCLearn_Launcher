@@ -121,14 +121,14 @@
                             Grid.Column="1"
                             Margin="{StaticResource Gap.Inline}"
                             PlaceholderText="127.0.0.1"
-                            Text="{Binding ProxyHost, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{Binding ProxyHost, UpdateSourceTrigger=PropertyChanged, Delay=500}" />
 
                         <ui:TextBox
                             Grid.Column="2"
                             Width="96"
                             Margin="{StaticResource Gap.Inline}"
                             PlaceholderText="10808"
-                            Text="{Binding ProxyPort, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{Binding ProxyPort, UpdateSourceTrigger=PropertyChanged, Delay=500}" />
                     </Grid>
                 </StackPanel>
             </ui:Card>
@@ -147,7 +147,7 @@
                             Style="{StaticResource BrowseButton}" />
                         <ui:Button
                             DockPanel.Dock="Right"
-                            Click="OnBrowseUnityHubClick"
+                            Command="{Binding BrowseUnityHubCommand}"
                             Content="{markup:Tr Settings.Browse}"
                             Style="{StaticResource BrowseButton}" />
                         <ui:TextBox
@@ -186,7 +186,7 @@
                         <ui:Button
                             MinWidth="120"
                             Appearance="Secondary"
-                            Click="OnAddUnityEditorClick"
+                            Command="{Binding BrowseUnityEditorCommand}"
                             Content="{markup:Tr Settings.UnityEditorsAdd}" />
                     </HeaderedContentControl>
 
@@ -244,7 +244,7 @@
                         MinHeight="60"
                         Margin="{StaticResource Gap.Small}"
                         AcceptsReturn="True"
-                        Text="{Binding DefaultUnityArguments, UpdateSourceTrigger=PropertyChanged}"
+                        Text="{Binding DefaultUnityArguments, UpdateSourceTrigger=PropertyChanged, Delay=500}"
                         TextWrapping="Wrap"
                         VerticalScrollBarVisibility="Auto" />
                     <TextBlock
@@ -263,7 +263,7 @@
                     <DockPanel Style="{StaticResource BrowseRow}">
                         <ui:Button
                             DockPanel.Dock="Right"
-                            Click="OnBrowseProjectDirectoryClick"
+                            Command="{Binding BrowseProjectDirectoryCommand}"
                             Content="{markup:Tr Settings.Browse}"
                             Style="{StaticResource BrowseButton}" />
                         <ui:TextBox
@@ -297,7 +297,7 @@
                             Style="{StaticResource BrowseButton}" />
                         <ui:Button
                             DockPanel.Dock="Right"
-                            Click="OnBrowseCacheDirectoryClick"
+                            Command="{Binding BrowseCacheDirectoryCommand}"
                             Content="{markup:Tr Settings.Browse}"
                             Style="{StaticResource BrowseButton}" />
                         <ui:TextBox
@@ -359,7 +359,7 @@
                             Style="{StaticResource BrowseButton}" />
                         <ui:Button
                             DockPanel.Dock="Right"
-                            Click="OnBrowseBackupDirectoryClick"
+                            Command="{Binding BrowseBackupDirectoryCommand}"
                             Content="{markup:Tr Settings.Browse}"
                             Style="{StaticResource BrowseButton}" />
                         <ui:TextBox
@@ -465,7 +465,7 @@
                         <ui:TextBox
                             Width="220"
                             MaxLength="3"
-                            Text="{Binding LogsRetentionCount, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{Binding LogsRetentionCount, UpdateSourceTrigger=PropertyChanged, Delay=500}" />
                     </HeaderedContentControl>
                 </StackPanel>
             </ui:Card>

@@ -70,6 +70,10 @@ public static class RemoteTextFile
 
             return new RemoteText(RemoteTextOutcome.Fetched, text, "", response.Headers.ETag?.ToString());
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
         catch (Exception exception) when (exception is HttpRequestException
             or TaskCanceledException
             or IOException

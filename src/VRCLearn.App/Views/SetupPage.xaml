@@ -96,7 +96,7 @@
                             <DockPanel Margin="{StaticResource Gap.Large}" Style="{StaticResource BrowseRow}">
                                 <ui:Button
                                     DockPanel.Dock="Right"
-                                    Click="OnBrowseProjectDirectoryClick"
+                                    Command="{Binding BrowseProjectDirectoryCommand}"
                                     Content="{markup:Tr Templates.Browse}"
                                     Style="{StaticResource BrowseButton}" />
                                 <ui:TextBox
@@ -118,7 +118,7 @@
                             <DockPanel Margin="{StaticResource Gap.Large}" Style="{StaticResource BrowseRow}">
                                 <ui:Button
                                     DockPanel.Dock="Right"
-                                    Click="OnBrowseBackupDirectoryClick"
+                                    Command="{Binding BrowseBackupDirectoryCommand}"
                                     Content="{markup:Tr Templates.Browse}"
                                     Style="{StaticResource BrowseButton}" />
                                 <ui:TextBox

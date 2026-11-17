@@ -13,7 +13,6 @@ namespace VRCLearn.App.Plugins;
 
 public sealed class PluginManager : IDisposable
 {
-    private readonly AppPaths _paths;
     private readonly PluginDirectoryScanner _scanner;
     private readonly PluginStateStore _states;
     private readonly PluginPackageInstaller _installer;
@@ -21,7 +20,7 @@ public sealed class PluginManager : IDisposable
     private readonly LocalizationService _localization;
     private readonly ILogger<PluginManager> _logger;
     private readonly PluginServiceRegistry _services = new();
-    private readonly Dictionary<string, PluginRuntime> _runtimes = new(StringComparer.Ordinal);
+    private readonly PluginLoader _loader;
     private IReadOnlyList<PluginSnapshot> _snapshots = [];
     private PluginResolution _resolution = new(
         new Dictionary<string, IReadOnlyList<string>>(),
@@ -44,7 +43,6 @@ public sealed class PluginManager : IDisposable
         LocalizationService localization,
         ILogger<PluginManager> logger)
     {
-        _paths = paths;
         _scanner = scanner;
         _states = states;
         _installer = installer;
@@ -59,6 +57,7 @@ public sealed class PluginManager : IDisposable
         _services.Register<IProjectPickerHost>("", projectPickerHost);
         _services.Register<IRepositoryHost>("", repositories);
         _services.Register<IWebProxy>("", proxy);
+        _loader = new PluginLoader(paths, _services, windows, localization, logger);
         _localization.PropertyChanged += OnLocalizationChanged;
     }
 
@@ -68,9 +67,9 @@ public sealed class PluginManager : IDisposable
     {
         var installed = _scanner.Scan();
 
-        foreach (var id in _runtimes.Keys.Where(id => installed.All(x => x.Id != id)).ToList())
+        foreach (var id in _loader.Ids.Where(id => installed.All(x => x.Id != id)).ToList())
         {
-            _ = UnloadRuntimeAsync(id);
+            _ = _loader.UnloadAsync(id);
         }
 
         var nodes = installed
@@ -139,7 +138,7 @@ public sealed class PluginManager : IDisposable
             return new PluginActionFailure([], dependents);
         }
 
-        await UnloadRuntimeAsync(id);
+        await _loader.UnloadAsync(id);
 
         _states.SetEnabled(id, false);
 
@@ -166,12 +165,12 @@ public sealed class PluginManager : IDisposable
             return "plugin is not ready";
         }
 
-        if (!EnsureLoaded(snapshot, [], out var error))
+        if (!_loader.EnsureLoaded(snapshot, snapshots, _resolution.Dependencies, [], out var error))
         {
             return error;
         }
 
-        var runtime = _runtimes[id];
+        var runtime = _loader.Get(id)!;
 
         try
         {
@@ -197,8 +196,7 @@ public sealed class PluginManager : IDisposable
         }
     }
 
-    public bool IsLoaded(string id) =>
-        _runtimes.TryGetValue(id, out var runtime) && runtime.IsLoaded;
+    public bool IsLoaded(string id) => _loader.IsLoaded(id);
 
     public Task<(PluginManifest Manifest, string Sha256)> InspectPackageAsync(
         string path,
@@ -231,7 +229,7 @@ public sealed class PluginManager : IDisposable
     {
         if (IsLoaded(id))
         {
-            await UnloadRuntimeAsync(id);
+            await _loader.UnloadAsync(id);
         }
 
         var result = await _installer
@@ -246,34 +244,7 @@ public sealed class PluginManager : IDisposable
         return result;
     }
 
-    private async Task UnloadRuntimeAsync(string id)
-    {
-        _windows.Close(id);
-
-        if (!_runtimes.Remove(id, out var runtime))
-        {
-            return;
-        }
-
-        await runtime.DisposeAsync(_logger);
-        _services.RemoveOwner(id);
-
-        await Task.Run(() =>
-        {
-            GC.Collect();
-            GC.WaitForPendingFinalizers();
-            GC.Collect();
-        });
-    }
-
-    public string GetDataDirectory(string id)
-    {
-        var directory = Path.Combine(_paths.PluginDataDirectory, id);
-
-        Directory.CreateDirectory(directory);
-
-        return directory;
-    }
+    public string GetDataDirectory(string id) => _loader.GetDataDirectory(id);
 
     public async Task<PluginUninstallResult> UninstallAsync(string id)
     {
@@ -282,7 +253,7 @@ public sealed class PluginManager : IDisposable
             throw new InvalidOperationException("plugin is enabled");
         }
 
-        await UnloadRuntimeAsync(id);
+        await _loader.UnloadAsync(id);
 
         return _installer.Uninstall(id);
     }
@@ -292,30 +263,12 @@ public sealed class PluginManager : IDisposable
         _localization.PropertyChanged -= OnLocalizationChanged;
         _windows.CloseAll();
 
-        var disposal = Task.Run(DisposeRuntimesAsync);
+        var disposal = Task.Run(_loader.DisposeAllAsync);
 
         if (!disposal.Wait(TimeSpan.FromSeconds(5)))
         {
             _logger.LogWarning("插件释放超时，退出时不再等待");
         }
-    }
-
-    private async Task DisposeRuntimesAsync()
-    {
-        var runtimes = _runtimes.ToArray();
-
-        await Task.WhenAll(runtimes.Select(x => x.Value.DisposeAsync(_logger))).ConfigureAwait(false);
-
-        foreach (var (id, _) in runtimes)
-        {
-            _services.RemoveOwner(id);
-        }
-
-        _runtimes.Clear();
-
-        GC.Collect();
-        GC.WaitForPendingFinalizers();
-        GC.Collect();
     }
 
     public void Dispose() => Shutdown();
@@ -343,7 +296,7 @@ public sealed class PluginManager : IDisposable
             : MissingRequirements(manifest, allInstalled);
         var dependencyFaulted = _resolution.Dependencies
             .GetValueOrDefault(manifest.Id, [])
-            .Any(id => _runtimes.TryGetValue(id, out var dependency) && dependency.Faulted);
+            .Any(id => _loader.Get(id) is { Faulted: true });
 
         var status = pendingInstall || pendingRemoval
             ? PluginStatus.PendingRestart
@@ -353,7 +306,7 @@ public sealed class PluginManager : IDisposable
                     ? PluginStatus.MissingDependency
                     : _resolution.Cycles.Contains(manifest.Id, StringComparer.Ordinal)
                         || dependencyFaulted
-                        || (_runtimes.TryGetValue(manifest.Id, out var runtime) && runtime.Faulted)
+                        || _loader.Get(manifest.Id) is { Faulted: true }
                         ? PluginStatus.Faulted
                         : loaded
                             ? PluginStatus.Loaded
@@ -366,7 +319,7 @@ public sealed class PluginManager : IDisposable
             status,
             missing,
             pendingInstall,
-            _runtimes.TryGetValue(manifest.Id, out var current) ? current.Error : null);
+            _loader.Get(manifest.Id)?.Error);
     }
 
     private IReadOnlyList<string> MissingRequirements(
@@ -384,135 +337,6 @@ public sealed class PluginManager : IDisposable
                 .Select(requirement => $"{requirement.Capability} >= {requirement.MinVersion}"),
         ];
 
-    private bool EnsureLoaded(PluginSnapshot snapshot, HashSet<string> stack, out string error)
-    {
-        error = "";
-
-        var id = snapshot.Installed.Id;
-
-        if (_runtimes.TryGetValue(id, out var existing))
-        {
-            if (existing.IsLoaded)
-            {
-                return true;
-            }
-
-            if (existing.Faulted)
-            {
-                error = existing.Error ?? "plugin failed to load";
-                return false;
-            }
-        }
-
-        if (!snapshot.Enabled || snapshot.Manifest is null)
-        {
-            error = "plugin is disabled";
-            return false;
-        }
-
-        if (snapshot.Status is PluginStatus.MissingDependency or PluginStatus.PendingRestart or PluginStatus.Faulted)
-        {
-            error = snapshot.Status == PluginStatus.MissingDependency
-                ? $"missing capability: {string.Join(", ", snapshot.Missing)}"
-                : "plugin is not ready";
-            return false;
-        }
-
-        if (!stack.Add(id))
-        {
-            error = "plugin dependency cycle";
-            return false;
-        }
-
-        try
-        {
-            var dependencies = _resolution.Dependencies.GetValueOrDefault(id, []);
-
-            foreach (var dependency in dependencies)
-            {
-                var dependencySnapshot = _snapshots.FirstOrDefault(x => x.Installed.Id == dependency);
-
-                if (dependencySnapshot is null || !EnsureLoaded(dependencySnapshot, stack, out error))
-                {
-                    return false;
-                }
-            }
-
-            return CreateRuntime(snapshot, out error);
-        }
-        finally
-        {
-            stack.Remove(id);
-        }
-    }
-
-    private bool CreateRuntime(PluginSnapshot snapshot, out string error)
-    {
-        error = "";
-
-        var manifest = snapshot.Manifest!;
-        var directory = snapshot.Installed.Directory;
-        var entry = Path.Combine(
-            directory,
-            manifest.Entry.Assembly.Replace('/', Path.DirectorySeparatorChar));
-
-        if (!File.Exists(entry))
-        {
-            error = $"entry assembly is missing: {manifest.Entry.Assembly}";
-            return false;
-        }
-
-        var runtime = new PluginRuntime(snapshot.Installed);
-        _runtimes[manifest.Id] = runtime;
-
-        try
-        {
-            var loadContext = new PluginLoadContext(directory, entry);
-            runtime.LoadContext = loadContext;
-
-            var assembly = loadContext.LoadFromAssemblyPath(entry);
-            var type = assembly.GetType(manifest.Entry.Type, throwOnError: false);
-
-            if (type is null || !typeof(IVclPlugin).IsAssignableFrom(type))
-            {
-                throw new InvalidOperationException(
-                    $"type does not implement {nameof(IVclPlugin)}: {manifest.Entry.Type}");
-            }
-
-            var dataDirectory = GetDataDirectory(manifest.Id);
-            var context = new PluginContext(
-                manifest,
-                directory,
-                dataDirectory,
-                _localization,
-                _services,
-                _windows,
-                _logger);
-
-            var instance = (IVclPlugin)Activator.CreateInstance(type)!;
-
-            runtime.Context = context;
-            runtime.Instance = instance;
-
-            instance.Initialize(context);
-
-            return true;
-        }
-        catch (Exception exception)
-        {
-            _logger.LogWarning(exception, "加载插件失败：{Id}", manifest.Id);
-
-            runtime.Faulted = true;
-            runtime.Error = exception.Message;
-            _ = runtime.DisposeAsync(_logger);
-            _services.RemoveOwner(manifest.Id);
-            _runtimes.Remove(manifest.Id);
-            error = exception.Message;
-
-            return false;
-        }
-    }
-
     private PluginResolution Resolve(IReadOnlyList<PluginSnapshot> snapshots, IReadOnlySet<string> enabledIds) =>
         PluginCapabilityResolver.Resolve(
             snapshots
@@ -526,7 +350,7 @@ public sealed class PluginManager : IDisposable
 
     private void OnLocalizationChanged(object? sender, PropertyChangedEventArgs e)
     {
-        foreach (var runtime in _runtimes.Values)
+        foreach (var runtime in _loader.Runtimes)
         {
             runtime.Context?.NotifyLanguageChanged();
 

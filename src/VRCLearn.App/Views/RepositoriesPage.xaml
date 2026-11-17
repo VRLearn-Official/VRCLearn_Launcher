@@ -150,7 +150,7 @@
                             <ui:Button
                                 Margin="{StaticResource Gap.Inline}"
                                 Appearance="Secondary"
-                                Click="OnExportClick"
+                                Command="{Binding ExportRepositoriesCommand}"
                                 Content="{markup:Tr Repositories.Export}" />
                         </StackPanel>
                         <ui:TextBox
@@ -189,7 +189,7 @@
                             <ui:Button
                                 Margin="12,0,0,0"
                                 Appearance="Secondary"
-                                Click="OnAddUserPackageClick"
+                                Command="{Binding AddUserPackageCommand}"
                                 Content="{markup:Tr Packages.User.Add}" />
                         </StackPanel>
                     </Grid>

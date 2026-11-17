@@ -53,7 +53,7 @@
                     <DockPanel>
                         <ui:Button
                             DockPanel.Dock="Right"
-                            Click="OnBrowseClick"
+                            Command="{Binding BrowseParentDirectoryCommand}"
                             Content="{markup:Tr Templates.Browse}"
                             Style="{StaticResource BrowseButton}" />
                         <TextBox Text="{Binding ParentDirectory, UpdateSourceTrigger=PropertyChanged}" />

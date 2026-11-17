@@ -25,6 +25,7 @@ public partial class MainWindow : FluentWindow
     private readonly MainWindowViewModel _viewModel;
     private readonly AnimationService _animations;
     private readonly DropImportService _drops;
+    private readonly LocalizationService _localization;
     private readonly ILogger<MainWindow> _logger;
 
     private string[]? _lastDropPaths;
@@ -35,18 +36,20 @@ public partial class MainWindow : FluentWindow
         MainWindowViewModel viewModel,
         AnimationService animations,
         DropImportService drops,
+        LocalizationService localization,
         ILogger<MainWindow> logger)
     {
         _viewModel = viewModel;
         _animations = animations;
         _drops = drops;
+        _localization = localization;
         _logger = logger;
         DataContext = viewModel;
 
         InitializeComponent();
 
         UpdateMaximizeButton();
-        LocalizationService.Instance.PropertyChanged += (_, _) => UpdateMaximizeButton();
+        _localization.PropertyChanged += OnLocalizationChanged;
 
         _viewModel.PropertyChanged += OnViewModelPropertyChanged;
         SyncNavigationSelection();
@@ -241,13 +244,22 @@ public partial class MainWindow : FluentWindow
 
         MaximizeIcon.Symbol = maximized ? SymbolRegular.SquareMultiple24 : SymbolRegular.Square24;
 
-        var text = LocalizationService.Instance[maximized ? "Caption.Restore" : "Caption.Maximize"];
+        var text = _localization[maximized ? "Caption.Restore" : "Caption.Maximize"];
 
         MaximizeButton.ToolTip = text;
         AutomationProperties.SetName(MaximizeButton, text);
     }
 
     private void OnCloseClick(object sender, RoutedEventArgs e) => Close();
+
+    private void OnLocalizationChanged(object? sender, PropertyChangedEventArgs e) => UpdateMaximizeButton();
+
+    protected override void OnClosed(EventArgs e)
+    {
+        _localization.PropertyChanged -= OnLocalizationChanged;
+
+        base.OnClosed(e);
+    }
 
     protected override void OnClosing(CancelEventArgs e)
     {

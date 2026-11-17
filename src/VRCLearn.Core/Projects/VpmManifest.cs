@@ -32,10 +32,18 @@ public sealed class VpmManifest
     public IEnumerable<LockedDependencyInfo> AllLocked() =>
         _controller.Value.Locked.Select(x => LockedDependencyInfo.Create(x.Key, x.Value.Version, x.Value.Dependencies));
 
-    public LockedDependencyInfo? GetLocked(string package) =>
-        _controller.Value.Locked.TryGetValue(package, out var locked)
-            ? LockedDependencyInfo.Create(package, locked.Version, locked.Dependencies)
-            : null;
+    public LockedDependencyInfo? GetLocked(string package)
+    {
+        foreach (var (name, locked) in _controller.Value.Locked)
+        {
+            if (string.Equals(name, package, StringComparison.OrdinalIgnoreCase))
+            {
+                return LockedDependencyInfo.Create(name, locked.Version, locked.Dependencies);
+            }
+        }
+
+        return null;
+    }
 
     public bool HasAny => _controller.Value.Locked.Count > 0 || _controller.Value.Dependencies.Count > 0;
 

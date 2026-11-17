@@ -142,79 +142,11 @@ public partial class SettingsPage : UserControl
         return clone;
     }
 
-    private void OnBrowseUnityHubClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not SettingsViewModel viewModel)
-        {
-            return;
-        }
-
-        var selected = DialogService.Instance.PickFile(
-            LocalizationService.Instance["Settings.UnityHub"],
-            "Unity Hub.exe|Unity Hub.exe|*.exe|*.*");
-
-        if (selected is not null)
-        {
-            viewModel.Shared.UnityHubPath = selected;
-        }
-    }
-
-    private void OnBrowseProjectDirectoryClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not SettingsViewModel viewModel)
-        {
-            return;
-        }
-
-        var selected = DialogService.Instance.PickFolder(
-            LocalizationService.Instance["Settings.ProjectPath"],
-            viewModel.Shared.ActualProjectDirectory);
-
-        if (selected is not null)
-        {
-            viewModel.Shared.ProjectDirectory = selected;
-        }
-    }
-
-    private async void OnBrowseBackupDirectoryClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not SettingsViewModel viewModel)
-        {
-            return;
-        }
-
-        var selected = DialogService.Instance.PickFolder(
-            LocalizationService.Instance["Settings.BackupDirectory"],
-            viewModel.Backups.Current);
-
-        if (selected is not null)
-        {
-            await viewModel.Backups.ChangeAsync(selected);
-        }
-    }
-
     private async void OnRestoreBackupDirectoryClick(object sender, RoutedEventArgs e)
     {
         if (DataContext is SettingsViewModel viewModel)
         {
             await viewModel.Backups.RestoreAsync();
-        }
-    }
-
-    private async void OnBrowseCacheDirectoryClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not SettingsViewModel viewModel)
-        {
-            return;
-        }
-
-        var selected = DialogService.Instance.PickFolder(
-            LocalizationService.Instance["Settings.CachePath"],
-            viewModel.Cache.Current);
-
-        if (selected is not null)
-        {
-            await viewModel.Cache.ChangeAsync(selected);
         }
     }
 
@@ -226,20 +158,4 @@ public partial class SettingsPage : UserControl
         }
     }
 
-    private void OnAddUnityEditorClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not SettingsViewModel viewModel)
-        {
-            return;
-        }
-
-        var selected = DialogService.Instance.PickFile(
-            LocalizationService.Instance["Settings.UnityEditors"],
-            "Unity.exe|Unity.exe|*.exe|*.*");
-
-        if (selected is not null)
-        {
-            viewModel.AddUnityEditor(selected);
-        }
-    }
 }

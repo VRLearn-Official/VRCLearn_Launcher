@@ -359,6 +359,52 @@ public sealed partial class TemplatesViewModel : PageViewModelBase
         ? File.ReadAllText(path)
         : null;
 
+    [RelayCommand]
+    private async Task ImportTemplates()
+    {
+        var pattern = $"*{FileExtension}";
+        var files = _dialogs.PickFiles(
+            _localization["Templates.Import"],
+            $"{pattern}|{pattern}|*|*");
+
+        if (files.Length > 0)
+        {
+            await ImportAsync(files);
+        }
+    }
+
+    [RelayCommand]
+    private void AddEditorUnityPackages()
+    {
+        var files = _dialogs.PickFiles(
+            _localization["Templates.Editor.UnityPackages"],
+            "*.unitypackage|*.unitypackage|*|*");
+
+        if (files.Length > 0)
+        {
+            AddUnityPackages(files);
+        }
+    }
+
+    [RelayCommand]
+    private void ExportTemplate(TemplateOption option)
+    {
+        if (Export(option) is not { } content)
+        {
+            return;
+        }
+
+        var target = _dialogs.PickSaveFile(
+            _localization["Templates.Export"],
+            option.Display + FileExtension,
+            $"*{FileExtension}|*{FileExtension}|*|*");
+
+        if (target is not null)
+        {
+            File.WriteAllText(target, content);
+        }
+    }
+
     public async Task ImportAsync(IReadOnlyList<string> paths)
     {
         var result = await _userTemplates.ImportAsync(paths, CancellationToken.None);

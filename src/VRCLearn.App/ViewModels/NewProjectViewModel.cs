@@ -1,6 +1,7 @@
 using System.Collections.ObjectModel;
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
 using VRCLearn.App.Services;
 using VRCLearn.Core.IO;
@@ -21,6 +22,7 @@ public sealed partial class NewProjectViewModel(
     ProjectDetailViewModel detail,
     NavigationService navigation,
     LocalizationService localization,
+    DialogService dialogs,
     ILauncherSettingsStore settings,
     ILogger<NewProjectViewModel> logger) : ObservableObject
 {
@@ -53,6 +55,17 @@ public sealed partial class NewProjectViewModel(
     partial void OnProjectNameChanged(string value) => OnPropertyChanged(nameof(TargetPath));
 
     partial void OnParentDirectoryChanged(string value) => OnPropertyChanged(nameof(TargetPath));
+
+    [RelayCommand]
+    private void BrowseParentDirectory()
+    {
+        var selected = dialogs.PickFolder("", ParentDirectory);
+
+        if (selected is not null)
+        {
+            ParentDirectory = selected;
+        }
+    }
 
     public string TargetPath =>
         ProjectName.Trim().Length == 0 || ParentDirectory.Length == 0

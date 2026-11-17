@@ -34,7 +34,7 @@
                     TextWrapping="Wrap" />
                 <ui:Button
                     Grid.Column="2"
-                    Click="OnBrowseClick"
+                    Command="{Binding BrowseImportFileCommand}"
                     Content="{markup:Tr Templates.Browse}"
                     IsEnabled="{Binding ImportFromFile}"
                     Style="{StaticResource BrowseButton}" />

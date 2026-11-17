@@ -14,6 +14,7 @@ public sealed partial class LogsViewModel : PageViewModelBase, IPageViewModel
     private readonly AppPaths _paths;
     private readonly FileLoggerProvider _logFile;
     private readonly LocalizationService _localization;
+    private readonly DialogService _dialogs;
     private readonly ILogger<LogsViewModel> _logger;
     private readonly IReadOnlyList<Option> _levelOptions;
 
@@ -21,6 +22,7 @@ public sealed partial class LogsViewModel : PageViewModelBase, IPageViewModel
         AppPaths paths,
         FileLoggerProvider logFile,
         LocalizationService localization,
+        DialogService dialogs,
         ToastService toasts,
         ILogger<LogsViewModel> logger)
         : base(toasts)
@@ -28,6 +30,7 @@ public sealed partial class LogsViewModel : PageViewModelBase, IPageViewModel
         _paths = paths;
         _logFile = logFile;
         _localization = localization;
+        _dialogs = dialogs;
         _logger = logger;
         _levelOptions =
         [
@@ -143,6 +146,20 @@ public sealed partial class LogsViewModel : PageViewModelBase, IPageViewModel
     private void OpenFolder() => ShellLauncher.OpenFolder(_paths.LogsDirectory);
 
     /// <summary>导出整份日志文件，不受当前筛选影响。</summary>
+    [RelayCommand]
+    private async Task ExportLog()
+    {
+        var target = _dialogs.PickSaveFile(
+            _localization["Logs.Export"],
+            $"vcl-{DateTime.Now:yyyy-MM-dd-HHmmss}.log",
+            "*.log|*.log|*.*|*.*");
+
+        if (target is not null)
+        {
+            await ExportAsync(target);
+        }
+    }
+
     public async Task ExportAsync(string destination)
     {
         try

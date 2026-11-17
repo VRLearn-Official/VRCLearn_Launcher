@@ -20,12 +20,7 @@ public static class ZipEntryPath
                 continue;
             }
 
-            if (segment.Length >= 2 && segment[1] == ':')
-            {
-                return null;
-            }
-
-            if (!PathUtil.IsSafePathSegment(segment, allowColon: true))
+            if (!PathUtil.IsSafePathSegment(segment))
             {
                 return null;
             }

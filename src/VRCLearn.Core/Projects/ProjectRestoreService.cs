@@ -238,78 +238,100 @@ public sealed class ProjectRestoreService(
 
         foreach (var projectPath in projectPaths)
         {
-            var normalized = Path.TrimEndingDirectorySeparator(projectPath);
-            var name = Path.GetFileName(normalized);
-
-            if (name.Length == 0 || Path.GetDirectoryName(normalized) is not { Length: > 0 } parentPath)
-            {
-                continue;
-            }
-
-            var parent = ioFactory.For(parentPath);
-            var journalName = JournalName(name);
-
-            if (await parent.ReadAllBytesOrNullAsync(journalName, cancellationToken).ConfigureAwait(false) is not { } bytes)
-            {
-                continue;
-            }
-
-            RestoreJournal? journal;
-
             try
             {
-                journal = JsonSerializer.Deserialize<RestoreJournal>(bytes, JsonDefaults.Compact);
+                await RecoverAsync(projectPath, recoveries, cancellationToken).ConfigureAwait(false);
             }
-            catch (JsonException exception)
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
             {
-                recoveries.Add(new RestoreRecovery(projectPath, false, exception.Message));
-
-                continue;
+                throw;
             }
-
-            if (journal is null)
-            {
-                recoveries.Add(new RestoreRecovery(projectPath, false, "恢复日志无法解析"));
-
-                continue;
-            }
-
-            try
-            {
-                var recovered = false;
-
-                if (!parent.DirectoryExists(name) && parent.DirectoryExists(journal.Replaced))
-                {
-                    parent.MoveDirectory(journal.Replaced, name);
-                    recovered = true;
-                }
-
-                if (!parent.DirectoryExists(name))
-                {
-                    recoveries.Add(new RestoreRecovery(projectPath, false, "原目录和替换目录都不在，保留恢复日志"));
-
-                    continue;
-                }
-
-                if (parent.DirectoryExists(journal.Staging))
-                {
-                    parent.DeleteDirectory(journal.Staging);
-                }
-
-                DeleteJournal(parent, name);
-
-                var leftover = parent.DirectoryExists(journal.Replaced)
-                    ? $"旧目录留在 {Path.Combine(parentPath, journal.Replaced)}"
-                    : null;
-
-                recoveries.Add(new RestoreRecovery(projectPath, recovered, leftover));
-            }
-            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            catch (Exception exception) when (exception is not OutOfMemoryException)
             {
                 recoveries.Add(new RestoreRecovery(projectPath, false, exception.Message));
             }
         }
 
         return recoveries;
+    }
+
+    private async Task RecoverAsync(
+        string projectPath,
+        List<RestoreRecovery> recoveries,
+        CancellationToken cancellationToken)
+    {
+        var normalized = Path.TrimEndingDirectorySeparator(projectPath);
+        var name = Path.GetFileName(normalized);
+
+        if (name.Length == 0 || Path.GetDirectoryName(normalized) is not { Length: > 0 } parentPath)
+        {
+            return;
+        }
+
+        var parent = ioFactory.For(parentPath);
+        var journalName = JournalName(name);
+
+        if (await parent.ReadAllBytesOrNullAsync(journalName, cancellationToken).ConfigureAwait(false) is not { } bytes)
+        {
+            return;
+        }
+
+        RestoreJournal? journal;
+
+        try
+        {
+            journal = JsonSerializer.Deserialize<RestoreJournal>(bytes, JsonDefaults.Compact);
+        }
+        catch (JsonException exception)
+        {
+            recoveries.Add(new RestoreRecovery(projectPath, false, exception.Message));
+
+            return;
+        }
+
+        if (journal is null
+            || !PathUtil.IsSafePathSegment(journal.Staging)
+            || !PathUtil.IsSafePathSegment(journal.Replaced))
+        {
+            DeleteJournal(parent, name);
+            recoveries.Add(new RestoreRecovery(projectPath, false, "恢复日志内容不合法，已丢弃"));
+
+            return;
+        }
+
+        try
+        {
+            var recovered = false;
+
+            if (!parent.DirectoryExists(name) && parent.DirectoryExists(journal.Replaced))
+            {
+                parent.MoveDirectory(journal.Replaced, name);
+                recovered = true;
+            }
+
+            if (!parent.DirectoryExists(name))
+            {
+                recoveries.Add(new RestoreRecovery(projectPath, false, "原目录和替换目录都不在，保留恢复日志"));
+
+                return;
+            }
+
+            if (parent.DirectoryExists(journal.Staging))
+            {
+                parent.DeleteDirectory(journal.Staging);
+            }
+
+            DeleteJournal(parent, name);
+
+            var leftover = parent.DirectoryExists(journal.Replaced)
+                ? $"旧目录留在 {Path.Combine(parentPath, journal.Replaced)}"
+                : null;
+
+            recoveries.Add(new RestoreRecovery(projectPath, recovered, leftover));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            recoveries.Add(new RestoreRecovery(projectPath, false, exception.Message));
+        }
     }
 }

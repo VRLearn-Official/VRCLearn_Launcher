@@ -37,7 +37,7 @@
                 <ui:Button
                     Style="{StaticResource ToolbarButton}"
                     Appearance="Secondary"
-                    Click="OnExportClick"
+                    Command="{Binding ExportLogCommand}"
                     Content="{markup:Tr Logs.Export}" />
                 <ui:Button
                     Style="{StaticResource ToolbarButton}"

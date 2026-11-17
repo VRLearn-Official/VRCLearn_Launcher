@@ -2,7 +2,6 @@
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
-using VRCLearn.App.Services;
 using VRCLearn.App.ViewModels;
 
 namespace VRCLearn.App.Views;
@@ -79,22 +78,4 @@ public partial class LogsPage : UserControl
     }
 
     private void ScrollToEnd() => LogText.ScrollToEnd();
-
-    private async void OnExportClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not LogsViewModel viewModel)
-        {
-            return;
-        }
-
-        var target = DialogService.Instance.PickSaveFile(
-            LocalizationService.Instance["Logs.Export"],
-            $"vcl-{DateTime.Now:yyyy-MM-dd-HHmmss}.log",
-            "*.log|*.log|*.*|*.*");
-
-        if (target is not null)
-        {
-            await viewModel.ExportAsync(target);
-        }
-    }
 }
