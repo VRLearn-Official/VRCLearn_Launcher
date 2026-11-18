@@ -11,6 +11,7 @@ using Microsoft.Extensions.Logging;
 using VRCLearn.App.Services;
 using VRCLearn.Core.Configuration;
 using VRCLearn.Core.IO;
+using VRCLearn.Core.Hashing;
 using VRCLearn.Core.Packages;
 using VRCLearn.Core.Projects;
 using VRCLearn.Core.Repositories;
@@ -231,6 +232,7 @@ public sealed partial class ProjectDetailViewModel(
 
 
     private bool _allowPrerelease;
+    private bool _hasStableUpgrades;
 
     /// <summary>一行一条参数；留空用全局设置。</summary>
     [ObservableProperty]
@@ -905,8 +907,71 @@ public sealed partial class ProjectDetailViewModel(
         Packages.Where(x => x.IsSelected && x.HasNewerVersion).ToList());
 
     [RelayCommand(CanExecute = nameof(CanUpgradeAll))]
-    private Task UpgradeAll() => UpgradePackagesAsync(
-        Packages.Where(x => x.HasNewerVersion).ToList());
+    private Task UpgradeAll() => ConfirmAndApplyAsync(
+        cascade => PlanAllUpgradesAsync(allowPrerelease: false, cascade),
+        localization["ProjectDetail.Batch.UpgradeDone"],
+        allowPrerelease: false,
+        refreshProject: true);
+
+    [RelayCommand(CanExecute = nameof(CanUpgradeAllPrerelease))]
+    private Task UpgradeAllPrerelease() => ShowPrereleaseUpgrades
+        ? ConfirmAndApplyAsync(
+            cascade => PlanAllUpgradesAsync(allowPrerelease: true, cascade),
+            localization["ProjectDetail.Batch.UpgradeDone"],
+            allowPrerelease: true,
+            refreshProject: true)
+        : Task.CompletedTask;
+
+    private static List<PackageInfo> FindAllUpgrades(UnityProject project, PackageCatalog catalog, bool allowPrerelease)
+    {
+        var packages = new List<PackageInfo>();
+        foreach (var (name, manifest) in project.InstalledPackages)
+        {
+            var version = project.GetLocked(name) is { } locked && locked.Version > manifest.Version
+                ? locked.Version : manifest.Version;
+            if (catalog.NewerThan(name, version, project.UnityVersion, allowPrerelease) is { } newer)
+            {
+                packages.Add(newer);
+            }
+        }
+        return packages;
+    }
+
+    private async Task<PendingProjectChanges?> PlanAllUpgradesAsync(bool allowPrerelease, bool upgradeDependents)
+    {
+        if (_project is not { } project)
+        {
+            return null;
+        }
+
+        var packages = FindAllUpgrades(project, Catalog(), allowPrerelease);
+        if (packages.Count == 0)
+        {
+            Status = localization["ProjectDetail.Batch.UpToDate"];
+            return null;
+        }
+
+        var changes = await PlanAddAsync(packages, AddPackageOperation.UpgradeLocked, upgradeDependents,
+            reportFailure: !upgradeDependents, allowPrerelease: allowPrerelease);
+        if (changes is null)
+        {
+            return null;
+        }
+
+        var blocked = changes.PackageChanges.Values.OfType<Install>()
+            .Select(x => x.Package).OfType<PackageInfo>()
+            .Where(x => (!allowPrerelease && !x.Version.IsStable)
+                || project.GetInstalledPackage(x.Name)?.Version > x.Version
+                || project.GetLocked(x.Name)?.Version > x.Version)
+            .Select(x => x.Name).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        if (blocked.Count > 0)
+        {
+            Status = localization.Format(allowPrerelease
+                ? "ProjectDetail.Batch.DowngradeBlocked" : "ProjectDetail.Batch.StableBlocked", Join(blocked));
+            return null;
+        }
+        return changes;
+    }
 
     private async Task UpgradePackagesAsync(IReadOnlyList<PackageRowViewModel> rows)
     {
@@ -1039,7 +1104,11 @@ public sealed partial class ProjectDetailViewModel(
 
     public bool CanRemoveSelected => Packages.Any(x => x.IsSelected && x.CanRemove);
 
-    public bool CanUpgradeAll => Packages.Any(x => x.HasNewerVersion);
+    public bool CanUpgradeAll => _project is not null && _hasStableUpgrades;
+
+    public bool ShowPrereleaseUpgrades => settings.Current.ShowPrereleasePackages;
+
+    public bool CanUpgradeAllPrerelease => ShowPrereleaseUpgrades && Packages.Any(x => x.HasNewerVersion);
 
     [RelayCommand(CanExecute = nameof(CanRemoveSelected))]
     private async Task RemoveSelected()
@@ -1662,6 +1731,7 @@ public sealed partial class ProjectDetailViewModel(
             }
         }
 
+        _hasStableUpgrades = _project is { } current && FindAllUpgrades(current, Catalog(), false).Count > 0;
         OnPropertyChanged(nameof(NeedsResolve));
         OnPropertyChanged(nameof(ResolveMessage));
         NotifySelectionChanged();
@@ -1727,12 +1797,15 @@ public sealed partial class ProjectDetailViewModel(
         OnPropertyChanged(nameof(CanReinstallSelected));
         OnPropertyChanged(nameof(CanRemoveSelected));
         OnPropertyChanged(nameof(CanUpgradeAll));
+        OnPropertyChanged(nameof(ShowPrereleaseUpgrades));
+        OnPropertyChanged(nameof(CanUpgradeAllPrerelease));
 
         InstallSelectedCommand.NotifyCanExecuteChanged();
         UpgradeSelectedCommand.NotifyCanExecuteChanged();
         ReinstallSelectedCommand.NotifyCanExecuteChanged();
         RemoveSelectedCommand.NotifyCanExecuteChanged();
         UpgradeAllCommand.NotifyCanExecuteChanged();
+        UpgradeAllPrereleaseCommand.NotifyCanExecuteChanged();
         ClearSelectionCommand.NotifyCanExecuteChanged();
     }
 
@@ -1790,18 +1863,37 @@ public sealed partial class ProjectDetailViewModel(
 
     private async Task ConfirmAndApplyAsync(
         Func<bool, Task<PendingProjectChanges?>> plan,
-        string successMessage)
+        string successMessage,
+        bool? allowPrerelease = null,
+        bool refreshProject = false)
     {
         if (_project is null || IsBusy || _changingPackages)
         {
             return;
         }
 
+        var generation = _loadGeneration;
+        var includePrerelease = allowPrerelease ?? _allowPrerelease;
         _changingPackages = true;
 
         try
         {
             Status = null;
+            string? fingerprint = null;
+            if (refreshProject)
+            {
+                var current = _project;
+                fingerprint = await PackageFingerprintAsync(current);
+                var fresh = await projects.OpenAsync(ProjectPath, CancellationToken.None);
+                if (generation != _loadGeneration || !ReferenceEquals(_project, current)
+                    || fingerprint != await PackageFingerprintAsync(fresh))
+                {
+                    Status = localization["ProjectDetail.Batch.ProjectChanged"];
+                    return;
+                }
+                _project = fresh;
+            }
+
 
             var changes = await plan(false);
 
@@ -1816,7 +1908,7 @@ public sealed partial class ProjectDetailViewModel(
             var affected = PackageOperations.FindAffectedDependents(
                 _project,
                 changes,
-                _allowPrerelease);
+                includePrerelease);
 
             var explained = affected.Select(x => x.Name).ToList();
 
@@ -1843,7 +1935,7 @@ public sealed partial class ProjectDetailViewModel(
                     && (PackageOperations.FindAffectedDependents(
                             _project,
                             cascade,
-                            _allowPrerelease).Count > 0
+                            includePrerelease).Count > 0
                         || ConflictLines(cascade, includeUnlocked: false) is { Count: > 0 }))
                 {
                     cascade = null;
@@ -1903,6 +1995,13 @@ public sealed partial class ProjectDetailViewModel(
                 }
             }
 
+            if (generation != _loadGeneration || (fingerprint is not null
+                && (_project is null || fingerprint != await PackageFingerprintAsync(_project))))
+            {
+                Status = localization["ProjectDetail.Batch.ProjectChanged"];
+                return;
+            }
+
             IsBusy = true;
 
             try
@@ -1922,17 +2021,34 @@ public sealed partial class ProjectDetailViewModel(
                 IsBusy = false;
             }
         }
+        catch (Exception exception) when (refreshProject && exception is not OperationCanceledException)
+        {
+            logger.LogWarning(exception, "规划批量更新失败：{Project}", ProjectPath);
+            Status = localization.Format("ProjectDetail.ApplyFailed", exception.Message);
+        }
         finally
         {
             _changingPackages = false;
         }
     }
 
+    private static async Task<string> PackageFingerprintAsync(UnityProject project)
+    {
+        var parts = new List<string>();
+        foreach (var path in new[] { VpmManifest.RelativePath, UpmManifest.RelativePath, "Packages/packages-lock.json" })
+        {
+            var bytes = await project.Io.ReadAllBytesOrNullAsync(path, CancellationToken.None);
+            parts.Add(bytes is null ? "missing" : Sha256Hex.Of(bytes));
+        }
+        return string.Join("\n", parts);
+    }
+
     private async Task<PendingProjectChanges?> PlanAddAsync(
         IReadOnlyList<PackageInfo> packages,
         AddPackageOperation operation,
         bool upgradeDependents,
-        bool reportFailure = true)
+        bool reportFailure = true,
+        bool? allowPrerelease = null)
     {
         if (_project is null || packages.Count == 0)
         {
@@ -1958,7 +2074,7 @@ public sealed partial class ProjectDetailViewModel(
                 Catalog(),
                 packages,
                 operation,
-                _allowPrerelease,
+                allowPrerelease ?? _allowPrerelease,
                 CancellationToken.None,
                 upgradeDependents);
 

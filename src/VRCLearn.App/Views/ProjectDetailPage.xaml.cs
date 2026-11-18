@@ -1,4 +1,5 @@
-﻿using System.Windows;
+﻿using System.ComponentModel;
+using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
@@ -12,10 +13,13 @@ public partial class ProjectDetailPage : UserControl
     private readonly DispatcherTimer _unityTimer;
     private int _backupsAnimation;
     private bool _updatingBatchLayout;
+    private ProjectDetailViewModel? _batchState;
 
     public ProjectDetailPage()
     {
         InitializeComponent();
+        DataContextChanged += (_, _) => ObserveBatchState();
+        Loaded += (_, _) => ObserveBatchState();
 
         _unityTimer = new DispatcherTimer { Interval = TimeSpan.FromSeconds(1) };
         _unityTimer.Tick += (_, _) => (DataContext as ProjectDetailViewModel)?.RefreshUnityState();
@@ -33,7 +37,28 @@ public partial class ProjectDetailPage : UserControl
             }
         };
 
-        Unloaded += (_, _) => _unityTimer.Stop();
+        Unloaded += (_, _) =>
+        {
+            _unityTimer.Stop();
+            ObserveBatchState(detach: true);
+        };
+    }
+
+    private void ObserveBatchState(bool detach = false)
+    {
+        var current = !detach && IsLoaded ? DataContext as ProjectDetailViewModel : null;
+        if (!ReferenceEquals(_batchState, current))
+        {
+            if (_batchState is not null) _batchState.PropertyChanged -= OnBatchStateChanged;
+            _batchState = current;
+            if (_batchState is not null) _batchState.PropertyChanged += OnBatchStateChanged;
+        }
+        UpdateBatchLayout();
+    }
+
+    private void OnBatchStateChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(ProjectDetailViewModel.ShowPrereleaseUpgrades)) UpdateBatchLayout();
     }
 
     private void OnBatchToolbarLoaded(object sender, RoutedEventArgs e) => UpdateBatchLayout();
@@ -70,7 +95,8 @@ public partial class ProjectDetailPage : UserControl
                 total += button.DesiredSize.Width;
             }
 
-            if (total <= available + 0.5)
+            if (total <= available + 0.5
+                && DataContext is not ProjectDetailViewModel { ShowPrereleaseUpgrades: true })
             {
                 BatchMoreButton.Visibility = Visibility.Collapsed;
                 return;
@@ -105,6 +131,8 @@ public partial class ProjectDetailPage : UserControl
 
     private void OnBatchMenuOpened(object sender, RoutedEventArgs e)
     {
+        PrereleaseUpgradeItem.Visibility = DataContext is ProjectDetailViewModel { ShowPrereleaseUpgrades: true }
+            ? Visibility.Visible : Visibility.Collapsed;
         (FrameworkElement Button, MenuItem Item)[] overflow =
         [
             (InstallSelectedButton, InstallSelectedOverflowItem),
@@ -118,6 +146,8 @@ public partial class ProjectDetailPage : UserControl
         {
             item.Visibility = button.Visibility == Visibility.Collapsed ? Visibility.Visible : Visibility.Collapsed;
         }
+        BatchFeatureSeparator.Visibility = PrereleaseUpgradeItem.Visibility == Visibility.Visible
+            && overflow.Any(x => x.Item.Visibility == Visibility.Visible) ? Visibility.Visible : Visibility.Collapsed;
 
     }
 

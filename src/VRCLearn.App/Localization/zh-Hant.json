@@ -707,5 +707,11 @@
   "ProjectDetail.Batch.UpgradeShort": "升級",
   "ProjectDetail.Batch.ReinstallShort": "重新安裝",
   "ProjectDetail.Batch.RemoveShort": "移除",
-  "ProjectDetail.Batch.ClearShort": "清空選擇"
+  "ProjectDetail.Batch.ClearShort": "清空選擇",
+  "ProjectDetail.Batch.UpgradePrerelease": "升級所有套件（預發行版）",
+  "ProjectDetail.Batch.UpgradeDone": "套件升級完成。",
+  "ProjectDetail.Batch.UpToDate": "沒有可升級的套件。",
+  "ProjectDetail.Batch.DowngradeBlocked": "批次升級已停止：以下套件需要降級：{0}",
+  "ProjectDetail.Batch.StableBlocked": "穩定版升級已停止：以下套件需要預發行版或降級：{0}",
+  "ProjectDetail.Batch.ProjectChanged": "專案的套件清單已變更，請重新整理後再試。"
 }
