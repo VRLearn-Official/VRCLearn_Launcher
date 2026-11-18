@@ -702,5 +702,11 @@
   "Projects.Status.BackedUpSkipped": "备份完成：{0}（{1} 个 Library 文件被占用，已跳过）",
   "ProjectDetail.BackupDoneSkipped": "备份完成：{0}（{1} 个 Library 文件被占用，已跳过）",
   "Templates.Status.NoDefaultManifest": "找不到适用于 Unity {0} 的标准包清单。请确认该 Unity 安装完整后重试。",
-  "Plugins.Update": "更新"
+  "Plugins.Update": "更新",
+  "ProjectDetail.Batch.More": "更多批量操作",
+  "ProjectDetail.Batch.InstallShort": "安装",
+  "ProjectDetail.Batch.UpgradeShort": "升级",
+  "ProjectDetail.Batch.ReinstallShort": "重新安装",
+  "ProjectDetail.Batch.RemoveShort": "移除",
+  "ProjectDetail.Batch.ClearShort": "清空选择"
 }
