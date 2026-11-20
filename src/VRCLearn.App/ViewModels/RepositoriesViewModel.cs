@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.Extensions.Logging;
@@ -130,6 +131,8 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
     void IReorderableList.Move(object item, int insertBefore) =>
         Move((RepositoryItemViewModel)item, insertBefore);
 
+    int IReorderableList.IndexOf(object item) => ((RepositoryItemViewModel)item).Index;
+
     [RelayCommand]
     private void ToggleHidden(RepositoryItemViewModel repository)
     {
@@ -148,6 +151,42 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
 
     [RelayCommand]
     private void Import() => _dialogs.ShowImportRepositories();
+
+    [RelayCommand]
+    private async Task AddUserPackage()
+    {
+        var selected = _dialogs.PickFolder(_localization["Packages.User.Add"]);
+
+        if (selected is not null)
+        {
+            await UserPackages.AddAsync(selected);
+        }
+    }
+
+    [RelayCommand]
+    private void ExportRepositories()
+    {
+        var target = _dialogs.PickSaveFile(
+            RepositoriesFile.Name,
+            RepositoriesFile.Name,
+            $"{RepositoriesFile.Name}|*.txt|*|*");
+
+        if (target is not null)
+        {
+            File.WriteAllText(target, Export());
+        }
+    }
+
+    [RelayCommand]
+    private void BrowseImportFile()
+    {
+        var selected = _dialogs.PickFile("", $"{RepositoriesFile.Name}|*.txt", RepositoriesFile.Name);
+
+        if (selected is not null)
+        {
+            ImportFilePath = selected;
+        }
+    }
 
     [ObservableProperty]
     private bool _importFromFile = true;
@@ -213,7 +252,7 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
             return;
         }
 
-        var outcome = await WithBusyAsync(() => _service.ImportFromUrlAsync(url, CancellationToken.None));
+        var outcome = await WithBusyOrThrowAsync(() => _service.ImportFromUrlAsync(url, CancellationToken.None));
 
         if (outcome.Summary is null)
         {
@@ -236,7 +275,7 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
             return null;
         }
 
-        var outcome = await WithBusyAsync(() => _service.AddAsync(url, null, headers ?? NoHeaders, CancellationToken.None));
+        var outcome = await WithBusyOrThrowAsync(() => _service.AddAsync(url, null, headers ?? NoHeaders, CancellationToken.None));
 
         if (outcome.Status == AddRepositoryStatus.Success)
         {

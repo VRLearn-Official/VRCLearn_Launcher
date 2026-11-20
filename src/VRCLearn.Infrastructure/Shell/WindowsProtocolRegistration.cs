@@ -103,8 +103,6 @@ public sealed class WindowsProtocolRegistration
         Registry.CurrentUser.DeleteSubKeyTree($@"{ClassesKey}\{progId}", throwOnMissingSubKey: false);
     }
 
-    public static string DescribeFileType() => CurrentProgId(ExtensionName) ?? "";
-
     private static string? CurrentProgId(string extension)
     {
         using var key = Registry.CurrentUser.OpenSubKey($@"{ClassesKey}\{extension}");

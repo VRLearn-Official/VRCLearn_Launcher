@@ -719,6 +719,21 @@ public sealed partial class ProjectDetailViewModel(
     private void CancelCopy() => CopyDestination = null;
 
     [RelayCommand]
+    private void BrowseCopyDestination()
+    {
+        var selected = dialogs.PickFolder(
+            localization["ProjectDetail.Copy.Title"],
+            Path.GetDirectoryName(CopyDestination ?? "") ?? "");
+
+        if (selected is not null)
+        {
+            CopyDestination = Path.Combine(
+                selected,
+                Path.GetFileName(CopyDestination ?? "") is { Length: > 0 } name ? name : ProjectName);
+        }
+    }
+
+    [RelayCommand]
     private async Task ConfirmCopy()
     {
         if (_project is null || CopyDestination is not { Length: > 0 } destination)
@@ -1305,12 +1320,21 @@ public sealed partial class ProjectDetailViewModel(
                 inlines.Add(new Run(format[position..match.Index]));
             }
 
-            var (text, bold) = args[int.Parse(match.Groups[1].Value)];
+            var index = match.Groups[1].Value[0] - '0';
 
-            inlines.Add(new Run(text)
+            if (index >= args.Length)
             {
-                FontWeight = bold ? FontWeights.Bold : FontWeights.Normal,
-            });
+                inlines.Add(new Run(match.Value));
+            }
+            else
+            {
+                var (text, bold) = args[index];
+
+                inlines.Add(new Run(text)
+                {
+                    FontWeight = bold ? FontWeights.Bold : FontWeights.Normal,
+                });
+            }
 
             position = match.Index + match.Length;
         }

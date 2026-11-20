@@ -121,14 +121,14 @@
                             Grid.Column="1"
                             Margin="{StaticResource Gap.Inline}"
                             PlaceholderText="127.0.0.1"
-                            Text="{Binding ProxyHost, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{Binding ProxyHost, UpdateSourceTrigger=PropertyChanged, Delay=500}" />
 
                         <ui:TextBox
                             Grid.Column="2"
                             Width="96"
                             Margin="{StaticResource Gap.Inline}"
                             PlaceholderText="10808"
-                            Text="{Binding ProxyPort, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{Binding ProxyPort, UpdateSourceTrigger=PropertyChanged, Delay=500}" />
                     </Grid>
                 </StackPanel>
             </ui:Card>
@@ -141,17 +141,19 @@
                     <DockPanel Style="{StaticResource BrowseRow}">
                         <ui:Button
                             DockPanel.Dock="Right"
-                            Click="OnBrowseUnityHubClick"
+                            Command="{Binding RefreshUnityHubCommand}"
+                            Content="{markup:Tr Settings.UnityHubRefresh}"
+                            Icon="{ui:SymbolIcon ArrowClockwise24}"
+                            Style="{StaticResource BrowseButton}" />
+                        <ui:Button
+                            DockPanel.Dock="Right"
+                            Command="{Binding BrowseUnityHubCommand}"
                             Content="{markup:Tr Settings.Browse}"
                             Style="{StaticResource BrowseButton}" />
                         <ui:TextBox
                             Style="{StaticResource PathTextBox}"
                             Text="{Binding Shared.ActualUnityHubPath, Mode=OneWay}" />
                     </DockPanel>
-                    <TextBlock
-                        Margin="{StaticResource Gap.Small}"
-                        Style="{StaticResource Caption}"
-                        Text="{markup:Tr Settings.UnityHubHint}" />
 
                     <HeaderedContentControl Margin="{StaticResource Gap.Large}" Style="{StaticResource FieldRow}">
                         <HeaderedContentControl.Header>
@@ -171,14 +173,22 @@
                             SelectedValuePath="Value" />
                     </HeaderedContentControl>
 
-                    <TextBlock
-                        Margin="{StaticResource Gap.Large}"
-                        Style="{StaticResource SettingLabel}"
-                        Text="{markup:Tr Settings.UnityEditors}" />
-                    <TextBlock
-                        Margin="{StaticResource Gap.Tight}"
-                        Style="{StaticResource Caption}"
-                        Text="{markup:Tr Settings.UnityEditorsHint}" />
+                    <HeaderedContentControl Margin="{StaticResource Gap.Large}" Style="{StaticResource FieldRow}">
+                        <HeaderedContentControl.Header>
+                            <StackPanel>
+                                <TextBlock Text="{markup:Tr Settings.UnityEditors}" />
+                                <TextBlock
+                                    Margin="{StaticResource Gap.Tight}"
+                                    Style="{StaticResource Caption}"
+                                    Text="{markup:Tr Settings.UnityEditorsHint}" />
+                            </StackPanel>
+                        </HeaderedContentControl.Header>
+                        <ui:Button
+                            MinWidth="120"
+                            Appearance="Secondary"
+                            Command="{Binding BrowseUnityEditorCommand}"
+                            Content="{markup:Tr Settings.UnityEditorsAdd}" />
+                    </HeaderedContentControl>
 
                     <TextBlock
                         Margin="{StaticResource Gap.Small}"
@@ -189,47 +199,42 @@
                     <ItemsControl Margin="{StaticResource Gap.Small}" ItemsSource="{Binding ManualUnityEditors}">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
-                                <Grid Margin="0,4">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
+                                <ui:Card Style="{StaticResource RowCard}">
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
 
-                                    <TextBlock
-                                        Grid.Column="0"
-                                        VerticalAlignment="Center"
-                                        Text="{Binding Display}"
-                                        TextWrapping="Wrap">
-                                        <TextBlock.Style>
-                                            <Style BasedOn="{StaticResource Mono}" TargetType="TextBlock">
-                                                <Style.Triggers>
-                                                    <DataTrigger Binding="{Binding IsMissing}" Value="True">
-                                                        <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
-                                                        <Setter Property="TextDecorations" Value="Strikethrough" />
-                                                    </DataTrigger>
-                                                </Style.Triggers>
-                                            </Style>
-                                        </TextBlock.Style>
-                                    </TextBlock>
+                                        <TextBlock
+                                            Grid.Column="0"
+                                            VerticalAlignment="Center"
+                                            Text="{Binding Display}"
+                                            TextWrapping="Wrap">
+                                            <TextBlock.Style>
+                                                <Style BasedOn="{StaticResource Mono}" TargetType="TextBlock">
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding IsMissing}" Value="True">
+                                                            <Setter Property="Foreground" Value="{DynamicResource SystemFillColorCautionBrush}" />
+                                                            <Setter Property="TextDecorations" Value="Strikethrough" />
+                                                        </DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </TextBlock.Style>
+                                        </TextBlock>
 
-                                    <ui:Button
-                                        Grid.Column="1"
-                                        Appearance="Secondary"
-                                        Command="{markup:RowCommand RemoveUnityEditorCommand}"
-                                        CommandParameter="{Binding}"
-                                        Content="{markup:Tr Repositories.Remove}"
-                                        Style="{StaticResource RowButton}" />
-                                </Grid>
+                                        <ui:Button
+                                            Grid.Column="1"
+                                            Appearance="Secondary"
+                                            Command="{markup:RowCommand RemoveUnityEditorCommand}"
+                                            CommandParameter="{Binding}"
+                                            Content="{markup:Tr Repositories.Remove}"
+                                            Style="{StaticResource RowButton}" />
+                                    </Grid>
+                                </ui:Card>
                             </DataTemplate>
                         </ItemsControl.ItemTemplate>
                     </ItemsControl>
-
-                    <ui:Button
-                        Margin="{StaticResource Gap.Row}"
-                        HorizontalAlignment="Left"
-                        Appearance="Secondary"
-                        Click="OnAddUnityEditorClick"
-                        Content="{markup:Tr Settings.UnityEditorsAdd}" />
 
                     <TextBlock
                         Margin="{StaticResource Gap.Large}"
@@ -239,7 +244,7 @@
                         MinHeight="60"
                         Margin="{StaticResource Gap.Small}"
                         AcceptsReturn="True"
-                        Text="{Binding DefaultUnityArguments, UpdateSourceTrigger=PropertyChanged}"
+                        Text="{Binding DefaultUnityArguments, UpdateSourceTrigger=PropertyChanged, Delay=500}"
                         TextWrapping="Wrap"
                         VerticalScrollBarVisibility="Auto" />
                     <TextBlock
@@ -258,17 +263,13 @@
                     <DockPanel Style="{StaticResource BrowseRow}">
                         <ui:Button
                             DockPanel.Dock="Right"
-                            Click="OnBrowseProjectDirectoryClick"
+                            Command="{Binding BrowseProjectDirectoryCommand}"
                             Content="{markup:Tr Settings.Browse}"
                             Style="{StaticResource BrowseButton}" />
                         <ui:TextBox
                             Style="{StaticResource PathTextBox}"
                             Text="{Binding Shared.ActualProjectDirectory, Mode=OneWay}" />
                     </DockPanel>
-                    <TextBlock
-                        Margin="{StaticResource Gap.Small}"
-                        Style="{StaticResource Caption}"
-                        Text="{markup:Tr Settings.ProjectPathHint}" />
 
                     <HeaderedContentControl Margin="{StaticResource Gap.Large}" Style="{StaticResource FieldRow}">
                         <HeaderedContentControl.Header>
@@ -296,46 +297,30 @@
                             Style="{StaticResource BrowseButton}" />
                         <ui:Button
                             DockPanel.Dock="Right"
-                            Click="OnBrowseCacheDirectoryClick"
+                            Command="{Binding BrowseCacheDirectoryCommand}"
                             Content="{markup:Tr Settings.Browse}"
                             Style="{StaticResource BrowseButton}" />
                         <ui:TextBox
                             Style="{StaticResource PathTextBox}"
                             Text="{Binding Cache.Current, Mode=OneWay}" />
                     </DockPanel>
-                    <TextBlock
-                        Margin="{StaticResource Gap.Small}"
-                        Style="{StaticResource Caption}"
-                        Text="{markup:Tr Settings.CachePathHint}" />
 
-                    <StackPanel
-                        Margin="{StaticResource Gap.Row}"
-                        HorizontalAlignment="Left"
-                        Orientation="Horizontal">
-                        <ui:ProgressRing
-                            Style="{StaticResource BusyRing}"
-                            Visibility="{Binding Cache.IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                    </StackPanel>
-
-                    <TextBlock
-                        Margin="{StaticResource Gap.Large}"
-                        Style="{StaticResource SettingLabel}"
-                        Text="{markup:Tr Settings.Cache}" />
-                    <TextBlock
-                        Margin="{StaticResource Gap.Tight}"
-                        Style="{StaticResource Caption}"
-                        Text="{markup:Tr Settings.Cache.Hint}" />
-
-                    <StackPanel Margin="{StaticResource Gap.Row}" HorizontalAlignment="Left" Orientation="Horizontal">
+                    <HeaderedContentControl Margin="{StaticResource Gap.Large}" Style="{StaticResource FieldRow}">
+                        <HeaderedContentControl.Header>
+                            <StackPanel>
+                                <TextBlock Text="{markup:Tr Settings.Cache}" />
+                                <TextBlock
+                                    Margin="{StaticResource Gap.Tight}"
+                                    Style="{StaticResource Caption}"
+                                    Text="{markup:Tr Settings.Cache.Hint}" />
+                            </StackPanel>
+                        </HeaderedContentControl.Header>
                         <ui:Button
+                            MinWidth="120"
                             Appearance="Secondary"
                             Command="{Binding Cache.ClearCommand}"
                             Content="{markup:Tr Settings.Cache.Clear}" />
-                        <TextBlock
-                            Margin="{StaticResource Gap.Inline}"
-                            VerticalAlignment="Center"
-                            Text="{Binding Cache.Size}" />
-                    </StackPanel>
+                    </HeaderedContentControl>
                 </StackPanel>
             </ui:Card>
 
@@ -374,7 +359,7 @@
                             Style="{StaticResource BrowseButton}" />
                         <ui:Button
                             DockPanel.Dock="Right"
-                            Click="OnBrowseBackupDirectoryClick"
+                            Command="{Binding BrowseBackupDirectoryCommand}"
                             Content="{markup:Tr Settings.Browse}"
                             Style="{StaticResource BrowseButton}" />
                         <ui:TextBox
@@ -430,12 +415,6 @@
                         <ui:ToggleSwitch IsChecked="{Binding Shared.UseForVccProtocol}" />
                     </HeaderedContentControl>
 
-                    <TextBlock
-                        Margin="{StaticResource Gap.Small}"
-                        Style="{StaticResource Mono}"
-                        Text="{Binding ActualProtocolCommand}"
-                        Visibility="{Binding HasProtocolCommand, Converter={StaticResource BooleanToVisibilityConverter}}" />
-
                     <HeaderedContentControl Style="{StaticResource FieldRow}">
                         <HeaderedContentControl.Header>
                             <StackPanel>
@@ -448,12 +427,6 @@
                         </HeaderedContentControl.Header>
                         <ui:ToggleSwitch IsChecked="{Binding Shared.UseForAlcomTemplateFiles}" />
                     </HeaderedContentControl>
-
-                    <TextBlock
-                        Margin="{StaticResource Gap.Small}"
-                        Style="{StaticResource Mono}"
-                        Text="{Binding ActualTemplateProgId}"
-                        Visibility="{Binding HasTemplateProgId, Converter={StaticResource BooleanToVisibilityConverter}}" />
                 </StackPanel>
             </ui:Card>
 
@@ -492,7 +465,7 @@
                         <ui:TextBox
                             Width="220"
                             MaxLength="3"
-                            Text="{Binding LogsRetentionCount, UpdateSourceTrigger=PropertyChanged}" />
+                            Text="{Binding LogsRetentionCount, UpdateSourceTrigger=PropertyChanged, Delay=500}" />
                     </HeaderedContentControl>
                 </StackPanel>
             </ui:Card>
@@ -566,12 +539,13 @@
                                     Margin="{StaticResource Gap.Tight}"
                                     Style="{StaticResource Mono}"
                                     Text="{Binding DataDirectory}" />
-                                <TextBlock
-                                    Margin="{StaticResource Gap.Tight}"
-                                    Style="{StaticResource Caption}"
-                                    Text="{markup:Tr Settings.DataDirectoryHint}" />
                             </StackPanel>
                         </HeaderedContentControl.Header>
+                        <ui:Button
+                            MinWidth="120"
+                            Appearance="Secondary"
+                            Command="{Binding OpenDataDirectoryCommand}"
+                            Content="{markup:Tr Settings.OpenDataDirectory}" />
                     </HeaderedContentControl>
 
                     <HeaderedContentControl Style="{StaticResource FieldRow}">

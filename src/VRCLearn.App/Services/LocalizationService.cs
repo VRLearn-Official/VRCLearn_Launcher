@@ -35,8 +35,19 @@ public sealed class LocalizationService : INotifyPropertyChanged
 
     public string this[string key] => _strings.TryGetValue(key, out var value) ? value : key;
 
-    public string Format(string key, params object?[] arguments) =>
-        string.Format(CultureInfo.CurrentCulture, this[key], arguments);
+    public string Format(string key, params object?[] arguments)
+    {
+        var format = this[key];
+
+        try
+        {
+            return string.Format(CultureInfo.CurrentCulture, format, arguments);
+        }
+        catch (FormatException)
+        {
+            return format;
+        }
+    }
 
     public string FormatDiskSpace(InsufficientDiskSpaceException exception) =>
         Format(

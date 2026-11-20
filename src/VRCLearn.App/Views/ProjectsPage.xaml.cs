@@ -4,7 +4,6 @@ using System.Windows.Controls.Primitives;
 using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Threading;
-using VRCLearn.App.Services;
 using VRCLearn.App.ViewModels;
 
 namespace VRCLearn.App.Views;
@@ -37,21 +36,6 @@ public partial class ProjectsPage : UserControl
         else
         {
             _unityTimer.Stop();
-        }
-    }
-
-    private async void OnAddClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not ProjectsViewModel viewModel)
-        {
-            return;
-        }
-
-        var selected = DialogService.Instance.PickFolder(LocalizationService.Instance["Projects.PickerTitle"]);
-
-        if (selected is not null)
-        {
-            await viewModel.AddAsync(selected);
         }
     }
 

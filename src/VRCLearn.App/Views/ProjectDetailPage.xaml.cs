@@ -1,5 +1,4 @@
-﻿using System.IO;
-using System.Windows;
+﻿using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Media.Animation;
 using System.Windows.Threading;
@@ -113,24 +112,4 @@ public partial class ProjectDetailPage : UserControl
         }
     }
 
-    private void OnBrowseCopyDestinationClick(object sender, RoutedEventArgs e)
-    {
-        if (DataContext is not ProjectDetailViewModel viewModel)
-        {
-            return;
-        }
-
-        var selected = DialogService.Instance.PickFolder(
-            LocalizationService.Instance["ProjectDetail.Copy.Title"],
-            Path.GetDirectoryName(viewModel.CopyDestination ?? "") ?? "");
-
-        if (selected is not null)
-        {
-            viewModel.CopyDestination = Path.Combine(
-                selected,
-                Path.GetFileName(viewModel.CopyDestination ?? "") is { Length: > 0 } name
-                    ? name
-                    : viewModel.ProjectName);
-        }
-    }
 }

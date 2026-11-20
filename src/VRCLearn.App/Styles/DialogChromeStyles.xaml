@@ -8,7 +8,6 @@
     <Style x:Key="PluginWindowStyle" TargetType="{x:Type ui:FluentWindow}" BasedOn="{StaticResource {x:Type ui:FluentWindow}}">
         <Setter Property="ResizeMode" Value="CanResize" />
         <Setter Property="ShowInTaskbar" Value="True" />
-        <Setter Property="WindowBackdropType" Value="Mica" />
         <Setter Property="ExtendsContentIntoTitleBar" Value="True" />
         <Setter Property="MinWidth" Value="360" />
         <Setter Property="MinHeight" Value="260" />

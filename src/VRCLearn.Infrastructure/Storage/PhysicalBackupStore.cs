@@ -23,9 +23,12 @@ public sealed class PhysicalBackupStore(
     {
         lock (_gate)
         {
-            return [.. configs.Current.BackupRecords.OrderByDescending(x => x.CreatedAt)];
+            return [.. configs.Current.BackupRecords.Where(x => IsOurs(x.FilePath)).OrderByDescending(x => x.CreatedAt)];
         }
     }
+
+    private bool IsOurs(string absolutePath) =>
+        !string.IsNullOrWhiteSpace(absolutePath) && PathUtil.IsUnder(absolutePath, Directory);
 
     public async Task<BackupRecord> CreateAsync(
         BackupCreateRequest request,
@@ -101,12 +104,17 @@ public sealed class PhysicalBackupStore(
     }
 
     public Stream? OpenOrNull(string absolutePath) =>
-        !string.IsNullOrWhiteSpace(absolutePath) && File.Exists(absolutePath)
+        IsOurs(absolutePath) && File.Exists(absolutePath)
             ? File.OpenRead(absolutePath)
             : null;
 
     public void Delete(string absolutePath)
     {
+        if (!IsOurs(absolutePath))
+        {
+            return;
+        }
+
         Recycle(absolutePath);
 
         lock (_gate)

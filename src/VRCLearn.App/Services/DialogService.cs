@@ -38,11 +38,7 @@ public sealed class DialogService
         _services = services;
         _animations = animations;
         _logger = logger;
-
-        Instance = this;
     }
-
-    public static DialogService Instance { get; private set; } = null!;
 
     /// <param name="preset">非空表示从模板行点进来、已预选好。</param>
     /// <returns>是否真的创建了。</returns>
@@ -177,7 +173,8 @@ public sealed class DialogService
         var viewModel = new ResourceEditViewModel(
             existing,
             store.Current.Tags,
-            _services.GetRequiredService<LocalizationService>());
+            _services.GetRequiredService<LocalizationService>(),
+            this);
 
         if (existing is not null)
         {

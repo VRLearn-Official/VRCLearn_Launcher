@@ -14,7 +14,7 @@
                 <ui:Button
                     Style="{StaticResource ToolbarButton}"
                     Appearance="Secondary"
-                    Click="OnImportClick"
+                    Command="{Binding ImportTemplatesCommand}"
                     Content="{markup:Tr Templates.Import}" />
                 <ui:Button
                     Style="{StaticResource ToolbarButton}"
@@ -112,7 +112,8 @@
                                         <ui:Button
                                             Style="{StaticResource RowButton}"
                                             Appearance="Secondary"
-                                            Click="OnExportClick"
+                                            Command="{markup:RowCommand ExportTemplateCommand}"
+                                            CommandParameter="{Binding}"
                                             Content="{markup:Tr Templates.Export}"
                                             Visibility="{Binding IsOwn, Converter={StaticResource BooleanToVisibilityConverter}}" />
                                         <ui:Button
@@ -253,7 +254,7 @@
                         Margin="{StaticResource Gap.Small}"
                         HorizontalAlignment="Left"
                         Appearance="Secondary"
-                        Click="OnAddUnityPackageClick"
+                        Command="{Binding AddEditorUnityPackagesCommand}"
                         Content="{markup:Tr Templates.Editor.AddUnityPackage}" />
 
                     <StackPanel Margin="{StaticResource Gap.Large}" Orientation="Horizontal">

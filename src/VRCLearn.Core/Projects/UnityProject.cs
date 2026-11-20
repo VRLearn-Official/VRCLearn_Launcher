@@ -73,14 +73,16 @@ public sealed class UnityProject
         var upmManifest = await UpmManifest.LoadAsync(io, cancellationToken).ConfigureAwait(false);
         var (unityVersion, unityRevision) = await ReadUnityVersionAsync(io, cancellationToken).ConfigureAwait(false);
 
-        var installedPackages = new Dictionary<string, PackageManifest>();
+        var installedPackages = new Dictionary<string, PackageManifest>(StringComparer.OrdinalIgnoreCase);
         var unlockedPackages = new List<(string Name, PackageManifest? Manifest)>();
 
         foreach (var name in io.ListDirectories(PackagesDirectory))
         {
             var parsed = await TryReadPackageAsync(io, name, cancellationToken).ConfigureAwait(false);
 
-            if (parsed is not null && parsed.Name == name && manifest.GetLocked(parsed.Name) is not null)
+            if (parsed is not null
+                && string.Equals(parsed.Name, name, StringComparison.OrdinalIgnoreCase)
+                && manifest.GetLocked(parsed.Name) is not null)
             {
                 installedPackages[name] = parsed;
             }

@@ -1,3 +1,4 @@
+using System.IO.Compression;
 using System.Security.Cryptography;
 using System.Text;
 using VRCLearn.Core.Archives;
@@ -55,7 +56,15 @@ public sealed class PackageInstaller(IFileIo environment, IVpmHttpClient? http) 
                 .ConfigureAwait(false)
                 ?? throw new InvalidDataException($"缓存里的 {zipPath} 读不出来了");
 
-            await SafeZipExtractor.ExtractAsync(zip, project, destination, cancellationToken).ConfigureAwait(false);
+            using var archive = new ZipArchive(zip, ZipArchiveMode.Read);
+
+            var plan = SafeZipExtractor.Plan(archive, null);
+
+            DiskSpace.Ensure(project.RootDirectory, plan.UncompressedBytes);
+
+            await SafeZipExtractor
+                .ExtractAsync(plan, project, destination, cancellationToken)
+                .ConfigureAwait(false);
         }
         catch
         {

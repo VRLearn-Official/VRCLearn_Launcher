@@ -260,7 +260,7 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
             return;
         }
 
-        var status = await WithBusyAsync(() => _progress.RunAsync(
+        var status = await WithBusyOrThrowAsync(() => _progress.RunAsync(
             _localization["Progress.Delete"],
             reporter => Task.Run(() => _service.RemoveFromDisk(project.ProjectPath, reporter))));
 
@@ -339,6 +339,17 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
 
     [RelayCommand]
     private void NewProject() => _dialogs.ShowNewProject(null);
+
+    [RelayCommand]
+    private async Task AddProject()
+    {
+        var selected = _dialogs.PickFolder(_localization["Projects.PickerTitle"]);
+
+        if (selected is not null)
+        {
+            await AddAsync(selected);
+        }
+    }
 
     [RelayCommand]
     private async Task LaunchUnity(ProjectItemViewModel project)
@@ -456,13 +467,8 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
         await ReloadAsync();
     }
 
-    [ObservableProperty]
-    private bool _isReloading;
-
     public async Task ReloadAsync()
     {
-        IsReloading = true;
-
         await _reloadGate.WaitAsync();
 
         try
@@ -472,7 +478,6 @@ public sealed partial class ProjectsViewModel : PageViewModelBase, IPageViewMode
         finally
         {
             _reloadGate.Release();
-            IsReloading = false;
         }
     }
 

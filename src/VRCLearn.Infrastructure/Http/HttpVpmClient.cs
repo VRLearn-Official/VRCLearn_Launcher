@@ -39,7 +39,19 @@ public sealed class HttpVpmClient : IVpmHttpClient
             .SendAsync(_client, request, cancellationToken)
             .ConfigureAwait(false);
 
-        return await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var stream = await response.Content
+                .ReadAsStreamAsync(cancellationToken)
+                .ConfigureAwait(false);
+
+            return new ResponseStream(stream, response);
+        }
+        catch
+        {
+            response.Dispose();
+            throw;
+        }
     }
 
     public async Task<HttpFetchResult?> GetWithETagAsync(
@@ -70,7 +82,7 @@ public sealed class HttpVpmClient : IVpmHttpClient
             response.EnsureSuccessStatusCode();
 
             var stream = await response.Content.ReadAsStreamAsync(cancellationToken).ConfigureAwait(false);
-            return new HttpFetchResult(stream, ReadETag(response));
+            return new HttpFetchResult(new ResponseStream(stream, response), ReadETag(response));
         }
         catch
         {

@@ -61,6 +61,7 @@ public static class SafeZipExtractor
         }
 
         var entries = new List<PlannedZipEntry>();
+        var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var fileCount = 0;
         long uncompressedBytes = 0;
 
@@ -90,6 +91,11 @@ public static class SafeZipExtractor
             else
             {
                 continue;
+            }
+
+            if (relativePath.Length > 0 && !paths.Add(relativePath))
+            {
+                throw new InvalidDataException($"duplicate zip entry: {entry.FullName}");
             }
 
             entries.Add(new PlannedZipEntry(entry, relativePath, isDirectory));

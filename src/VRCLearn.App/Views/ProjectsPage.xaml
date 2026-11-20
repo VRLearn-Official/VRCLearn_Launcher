@@ -54,15 +54,15 @@
                     VerticalAlignment="Center"
                     Orientation="Horizontal">
                     <ui:Button
-                        Style="{StaticResource RefreshToolbarButton}"
-                        Tag="{Binding IsReloading}"
+                        Style="{StaticResource ToolbarButton}"
                         Appearance="Secondary"
                         Command="{Binding RefreshCommand}"
-                        Content="{markup:Tr Projects.Refresh}" />
+                        Content="{markup:Tr Projects.Refresh}"
+                        Icon="{ui:SymbolIcon ArrowClockwise24}" />
                     <ui:Button
                         Style="{StaticResource ToolbarButton}"
                         Appearance="Secondary"
-                        Click="OnAddClick"
+                        Command="{Binding AddProjectCommand}"
                         Content="{markup:Tr Projects.Add}" />
                     <ui:Button
                         Margin="0"

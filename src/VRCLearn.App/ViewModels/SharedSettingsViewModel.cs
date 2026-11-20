@@ -138,6 +138,8 @@ public sealed partial class SharedSettingsViewModel : ObservableObject
     public string ActualUnityHubPath =>
         _hub.ExecutablePath is { } path ? path : _localization["Settings.UnityHubNotFound"];
 
+    public void RefreshUnityHubPath() => OnPropertyChanged(nameof(ActualUnityHubPath));
+
     [ObservableProperty]
     private string _projectDirectory;
 

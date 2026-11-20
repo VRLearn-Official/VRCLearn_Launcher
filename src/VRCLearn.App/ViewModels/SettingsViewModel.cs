@@ -27,7 +27,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     private readonly MutableProxy _proxy;
     private readonly ConfigBackupService _configBackup;
     private readonly ILauncherSettingsStore _settings;
-    private readonly WindowsProtocolRegistration _protocols;
     private readonly SetupViewModel _setup;
     private readonly NavigationService _navigation;
     private readonly IUnityEditorLocator _editors;
@@ -43,6 +42,8 @@ public sealed partial class SettingsViewModel : ObservableObject
 
     private bool _configBusy;
 
+    private string[] _editorPaths = [];
+
     public SettingsViewModel(
         AppPaths paths,
         GuiConfigStore store,
@@ -53,7 +54,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         BackupDirectoryViewModel backups,
         ConfigBackupService configBackup,
         ILauncherSettingsStore settings,
-        WindowsProtocolRegistration protocols,
         SetupViewModel setup,
         UpdateViewModel update,
         AnimationService animations,
@@ -80,7 +80,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         Backups = backups;
         _configBackup = configBackup;
         _settings = settings;
-        _protocols = protocols;
         _setup = setup;
         Update = update;
         _animations = animations;
@@ -89,7 +88,6 @@ public sealed partial class SettingsViewModel : ObservableObject
 
         Shared = shared;
 
-        _protocols.Applied += (_, _) => RefreshProtocolState();
         _settings.Changed += OnSettingsChanged;
 
         _buttonColors = LocalizedOptions.ButtonColors(localization);
@@ -114,8 +112,6 @@ public sealed partial class SettingsViewModel : ObservableObject
         _selectedLogLevel = _store.Current.LogsLevel;
         _logsRetentionCount = _store.Current.LogsRetentionCount;
         _showPrereleasePackages = _settings.Current.ShowPrereleasePackages;
-        _actualProtocolCommand = WindowsProtocolRegistration.Describe(WindowsProtocolRegistration.VccScheme);
-        _actualTemplateProgId = WindowsProtocolRegistration.DescribeFileType();
         _defaultUnityArguments = string.Join(Environment.NewLine, _store.Current.DefaultUnityArguments);
         _unityHubAccessMethod = HubAccessMethods.Any(x => x.Value == _store.Current.UnityHubAccessMethod)
             ? _store.Current.UnityHubAccessMethod
@@ -138,6 +134,68 @@ public sealed partial class SettingsViewModel : ObservableObject
     public IReadOnlyList<Option> BackupFormats => _backupFormats;
 
     public string DataDirectory => _paths.Root;
+
+    [RelayCommand]
+    private void OpenDataDirectory() => ShellLauncher.OpenFolder(_paths.Root);
+
+    [RelayCommand]
+    private void BrowseUnityEditor()
+    {
+        var selected = _dialogs.PickFile(
+            _localization["Settings.UnityEditors"],
+            "Unity.exe|Unity.exe|*.exe|*.*");
+
+        if (selected is not null)
+        {
+            AddUnityEditor(selected);
+        }
+    }
+
+    [RelayCommand]
+    private void BrowseUnityHub()
+    {
+        var selected = _dialogs.PickFile(
+            _localization["Settings.UnityHub"],
+            "Unity Hub.exe|Unity Hub.exe|*.exe|*.*");
+
+        if (selected is not null)
+        {
+            Shared.UnityHubPath = selected;
+        }
+    }
+
+    [RelayCommand]
+    private void BrowseProjectDirectory()
+    {
+        var selected = _dialogs.PickFolder(_localization["Settings.ProjectPath"], Shared.ActualProjectDirectory);
+
+        if (selected is not null)
+        {
+            Shared.ProjectDirectory = selected;
+        }
+    }
+
+    [RelayCommand]
+    private async Task BrowseBackupDirectory()
+    {
+        var selected = _dialogs.PickFolder(_localization["Settings.BackupDirectory"], Backups.Current);
+
+        if (selected is not null)
+        {
+            await Backups.ChangeAsync(selected);
+        }
+    }
+
+    [RelayCommand]
+    private async Task BrowseCacheDirectory()
+    {
+        var selected = _dialogs.PickFolder(_localization["Settings.CachePath"], Cache.Current);
+
+        if (selected is not null)
+        {
+            await Cache.ChangeAsync(selected);
+        }
+    }
 
     // ---- 包缓存 ----
 
@@ -196,6 +254,13 @@ public sealed partial class SettingsViewModel : ObservableObject
     }
 
     [RelayCommand]
+    private async Task RefreshUnityHub()
+    {
+        await _editors.RefreshFromHubAsync(CancellationToken.None);
+        Shared.RefreshUnityHubPath();
+    }
+
+    [RelayCommand]
     private void RemoveUnityEditor(UnityEditorItem item)
     {
         _settings.Current.UnityEditors.RemoveAll(x => string.Equals(x, item.Path, StringComparison.OrdinalIgnoreCase));
@@ -214,6 +279,8 @@ public sealed partial class SettingsViewModel : ObservableObject
         {
             ManualUnityEditors.Add(new UnityEditorItem(_editors.Probe(path), path));
         }
+
+        _editorPaths = [.. _settings.Current.UnityEditors];
 
         OnPropertyChanged(nameof(HasNoManualUnityEditors));
     }
@@ -313,22 +380,6 @@ public sealed partial class SettingsViewModel : ObservableObject
 
         _logger.LogInformation("备份压缩格式：{Format}", value);
     }
-
-    [ObservableProperty]
-    private string _actualProtocolCommand = "";
-
-    public bool HasProtocolCommand => ActualProtocolCommand.Length > 0;
-
-    partial void OnActualProtocolCommandChanged(string value) =>
-        OnPropertyChanged(nameof(HasProtocolCommand));
-
-    [ObservableProperty]
-    private string _actualTemplateProgId = "";
-
-    public bool HasTemplateProgId => ActualTemplateProgId.Length > 0;
-
-    partial void OnActualTemplateProgIdChanged(string value) =>
-        OnPropertyChanged(nameof(HasTemplateProgId));
 
     public UpdateViewModel Update { get; }
 
@@ -516,12 +567,6 @@ public sealed partial class SettingsViewModel : ObservableObject
     [RelayCommand]
     private static void OpenRepository() => ShellLauncher.OpenUrl(Links.Repository);
 
-    private void RefreshProtocolState()
-    {
-        ActualProtocolCommand = WindowsProtocolRegistration.Describe(WindowsProtocolRegistration.VccScheme);
-        ActualTemplateProgId = WindowsProtocolRegistration.DescribeFileType();
-    }
-
     private void OnSettingsChanged(object? sender, EventArgs e)
     {
         var dispatcher = Application.Current?.Dispatcher;
@@ -533,7 +578,11 @@ public sealed partial class SettingsViewModel : ObservableObject
             return;
         }
 
-        ReloadUnityEditors();
+        if (!_settings.Current.UnityEditors.SequenceEqual(_editorPaths, StringComparer.OrdinalIgnoreCase))
+        {
+            ReloadUnityEditors();
+        }
+
         Backups.Refresh();
     }
 

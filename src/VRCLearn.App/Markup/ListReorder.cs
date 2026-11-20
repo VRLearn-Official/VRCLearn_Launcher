@@ -195,14 +195,15 @@ public static class ListReorder
                 return;
             }
 
-            if (_owner.ItemContainerGenerator.ItemFromContainer(container) is not RepositoryItemViewModel item)
+            if (_owner.DataContext is not IReorderableList list
+                || _owner.ItemContainerGenerator.ItemFromContainer(container) is not { } item)
             {
                 return;
             }
 
             _container = container;
             _item = item;
-            _index = item.Index;
+            _index = list.IndexOf(item);
             _start = e.GetPosition(_owner);
             _grab = e.GetPosition(container);
 
@@ -457,31 +458,33 @@ public static class ListReorder
         private List<Row> RealizedRows()
         {
             var rows = new List<Row>();
-            if (_panel is not { } panel)
+            if (_panel is not { } panel || _owner.DataContext is not IReorderableList list)
             {
                 return rows;
             }
 
             foreach (var container in panel.Children.OfType<FrameworkElement>())
             {
-                if (_owner.ItemContainerGenerator.ItemFromContainer(container) is not RepositoryItemViewModel item)
+                if (_owner.ItemContainerGenerator.ItemFromContainer(container) is not { } item)
                 {
                     continue;
                 }
 
                 if (!_rows.TryGetValue(container, out var row))
                 {
+                    var index = list.IndexOf(item);
+
                     row = new Row
                     {
                         Container = container,
                         Transform = new TranslateTransform(),
                         Original = container.RenderTransform,
-                        Index = item.Index,
+                        Index = index,
                     };
                     _rows.Add(container, row);
                     container.RenderTransform = row.Transform;
 
-                    if (item.Index == _index)
+                    if (index == _index)
                     {
                         container.Visibility = Visibility.Hidden;
                     }

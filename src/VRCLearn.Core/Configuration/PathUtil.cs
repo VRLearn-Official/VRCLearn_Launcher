@@ -33,17 +33,14 @@ public static class PathUtil
     /// <summary>CON、NUL、COM1 之类的设备名，带扩展名也算。</summary>
     public static bool IsReservedName(string name) => ReservedNames.Contains(name.Split('.')[0]);
 
-    public static bool IsSafePathSegment(string? segment, bool allowColon = false) =>
+    public static bool IsSafePathSegment(string? segment) =>
         !string.IsNullOrEmpty(segment)
         && segment is not "." and not ".."
-        && segment.IndexOfAny(allowColon ? InvalidCharsAllowingColon : InvalidChars) < 0
+        && segment.IndexOfAny(InvalidChars) < 0
         && segment.TrimEnd('.', ' ') == segment
         && !IsReservedName(segment);
 
     private static readonly char[] InvalidChars = Path.GetInvalidFileNameChars();
-
-    private static readonly char[] InvalidCharsAllowingColon =
-        [.. InvalidChars.Where(x => x != ':')];
 
     private static readonly HashSet<string> ReservedNames = new(StringComparer.OrdinalIgnoreCase)
     {

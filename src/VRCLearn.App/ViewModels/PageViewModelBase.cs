@@ -37,7 +37,7 @@ public abstract partial class PageViewModelBase(ToastService toasts) : Observabl
         }
     }
 
-    protected async Task<T> WithBusyAsync<T>(Func<Task<T>> work)
+    protected async Task<T> WithBusyOrThrowAsync<T>(Func<Task<T>> work)
     {
         IsBusy = true;
 

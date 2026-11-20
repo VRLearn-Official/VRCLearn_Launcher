@@ -47,14 +47,8 @@ chinesesimplified.CloseLauncherFailed=未能自动关闭 VRCLearn Launcher，请
 [Tasks]
 Name: "desktopicon"; Description: "{cm:CreateDesktopIcon}"; GroupDescription: "{cm:AdditionalIcons}"
 
-[InstallDelete]
-Type: filesandordirs; Name: "{app}\*"
-
 [Files]
 Source: "..\artifacts\publish\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-
-[InstallDelete]
-Type: filesandordirs; Name: "{app}\Plugins"
 
 [Icons]
 Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
@@ -167,8 +161,12 @@ begin
   Result := '';
   if CheckForMutexes('{#MyAppMutex}') then
   begin
-    Log('VRCLearn Launcher is still running.');
-    Result := CustomMessage('CloseLauncher');
+    RequestLauncherClose();
+    if CheckForMutexes('{#MyAppMutex}') then
+    begin
+      Log('VRCLearn Launcher is still running.');
+      Result := CustomMessage('CloseLauncher');
+    end;
   end;
 end;
 

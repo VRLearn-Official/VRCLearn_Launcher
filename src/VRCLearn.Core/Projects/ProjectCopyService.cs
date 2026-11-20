@@ -40,6 +40,8 @@ public sealed class ProjectCopyService(IFileIoFactory fileIo)
 
             if (source is null)
             {
+                progress?.Report(new FileProgress(total, ++done));
+
                 continue;
             }
 

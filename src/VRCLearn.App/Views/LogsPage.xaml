@@ -29,15 +29,15 @@
                     IsChecked="{Binding AutoRefresh}" />
 
                 <ui:Button
-                    Style="{StaticResource RefreshToolbarButton}"
-                    Tag="{Binding RefreshCommand.IsRunning}"
+                    Style="{StaticResource ToolbarButton}"
                     Appearance="Secondary"
                     Command="{Binding RefreshCommand}"
-                    Content="{markup:Tr Logs.Refresh}" />
+                    Content="{markup:Tr Logs.Refresh}"
+                    Icon="{ui:SymbolIcon ArrowClockwise24}" />
                 <ui:Button
                     Style="{StaticResource ToolbarButton}"
                     Appearance="Secondary"
-                    Click="OnExportClick"
+                    Command="{Binding ExportLogCommand}"
                     Content="{markup:Tr Logs.Export}" />
                 <ui:Button
                     Style="{StaticResource ToolbarButton}"
