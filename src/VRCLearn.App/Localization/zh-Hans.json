@@ -654,7 +654,7 @@
   "Plugins.UpdateProgressTitle": "正在更新插件",
   "Plugins.UpdateProgress": "正在下载并安装「{0}」{1}…",
   "Plugins.UpdateMessage": "插件「{0}」有新版本：{1} → {2}。现在下载并安装？",
-  "Plugins.UpdateMessageRunning": "插件「{0}」正在运行，更新会关闭它：{1} → {2}。现在下载并安装？",
+  "Plugins.UpdateMessageRunning": "插件「{0}」正在运行，更新会关闭它，重启程序后才能再次打开：{1} → {2}。现在下载并安装？",
   "Plugins.UpdateConfirm": "更新",
   "Plugins.UpdateDone": "插件 {0} 已更新到 {1}",
   "Plugins.UpdatePending": "插件 {0} 已下载，重启后生效",

@@ -654,7 +654,7 @@
   "Plugins.UpdateProgressTitle": "正在更新外掛",
   "Plugins.UpdateProgress": "正在下載並安裝「{0}」{1}…",
   "Plugins.UpdateMessage": "外掛「{0}」有新版本：{1} → {2}。現在下載並安裝？",
-  "Plugins.UpdateMessageRunning": "外掛「{0}」正在執行，更新會關閉它：{1} → {2}。現在下載並安裝？",
+  "Plugins.UpdateMessageRunning": "外掛「{0}」正在執行，更新會關閉它，重新啟動程式後才能再次開啟：{1} → {2}。現在下載並安裝？",
   "Plugins.UpdateConfirm": "更新",
   "Plugins.UpdateDone": "外掛 {0} 已更新到 {1}",
   "Plugins.UpdatePending": "外掛 {0} 已下載，重新啟動後生效",

@@ -229,19 +229,10 @@ public sealed class PluginManager : IDisposable
     {
         if (IsLoaded(id))
         {
-            await _loader.UnloadAsync(id);
+            _windows.Close(id);
         }
 
-        var result = await _installer
-            .InstallAsync(
-                path,
-                isLoaded: false,
-                cancellationToken,
-                expectedSha256);
-
-        GetSnapshots();
-
-        return result;
+        return await InstallAsync(path, id, expectedSha256, cancellationToken);
     }
 
     public string GetDataDirectory(string id) => _loader.GetDataDirectory(id);
