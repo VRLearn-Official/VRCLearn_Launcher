@@ -126,107 +126,6 @@
                 </StackPanel>
             </ui:Card>
 
-            <StackPanel Visibility="{Binding HasBackups, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <ToggleButton
-                    Checked="OnBackupsChecked"
-                    Cursor="Hand"
-                    FocusVisualStyle="{x:Null}"
-                    HorizontalContentAlignment="Stretch"
-                    IsChecked="{Binding AreBackupsExpanded, Mode=TwoWay}"
-                    Unchecked="OnBackupsUnchecked">
-                    <ToggleButton.Template>
-                        <ControlTemplate TargetType="ToggleButton">
-                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
-                        </ControlTemplate>
-                    </ToggleButton.Template>
-                    <Grid Margin="{StaticResource Gap.Section}">
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <TextBlock
-                            Margin="0"
-                            Style="{StaticResource SectionTitle}"
-                            Text="{markup:Tr ProjectDetail.Backups.Title}" />
-                        <ui:SymbolIcon
-                            Grid.Column="1"
-                            HorizontalAlignment="Right"
-                            VerticalAlignment="Center"
-                            FontSize="{StaticResource IconSize.Inline}"
-                            Foreground="{DynamicResource TextFillColorSecondaryBrush}">
-                            <ui:SymbolIcon.Style>
-                                <Style TargetType="ui:SymbolIcon">
-                                    <Setter Property="Symbol" Value="ChevronDown24" />
-                                    <Style.Triggers>
-                                        <DataTrigger Binding="{Binding AreBackupsExpanded}" Value="True">
-                                            <Setter Property="Symbol" Value="ChevronUp24" />
-                                        </DataTrigger>
-                                    </Style.Triggers>
-                                </Style>
-                            </ui:SymbolIcon.Style>
-                        </ui:SymbolIcon>
-                    </Grid>
-                </ToggleButton>
-                <StackPanel
-                    x:Name="BackupsContent"
-                    ClipToBounds="True"
-                    Visibility="Collapsed">
-                    <ItemsControl
-                        MaxHeight="320"
-                        Margin="{StaticResource Gap.Row}"
-                        Style="{StaticResource VirtualizedItems}"
-                        ItemsSource="{Binding Backups}">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <ui:Card Style="{StaticResource MissingRowCard}">
-                                <Grid>
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <Grid VerticalAlignment="Center">
-                                        <Grid.ColumnDefinitions>
-                                            <ColumnDefinition Width="Auto" />
-                                            <ColumnDefinition Width="*" />
-                                        </Grid.ColumnDefinitions>
-                                        <TextBlock
-                                            VerticalAlignment="Center"
-                                            Style="{StaticResource Caption}"
-                                            Text="{Binding Display}"
-                                            ToolTip="{Binding FileName}" />
-                                        <TextBlock
-                                            Grid.Column="1"
-                                            Margin="{StaticResource Gap.Inline}"
-                                            VerticalAlignment="Center"
-                                            Style="{StaticResource CaptionDim}"
-                                            Text="{Binding Note}"
-                                            TextTrimming="CharacterEllipsis"
-                                            ToolTip="{Binding Note}"
-                                            Visibility="{Binding HasNote, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    </Grid>
-                                    <TextBlock
-                                        Grid.Column="1"
-                                        VerticalAlignment="Center"
-                                        Style="{StaticResource Caption}"
-                                        Text="{markup:Tr Backups.FileMoved}"
-                                        Visibility="{Binding IsMissing, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                    <ui:Button
-                                        Grid.Column="1"
-                                        Appearance="Secondary"
-                                        Command="{markup:RowCommand RestoreCommand}"
-                                        CommandParameter="{Binding}"
-                                        Content="{markup:Tr ProjectDetail.Restore}"
-                                        Visibility="{Binding IsAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
-                                </Grid>
-                                </ui:Card>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </StackPanel>
-            </StackPanel>
-
-            <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Packages}" />
-
             <ui:Card Margin="0,10,0,0" Padding="16,10">
                 <Grid x:Name="BatchToolbar" Loaded="OnBatchToolbarLoaded" SizeChanged="OnBatchToolbarSizeChanged">
                     <Grid.ColumnDefinitions>
@@ -443,6 +342,105 @@
                         </DataTemplate>
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
+
+            <StackPanel Visibility="{Binding HasBackups, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ToggleButton
+                    Checked="OnBackupsChecked"
+                    Cursor="Hand"
+                    FocusVisualStyle="{x:Null}"
+                    HorizontalContentAlignment="Stretch"
+                    IsChecked="{Binding AreBackupsExpanded, Mode=TwoWay}"
+                    Unchecked="OnBackupsUnchecked">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                    <Grid Margin="{StaticResource Gap.Section}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Margin="0"
+                            Style="{StaticResource SectionTitle}"
+                            Text="{markup:Tr ProjectDetail.Backups.Title}" />
+                        <ui:SymbolIcon
+                            Grid.Column="1"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            FontSize="{StaticResource IconSize.Inline}"
+                            Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                            <ui:SymbolIcon.Style>
+                                <Style TargetType="ui:SymbolIcon">
+                                    <Setter Property="Symbol" Value="ChevronDown24" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AreBackupsExpanded}" Value="True">
+                                            <Setter Property="Symbol" Value="ChevronUp24" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ui:SymbolIcon.Style>
+                        </ui:SymbolIcon>
+                    </Grid>
+                </ToggleButton>
+                <StackPanel
+                    x:Name="BackupsContent"
+                    ClipToBounds="True"
+                    Visibility="Collapsed">
+                    <ItemsControl
+                        MaxHeight="320"
+                        Margin="{StaticResource Gap.Row}"
+                        Style="{StaticResource VirtualizedItems}"
+                        ItemsSource="{Binding Backups}">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <ui:Card Style="{StaticResource MissingRowCard}">
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid VerticalAlignment="Center">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock
+                                            VerticalAlignment="Center"
+                                            Style="{StaticResource Caption}"
+                                            Text="{Binding Display}"
+                                            ToolTip="{Binding FileName}" />
+                                        <TextBlock
+                                            Grid.Column="1"
+                                            Margin="{StaticResource Gap.Inline}"
+                                            VerticalAlignment="Center"
+                                            Style="{StaticResource CaptionDim}"
+                                            Text="{Binding Note}"
+                                            TextTrimming="CharacterEllipsis"
+                                            ToolTip="{Binding Note}"
+                                            Visibility="{Binding HasNote, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    </Grid>
+                                    <TextBlock
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        Style="{StaticResource Caption}"
+                                        Text="{markup:Tr Backups.FileMoved}"
+                                        Visibility="{Binding IsMissing, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                    <ui:Button
+                                        Grid.Column="1"
+                                        Appearance="Secondary"
+                                        Command="{markup:RowCommand RestoreCommand}"
+                                        CommandParameter="{Binding}"
+                                        Content="{markup:Tr ProjectDetail.Restore}"
+                                        Visibility="{Binding IsAvailable, Converter={StaticResource BooleanToVisibilityConverter}}" />
+                                </Grid>
+                                </ui:Card>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </StackPanel>
+            </StackPanel>
 
             <Expander Margin="{StaticResource Gap.Large}" Header="{markup:Tr ProjectDetail.UnityArguments}">
                 <StackPanel Margin="{StaticResource Gap.Small}">
