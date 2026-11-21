@@ -514,7 +514,7 @@
   "Settings.ButtonColor.System": "System",
   "Settings.Animation": "Interface animations",
   "Settings.AnimationHint": "Transition animations for pages and dialogs.",
-  "Settings.Prerelease": "Show beta packages",
+  "Settings.Prerelease": "Use beta packages",
   "Settings.PrereleaseHint": "Search and install will include beta versions.",
   "Settings.Logs": "Logs",
   "Settings.LogsLevel": "Log level",

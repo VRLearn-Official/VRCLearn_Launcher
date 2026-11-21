@@ -514,7 +514,7 @@
   "Settings.ButtonColor.System": "跟隨系統",
   "Settings.Animation": "介面動畫",
   "Settings.AnimationHint": "頁面切換與彈出視窗的轉場動畫。",
-  "Settings.Prerelease": "顯示 beta 版的套件",
+  "Settings.Prerelease": "使用 beta 版的套件",
   "Settings.PrereleaseHint": "搜尋和安裝時會包含 beta 版本。",
   "Settings.Logs": "日誌",
   "Settings.LogsLevel": "日誌等級",
