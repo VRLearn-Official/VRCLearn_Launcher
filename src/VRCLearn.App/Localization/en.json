@@ -708,10 +708,10 @@
   "ProjectDetail.Batch.ReinstallShort": "Reinstall",
   "ProjectDetail.Batch.RemoveShort": "Remove",
   "ProjectDetail.Batch.ClearShort": "Clear",
-  "ProjectDetail.Batch.UpgradePrerelease": "Upgrade all (prerelease)",
+  "ProjectDetail.Batch.UpgradePrerelease": "Upgrade all (including beta)",
   "ProjectDetail.Batch.UpgradeDone": "Package upgrade completed.",
   "ProjectDetail.Batch.UpToDate": "No packages have a newer compatible version.",
   "ProjectDetail.Batch.DowngradeBlocked": "Bulk upgrade stopped: these packages require a downgrade: {0}",
-  "ProjectDetail.Batch.StableBlocked": "Stable upgrade stopped: these packages require a prerelease or downgrade: {0}",
+  "ProjectDetail.Batch.StableBlocked": "Stable upgrade stopped: these packages require a beta version or a downgrade: {0}",
   "ProjectDetail.Batch.ProjectChanged": "The project package manifests changed. Refresh and try again."
 }

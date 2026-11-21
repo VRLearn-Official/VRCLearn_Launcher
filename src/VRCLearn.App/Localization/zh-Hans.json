@@ -708,10 +708,10 @@
   "ProjectDetail.Batch.ReinstallShort": "重新安装",
   "ProjectDetail.Batch.RemoveShort": "移除",
   "ProjectDetail.Batch.ClearShort": "清空选择",
-  "ProjectDetail.Batch.UpgradePrerelease": "升级所有包（预发布版）",
+  "ProjectDetail.Batch.UpgradePrerelease": "全部升级（含 beta 版）",
   "ProjectDetail.Batch.UpgradeDone": "软件包升级完成。",
   "ProjectDetail.Batch.UpToDate": "没有可升级的软件包。",
   "ProjectDetail.Batch.DowngradeBlocked": "批量升级已停止：以下软件包需要降级：{0}",
-  "ProjectDetail.Batch.StableBlocked": "稳定版升级已停止：以下软件包需要预发布版或降级：{0}",
+  "ProjectDetail.Batch.StableBlocked": "稳定版升级已停止：以下软件包需要 beta 版或降级：{0}",
   "ProjectDetail.Batch.ProjectChanged": "项目的软件包清单已发生变化，请刷新后重试。"
 }
