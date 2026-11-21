@@ -1,4 +1,4 @@
-<UserControl
+﻿<UserControl
     x:Class="VRCLearn.App.Views.ProjectDetailPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -228,43 +228,105 @@
             <TextBlock Style="{StaticResource SectionTitle}" Text="{markup:Tr ProjectDetail.Packages}" />
 
             <ui:Card Margin="0,10,0,0" Padding="16,10">
-                <StackPanel Orientation="Horizontal">
+                <Grid x:Name="BatchToolbar" Loaded="OnBatchToolbarLoaded" SizeChanged="OnBatchToolbarSizeChanged">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" MinWidth="0" />
+                    </Grid.ColumnDefinitions>
                     <TextBlock
+                        x:Name="BatchTitle"
                         Margin="0,0,12,0"
                         VerticalAlignment="Center"
                         FontWeight="SemiBold"
+                        SizeChanged="OnBatchToolbarSizeChanged"
                         Text="{markup:Tr ProjectDetail.Batch.Title}" />
-                    <ui:Button
-                        Style="{StaticResource RowButton}"
-                        Appearance="Secondary"
-                        Command="{Binding InstallSelectedCommand}"
-                        Content="{markup:Tr ProjectDetail.Batch.Install}" />
-                    <ui:Button
-                        Style="{StaticResource RowButton}"
-                        Appearance="Secondary"
-                        Command="{Binding UpgradeSelectedCommand}"
-                        Content="{markup:Tr ProjectDetail.Batch.Upgrade}" />
-                    <ui:Button
-                        Style="{StaticResource RowButton}"
-                        Appearance="Secondary"
-                        Command="{Binding ReinstallSelectedCommand}"
-                        Content="{markup:Tr ProjectDetail.Batch.Reinstall}" />
-                    <ui:Button
-                        Style="{StaticResource RowButton}"
-                        Appearance="Secondary"
-                        Command="{Binding RemoveSelectedCommand}"
-                        Content="{markup:Tr ProjectDetail.Batch.Remove}" />
-                    <ui:Button
-                        Style="{StaticResource RowButton}"
-                        Appearance="Secondary"
-                        Command="{Binding UpgradeAllCommand}"
-                        Content="{markup:Tr ProjectDetail.Batch.UpgradeAll}" />
-                    <ui:Button
-                        Style="{StaticResource RowButton}"
-                        Appearance="Secondary"
-                        Command="{Binding ClearSelectionCommand}"
-                        Content="{markup:Tr ProjectDetail.Batch.Clear}" />
-                </StackPanel>
+                    <StackPanel x:Name="BatchActions" Grid.Column="1" Orientation="Horizontal">
+                        <ui:Button
+                            x:Name="InstallSelectedButton"
+                            Style="{StaticResource RowButton}"
+                            Appearance="Secondary"
+                            SizeChanged="OnBatchToolbarSizeChanged"
+                            Command="{Binding InstallSelectedCommand}"
+                            Content="{markup:Tr ProjectDetail.Batch.InstallShort}"
+                            ToolTip="{markup:Tr ProjectDetail.Batch.Install}" />
+                        <ui:Button
+                            x:Name="UpgradeSelectedButton"
+                            Style="{StaticResource RowButton}"
+                            Appearance="Secondary"
+                            SizeChanged="OnBatchToolbarSizeChanged"
+                            Command="{Binding UpgradeSelectedCommand}"
+                            Content="{markup:Tr ProjectDetail.Batch.UpgradeShort}"
+                            ToolTip="{markup:Tr ProjectDetail.Batch.Upgrade}" />
+                        <ui:Button
+                            x:Name="UpgradeAllButton"
+                            Style="{StaticResource RowButton}"
+                            Appearance="Secondary"
+                            SizeChanged="OnBatchToolbarSizeChanged"
+                            Command="{Binding UpgradeAllCommand}"
+                            Content="{markup:Tr ProjectDetail.Batch.UpgradeAll}"
+                            ToolTip="{markup:Tr ProjectDetail.Batch.UpgradeAll}" />
+                        <ui:Button
+                            x:Name="ReinstallSelectedButton"
+                            Style="{StaticResource RowButton}"
+                            Appearance="Secondary"
+                            SizeChanged="OnBatchToolbarSizeChanged"
+                            Command="{Binding ReinstallSelectedCommand}"
+                            Content="{markup:Tr ProjectDetail.Batch.ReinstallShort}"
+                            ToolTip="{markup:Tr ProjectDetail.Batch.Reinstall}" />
+                        <ui:Button
+                            x:Name="RemoveSelectedButton"
+                            Style="{StaticResource RowButton}"
+                            Appearance="Secondary"
+                            SizeChanged="OnBatchToolbarSizeChanged"
+                            Command="{Binding RemoveSelectedCommand}"
+                            Content="{markup:Tr ProjectDetail.Batch.RemoveShort}"
+                            ToolTip="{markup:Tr ProjectDetail.Batch.Remove}" />
+                        <ui:Button
+                            x:Name="ClearSelectionButton"
+                            Style="{StaticResource RowButton}"
+                            Appearance="Secondary"
+                            SizeChanged="OnBatchToolbarSizeChanged"
+                            Command="{Binding ClearSelectionCommand}"
+                            Content="{markup:Tr ProjectDetail.Batch.ClearShort}"
+                            ToolTip="{markup:Tr ProjectDetail.Batch.Clear}" />
+                        <ui:Button
+                            x:Name="BatchMoreButton"
+                            Style="{StaticResource RowButton}"
+                            Appearance="Secondary"
+                            SizeChanged="OnBatchToolbarSizeChanged"
+                            AutomationProperties.Name="{markup:Tr ProjectDetail.Batch.More}"
+                            Click="OnBatchMoreClick"
+                            Icon="{ui:SymbolIcon MoreHorizontal24}"
+                            ToolTip="{markup:Tr ProjectDetail.Batch.More}">
+                            <ui:Button.ContextMenu>
+                                <ContextMenu Placement="Bottom" Opened="OnBatchMenuOpened"
+                                             DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+                                    <MenuItem x:Name="InstallSelectedOverflowItem" Visibility="Collapsed"
+                                              Command="{Binding InstallSelectedCommand}"
+                                              IsEnabled="{Binding CanInstallSelected}"
+                                              Header="{markup:Tr ProjectDetail.Batch.Install}" />
+                                    <MenuItem x:Name="UpgradeSelectedOverflowItem" Visibility="Collapsed"
+                                              Command="{Binding UpgradeSelectedCommand}"
+                                              IsEnabled="{Binding CanUpgradeSelected}"
+                                              Header="{markup:Tr ProjectDetail.Batch.Upgrade}" />
+                                    <MenuItem x:Name="UpgradeAllOverflowItem" Visibility="Collapsed"
+                                              Command="{Binding UpgradeAllCommand}"
+                                              IsEnabled="{Binding CanUpgradeAll}"
+                                              Header="{markup:Tr ProjectDetail.Batch.UpgradeAll}" />
+                                    <MenuItem x:Name="ReinstallSelectedOverflowItem" Visibility="Collapsed"
+                                              Command="{Binding ReinstallSelectedCommand}"
+                                              Header="{markup:Tr ProjectDetail.Batch.Reinstall}" />
+                                    <MenuItem x:Name="RemoveSelectedOverflowItem" Visibility="Collapsed"
+                                              Command="{Binding RemoveSelectedCommand}"
+                                              Header="{markup:Tr ProjectDetail.Batch.Remove}" />
+                                    <MenuItem x:Name="ClearSelectionOverflowItem" Visibility="Collapsed"
+                                              Command="{Binding ClearSelectionCommand}"
+                                              Header="{markup:Tr ProjectDetail.Batch.Clear}" />
+                                </ContextMenu>
+                            </ui:Button.ContextMenu>
+                        </ui:Button>
+                    </StackPanel>
+                </Grid>
             </ui:Card>
 
             <ui:TextBox
