@@ -44,6 +44,19 @@ public static class RepositoryMove
 
 public sealed record ImportFromUrlOutcome(ImportSummary? Summary, string? Detail = null);
 
-public sealed record RefreshSummary(int Updated, int NotModified, int Failed);
+public enum RefreshOutcome
+{
+    Updated,
+    NotModified,
+    Failed,
+}
+
+public sealed record RepositoryRefreshResult(string? Name, Uri Url, RefreshOutcome Outcome, string? Detail = null);
+
+public sealed record RefreshSummary(
+    int Updated,
+    int NotModified,
+    int Failed,
+    IReadOnlyList<RepositoryRefreshResult> Results);
 
 public sealed record ImportSummary(int Added, int AlreadyAdded, int Failed, int UnparseableLines);

@@ -66,7 +66,10 @@
                         LaunchCommand="{Binding OpenInUnityCommand}" />
                 </StackPanel>
                 <Grid Visibility="{Binding RefreshCommand.IsRunning, Converter={StaticResource InverseBooleanToVisibilityConverter}}">
-                    <ui:ProgressRing Margin="4,0,0,8" Style="{StaticResource BusyRing}" />
+                    <ui:ProgressRing
+                        Margin="4,0,0,8"
+                        Style="{StaticResource SpinningRing}"
+                        Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
                 </Grid>
             </WrapPanel>
 
