@@ -92,40 +92,6 @@
                     Content="{markup:Tr ProjectDetail.Resolve}" />
             </ui:InfoBar>
 
-            <ui:Card
-                Margin="{StaticResource Gap.Field}"
-                Padding="{StaticResource Pad.CardRow}"
-                Visibility="{Binding HasPendingCopy, Converter={StaticResource BooleanToVisibilityConverter}}">
-                <StackPanel>
-                    <TextBlock FontWeight="SemiBold" Text="{markup:Tr ProjectDetail.Copy.Title}" />
-                    <TextBlock
-                        Margin="{StaticResource Gap.Tight}"
-                        Style="{StaticResource Caption}"
-                        Text="{markup:Tr ProjectDetail.Copy.Hint}" />
-
-                    <DockPanel Margin="{StaticResource Gap.Row}" Style="{StaticResource BrowseRow}">
-                        <ui:Button
-                            DockPanel.Dock="Right"
-                            Command="{Binding BrowseCopyDestinationCommand}"
-                            Content="{markup:Tr ProjectDetail.Browse}"
-                            Style="{StaticResource BrowseButton}" />
-                        <TextBox Text="{Binding CopyDestination, UpdateSourceTrigger=PropertyChanged}" TextWrapping="Wrap" />
-                    </DockPanel>
-
-                    <StackPanel Margin="{StaticResource Gap.Row}" Orientation="Horizontal">
-                        <ui:Button
-                            Appearance="Primary"
-                            Command="{Binding ConfirmCopyCommand}"
-                            Content="{markup:Tr ProjectDetail.Copy.Confirm}" />
-                        <ui:Button
-                            Margin="{StaticResource Gap.Inline}"
-                            Appearance="Secondary"
-                            Command="{Binding CancelCopyCommand}"
-                            Content="{markup:Tr ProjectDetail.Cancel}" />
-                    </StackPanel>
-                </StackPanel>
-            </ui:Card>
-
             <ui:Card Margin="0,10,0,0" Padding="16,10">
                 <Grid x:Name="BatchToolbar" Loaded="OnBatchToolbarLoaded" SizeChanged="OnBatchToolbarSizeChanged">
                     <Grid.ColumnDefinitions>
@@ -442,20 +408,65 @@
                 </StackPanel>
             </StackPanel>
 
-            <Expander Margin="{StaticResource Gap.Large}" Header="{markup:Tr ProjectDetail.UnityArguments}">
-                <StackPanel Margin="{StaticResource Gap.Small}">
-                    <TextBox
-                        MinHeight="52"
-                        AcceptsReturn="True"
-                        Text="{Binding UnityArgumentsText, UpdateSourceTrigger=PropertyChanged}"
-                        TextWrapping="Wrap"
-                        VerticalScrollBarVisibility="Auto" />
-                    <TextBlock
-                        Margin="{StaticResource Gap.Small}"
-                        Style="{StaticResource Caption}"
-                        Text="{markup:Tr ProjectDetail.UnityArgumentsHint}" />
+            <StackPanel>
+                <ToggleButton
+                    Checked="OnUnityArgumentsChecked"
+                    Cursor="Hand"
+                    FocusVisualStyle="{x:Null}"
+                    HorizontalContentAlignment="Stretch"
+                    IsChecked="{Binding AreUnityArgumentsExpanded, Mode=TwoWay}"
+                    Unchecked="OnUnityArgumentsUnchecked">
+                    <ToggleButton.Template>
+                        <ControlTemplate TargetType="ToggleButton">
+                            <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" />
+                        </ControlTemplate>
+                    </ToggleButton.Template>
+                    <Grid Margin="{StaticResource Gap.Section}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" />
+                            <ColumnDefinition Width="Auto" />
+                        </Grid.ColumnDefinitions>
+                        <TextBlock
+                            Margin="0"
+                            Style="{StaticResource SectionTitle}"
+                            Text="{markup:Tr ProjectDetail.UnityArguments}" />
+                        <ui:SymbolIcon
+                            Grid.Column="1"
+                            HorizontalAlignment="Right"
+                            VerticalAlignment="Center"
+                            FontSize="{StaticResource IconSize.Inline}"
+                            Foreground="{DynamicResource TextFillColorSecondaryBrush}">
+                            <ui:SymbolIcon.Style>
+                                <Style TargetType="ui:SymbolIcon">
+                                    <Setter Property="Symbol" Value="ChevronDown24" />
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding AreUnityArgumentsExpanded}" Value="True">
+                                            <Setter Property="Symbol" Value="ChevronUp24" />
+                                        </DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </ui:SymbolIcon.Style>
+                        </ui:SymbolIcon>
+                    </Grid>
+                </ToggleButton>
+                <StackPanel
+                    x:Name="UnityArgumentsContent"
+                    ClipToBounds="True"
+                    Visibility="Collapsed">
+                    <StackPanel Margin="{StaticResource Gap.Small}">
+                        <TextBox
+                            MinHeight="52"
+                            AcceptsReturn="True"
+                            Text="{Binding UnityArgumentsText, UpdateSourceTrigger=PropertyChanged}"
+                            TextWrapping="Wrap"
+                            VerticalScrollBarVisibility="Auto" />
+                        <TextBlock
+                            Margin="{StaticResource Gap.Small}"
+                            Style="{StaticResource Caption}"
+                            Text="{markup:Tr ProjectDetail.UnityArgumentsHint}" />
+                    </StackPanel>
                 </StackPanel>
-            </Expander>
+            </StackPanel>
         </StackPanel>
     </ScrollViewer>
 </UserControl>

@@ -188,19 +188,15 @@ public sealed partial class ProjectDetailViewModel(
 
     public ProjectType ProjectType { get; private set; }
 
-    [ObservableProperty]
-    private string? _copyDestination;
-
-    partial void OnCopyDestinationChanged(string? value) => OnPropertyChanged(nameof(HasPendingCopy));
-
-    public bool HasPendingCopy => CopyDestination is not null;
-
     public ObservableCollection<BackupItemViewModel> Backups { get; } = [];
 
     public bool HasBackups => Backups.Count > 0;
 
     [ObservableProperty]
     private bool _areBackupsExpanded;
+
+    [ObservableProperty]
+    private bool _areUnityArgumentsExpanded;
 
     public bool IsUnityRunning { get; private set; }
 
@@ -323,7 +319,6 @@ public sealed partial class ProjectDetailViewModel(
         _customPackages.Clear();
         ForgetCatalogs();
 
-        CopyDestination = null;
         UnityHubInstallLink = null;
         Packages.Clear();
         Backups.Clear();
@@ -364,7 +359,7 @@ public sealed partial class ProjectDetailViewModel(
         InstalledEditors.Clear();
         SelectedEditor = null;
         AreBackupsExpanded = false;
-        CopyDestination = null;
+        AreUnityArgumentsExpanded = false;
         UnityHubInstallLink = null;
         NotifySelectionChanged();
         Status = null;
@@ -702,7 +697,7 @@ public sealed partial class ProjectDetailViewModel(
     }
 
     [RelayCommand]
-    private void Copy()
+    private async Task Copy()
     {
         if (_project is null || ParentDirectory() is not { } parent)
         {
@@ -710,33 +705,12 @@ public sealed partial class ProjectDetailViewModel(
         }
 
         Status = null;
-        CopyDestination = Path.Combine(parent, ProjectCopyService.FreeSiblingPath(fileIo.For(parent), ProjectName));
-    }
 
-    private string? ParentDirectory() => PathUtil.ParentOf(ProjectPath);
+        var suggested = Path.Combine(
+            parent,
+            ProjectCopyService.FreeSiblingPath(fileIo.For(parent), ProjectName));
 
-    [RelayCommand]
-    private void CancelCopy() => CopyDestination = null;
-
-    [RelayCommand]
-    private void BrowseCopyDestination()
-    {
-        var selected = dialogs.PickFolder(
-            localization["ProjectDetail.Copy.Title"],
-            Path.GetDirectoryName(CopyDestination ?? "") ?? "");
-
-        if (selected is not null)
-        {
-            CopyDestination = Path.Combine(
-                selected,
-                Path.GetFileName(CopyDestination ?? "") is { Length: > 0 } name ? name : ProjectName);
-        }
-    }
-
-    [RelayCommand]
-    private async Task ConfirmCopy()
-    {
-        if (_project is null || CopyDestination is not { Length: > 0 } destination)
+        if (dialogs.ShowCopyProject(suggested) is not { Length: > 0 } destination)
         {
             return;
         }
@@ -752,13 +726,13 @@ public sealed partial class ProjectDetailViewModel(
                     localization["Progress.Copy"],
                     reporter => copies.CopyAsync(_project, destination, reporter, CancellationToken.None));
 
-                CopyDestination = null;
-
                 projects.Add(destination);
                 Status = localization.Format("ProjectDetail.Copy.Done", destination);
             },
             "ProjectDetail.Copy.Failed");
     }
+
+    private string? ParentDirectory() => PathUtil.ParentOf(ProjectPath);
 
     private void ReloadBackups()
     {

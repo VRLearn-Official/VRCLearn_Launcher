@@ -200,6 +200,20 @@ public sealed class DialogService
         return dialog.ShowDialog() == true ? dialog.Outcome : null;
     }
 
+    public string? ShowCopyProject(string destination)
+    {
+        var viewModel = new CopyProjectViewModel(
+            destination,
+            _services.GetRequiredService<LocalizationService>(),
+            this);
+
+        _logger.LogInformation("打开复制项目对话框");
+
+        return Show(new CopyProjectDialog { DataContext = viewModel })
+            ? viewModel.Destination.Trim()
+            : null;
+    }
+
     public IReadOnlyList<string>? ShowTagFilter(
         IReadOnlyList<string> tags,
         IReadOnlyCollection<string> selected)

@@ -10,7 +10,8 @@ namespace VRCLearn.App.Views;
 public partial class ProjectDetailPage : UserControl
 {
     private readonly DispatcherTimer _unityTimer;
-    private int _backupsAnimation;
+    private readonly SectionAnimator _backupsSection = new();
+    private readonly SectionAnimator _unityArgumentsSection = new();
     private bool _updatingBatchLayout;
 
     public ProjectDetailPage()
@@ -121,72 +122,85 @@ public partial class ProjectDetailPage : UserControl
 
     }
 
-    private void OnBackupsChecked(object sender, RoutedEventArgs e) => ShowBackups(true);
+    private void OnBackupsChecked(object sender, RoutedEventArgs e) =>
+        _backupsSection.Show(this, BackupsContent, true);
 
-    private void OnBackupsUnchecked(object sender, RoutedEventArgs e) => ShowBackups(false);
+    private void OnBackupsUnchecked(object sender, RoutedEventArgs e) =>
+        _backupsSection.Show(this, BackupsContent, false);
 
-    private void ShowBackups(bool expand)
+    private void OnUnityArgumentsChecked(object sender, RoutedEventArgs e) =>
+        _unityArgumentsSection.Show(this, UnityArgumentsContent, true);
+
+    private void OnUnityArgumentsUnchecked(object sender, RoutedEventArgs e) =>
+        _unityArgumentsSection.Show(this, UnityArgumentsContent, false);
+
+    private sealed class SectionAnimator
     {
-        var generation = ++_backupsAnimation;
+        private int _generation;
 
-        BackupsContent.BeginAnimation(MaxHeightProperty, null);
-
-        if (!IsVisible || AnimationService.Current?.Enabled == false)
+        public void Show(FrameworkElement page, FrameworkElement content, bool expand)
         {
-            BackupsContent.MaxHeight = double.PositiveInfinity;
-            BackupsContent.Visibility = expand ? Visibility.Visible : Visibility.Collapsed;
+            var generation = ++_generation;
 
-            return;
-        }
+            content.BeginAnimation(FrameworkElement.MaxHeightProperty, null);
 
-        if (expand)
-        {
-            BackupsContent.Visibility = Visibility.Visible;
-            BackupsContent.MaxHeight = double.PositiveInfinity;
-            BackupsContent.Measure(new Size(
-                BackupsContent.ActualWidth > 0 ? BackupsContent.ActualWidth : ActualWidth,
-                double.PositiveInfinity));
+            if (!page.IsVisible || AnimationService.Current?.Enabled == false)
+            {
+                content.MaxHeight = double.PositiveInfinity;
+                content.Visibility = expand ? Visibility.Visible : Visibility.Collapsed;
 
-            var animation = new DoubleAnimation(0, BackupsContent.DesiredSize.Height, AnimationService.Switch)
+                return;
+            }
+
+            if (expand)
+            {
+                content.Visibility = Visibility.Visible;
+                content.MaxHeight = double.PositiveInfinity;
+                content.Measure(new Size(
+                    content.ActualWidth > 0 ? content.ActualWidth : page.ActualWidth,
+                    double.PositiveInfinity));
+
+                var animation = new DoubleAnimation(0, content.DesiredSize.Height, AnimationService.Switch)
+                {
+                    EasingFunction = AnimationService.Ease,
+                };
+
+                animation.Completed += (_, _) =>
+                {
+                    if (generation != _generation)
+                    {
+                        return;
+                    }
+
+                    content.BeginAnimation(FrameworkElement.MaxHeightProperty, null);
+                    content.MaxHeight = double.PositiveInfinity;
+                };
+
+                content.MaxHeight = 0;
+                content.BeginAnimation(FrameworkElement.MaxHeightProperty, animation);
+
+                return;
+            }
+
+            var collapse = new DoubleAnimation(content.ActualHeight, 0, AnimationService.Switch)
             {
                 EasingFunction = AnimationService.Ease,
             };
 
-            animation.Completed += (_, _) =>
+            collapse.Completed += (_, _) =>
             {
-                if (generation != _backupsAnimation)
+                if (generation != _generation)
                 {
                     return;
                 }
 
-                BackupsContent.BeginAnimation(MaxHeightProperty, null);
-                BackupsContent.MaxHeight = double.PositiveInfinity;
+                content.BeginAnimation(FrameworkElement.MaxHeightProperty, null);
+                content.Visibility = Visibility.Collapsed;
+                content.MaxHeight = double.PositiveInfinity;
             };
 
-            BackupsContent.MaxHeight = 0;
-            BackupsContent.BeginAnimation(MaxHeightProperty, animation);
-
-            return;
+            content.BeginAnimation(FrameworkElement.MaxHeightProperty, collapse);
         }
-
-        var collapse = new DoubleAnimation(BackupsContent.ActualHeight, 0, AnimationService.Switch)
-        {
-            EasingFunction = AnimationService.Ease,
-        };
-
-        collapse.Completed += (_, _) =>
-        {
-            if (generation != _backupsAnimation)
-            {
-                return;
-            }
-
-            BackupsContent.BeginAnimation(MaxHeightProperty, null);
-            BackupsContent.Visibility = Visibility.Collapsed;
-            BackupsContent.MaxHeight = double.PositiveInfinity;
-        };
-
-        BackupsContent.BeginAnimation(MaxHeightProperty, collapse);
     }
 
     private void OnUpgradeClick(object sender, RoutedEventArgs e)
