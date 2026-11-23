@@ -29,10 +29,8 @@ public sealed partial class ProjectDetailViewModel(
     RepositoryService repositories,
     IPackageInstaller installer,
     ProjectBackupRunner backupRunner,
-    ProjectRestoreService restores,
     ProjectCopyService copies,
     UserPackageService userPackages,
-    IBackupStore backupStore,
     IUserTemplateStore userTemplates,
     IFileIoFactory fileIo,
     GuiConfigStore configStore,
@@ -188,16 +186,6 @@ public sealed partial class ProjectDetailViewModel(
 
     public ProjectType ProjectType { get; private set; }
 
-    public ObservableCollection<BackupItemViewModel> Backups { get; } = [];
-
-    public bool HasBackups => Backups.Count > 0;
-
-    [ObservableProperty]
-    private bool _areBackupsExpanded;
-
-    [ObservableProperty]
-    private bool _areUnityArgumentsExpanded;
-
     public bool IsUnityRunning { get; private set; }
 
     public void RefreshUnityState() =>
@@ -321,7 +309,6 @@ public sealed partial class ProjectDetailViewModel(
 
         UnityHubInstallLink = null;
         Packages.Clear();
-        Backups.Clear();
         InstalledEditors.Clear();
         NotifySelectionChanged();
         OnPropertyChanged(nameof(HeaderSubtitle));
@@ -355,11 +342,8 @@ public sealed partial class ProjectDetailViewModel(
         ForgetCatalogs();
 
         Packages.Clear();
-        Backups.Clear();
         InstalledEditors.Clear();
         SelectedEditor = null;
-        AreBackupsExpanded = false;
-        AreUnityArgumentsExpanded = false;
         UnityHubInstallLink = null;
         NotifySelectionChanged();
         Status = null;
@@ -421,7 +405,6 @@ public sealed partial class ProjectDetailViewModel(
 
             ReloadEditors(editorsTask.Result);
             ReloadPackages();
-            ReloadBackups();
 
             RefreshUnityState();
         }
@@ -439,10 +422,8 @@ public sealed partial class ProjectDetailViewModel(
             SelectedEditor = null;
             ProjectType = ProjectType.Unknown;
             Packages.Clear();
-            Backups.Clear();
             InstalledEditors.Clear();
             NotifySelectionChanged();
-            OnPropertyChanged(nameof(HasBackups));
             OnPropertyChanged(nameof(HeaderSubtitle));
             Status = localization.Format("ProjectDetail.Unreadable", exception.Message);
         }
@@ -596,104 +577,11 @@ public sealed partial class ProjectDetailViewModel(
                     skipped,
                     CancellationToken.None);
 
-                ReloadBackups();
                 Status = skipped.Count == 0
                     ? localization.Format("ProjectDetail.BackupDone", record.FileName)
                     : localization.Format("ProjectDetail.BackupDoneSkipped", record.FileName, skipped.Count);
             },
             "ProjectDetail.BackupFailed");
-    }
-
-    [RelayCommand]
-    private async Task Restore(BackupItemViewModel entry)
-    {
-        if (_project is null || entry.IsMissing || IsBusy)
-        {
-            return;
-        }
-
-        if (!File.Exists(entry.FilePath))
-        {
-            Status = localization["Backups.FileMoved"];
-            ReloadBackups();
-            return;
-        }
-
-        if (UnityIsRunning())
-        {
-            return;
-        }
-
-        if (!dialogs.ShowConfirm(
-                localization["ProjectDetail.Restore.ConfirmTitle"],
-                localization.Format("ProjectDetail.Restore.ConfirmPrompt", entry.Display),
-                localization["ProjectDetail.Restore.Confirm"],
-                danger: true,
-                warning: localization["ProjectDetail.Restore.ConfirmWarning"]))
-        {
-            return;
-        }
-
-        if (UnityIsRunning())
-        {
-            return;
-        }
-
-        IsBusy = true;
-        Status = localization["ProjectDetail.Restore.Working"];
-
-        try
-        {
-            var outcome = await progress.RunAsync(
-                localization["Progress.Restore"],
-                reporter => restores.RestoreAsync(
-                    _project,
-                    entry.FilePath,
-                    DateTime.Now,
-                    reporter,
-                    CancellationToken.None));
-
-            await LoadAsync();
-
-            Status = outcome.Leftovers.Count == 0
-                ? localization["ProjectDetail.Restore.Done"]
-                : localization.Format(
-                    "ProjectDetail.Restore.DoneWithLeftover",
-                    string.Join("、", outcome.Leftovers));
-        }
-        catch (InsufficientDiskSpaceException exception)
-        {
-            logger.LogWarning(exception, "还原项目失败：{Project}", ProjectPath);
-
-            Status = localization.FormatDiskSpace(exception);
-
-            await LoadAsync();
-        }
-        catch (Exception exception) when (exception is not OperationCanceledException)
-        {
-            logger.LogWarning(exception, "还原项目失败：{Project}", ProjectPath);
-
-            Status = localization.Format("ProjectDetail.Restore.Failed", exception.Message);
-
-            await LoadAsync();
-        }
-        finally
-        {
-            IsBusy = false;
-        }
-    }
-
-    private bool UnityIsRunning()
-    {
-        if (!launcher.IsRunning(ProjectPath))
-        {
-            return false;
-        }
-
-        logger.LogWarning("Unity 正在运行，无法还原项目：{Project}", ProjectPath);
-
-        Status = localization["ProjectDetail.Restore.UnityRunning"];
-        return true;
     }
 
     [RelayCommand]
@@ -733,29 +621,6 @@ public sealed partial class ProjectDetailViewModel(
     }
 
     private string? ParentDirectory() => PathUtil.ParentOf(ProjectPath);
-
-    private void ReloadBackups()
-    {
-        Backups.Clear();
-
-        if (_project is null)
-        {
-            OnPropertyChanged(nameof(HasBackups));
-            return;
-        }
-
-        foreach (var record in backupStore.List())
-        {
-            var entry = BackupItemViewModel.From(record);
-
-            if (string.Equals(entry.ProjectName, ProjectName, StringComparison.OrdinalIgnoreCase))
-            {
-                Backups.Add(entry);
-            }
-        }
-
-        OnPropertyChanged(nameof(HasBackups));
-    }
 
     [RelayCommand]
     private async Task Resolve()
