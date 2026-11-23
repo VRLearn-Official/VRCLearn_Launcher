@@ -1,0 +1,45 @@
+<views:DialogWindowBase
+    x:Class="VRCLearn.App.Views.CopyProjectDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+    xmlns:markup="clr-namespace:VRCLearn.App.Markup"
+    xmlns:views="clr-namespace:VRCLearn.App.Views"
+    Title="{markup:Tr ProjectDetail.Copy.Title}"
+    Width="560"
+    WindowStartupLocation="CenterOwner"
+    Style="{StaticResource DialogWindow}">
+
+    <views:DialogChrome Style="{StaticResource DialogChromeStyle}">
+        <StackPanel Margin="24,4,24,20">
+            <TextBlock
+                Style="{StaticResource Caption}"
+                Text="{markup:Tr ProjectDetail.Copy.Hint}"
+                TextWrapping="Wrap" />
+
+            <HeaderedContentControl Header="{markup:Tr ProjectDetail.Copy.Destination}" Style="{StaticResource FormRow}">
+                <DockPanel>
+                    <ui:Button
+                        DockPanel.Dock="Right"
+                        Command="{Binding BrowseCommand}"
+                        Content="{markup:Tr ProjectDetail.Browse}"
+                        Style="{StaticResource BrowseButton}" />
+                    <TextBox Text="{Binding Destination, UpdateSourceTrigger=PropertyChanged}" />
+                </DockPanel>
+            </HeaderedContentControl>
+
+            <StackPanel Style="{StaticResource DialogRow}">
+                <ui:Button
+                    Appearance="Primary"
+                    Click="OnConfirmClick"
+                    Content="{markup:Tr ProjectDetail.Copy.Confirm}"
+                    Style="{StaticResource DialogButton}" />
+                <ui:Button
+                    Margin="{StaticResource Gap.Inline}"
+                    Click="OnCancelClick"
+                    Content="{markup:Tr ProjectDetail.Cancel}"
+                    Style="{StaticResource DialogButton}" />
+            </StackPanel>
+        </StackPanel>
+    </views:DialogChrome>
+</views:DialogWindowBase>

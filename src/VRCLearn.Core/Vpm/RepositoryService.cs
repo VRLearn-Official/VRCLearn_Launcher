@@ -205,6 +205,7 @@ public sealed class RepositoryService
         var updated = 0;
         var notModified = 0;
         var failed = 0;
+        var results = new List<RepositoryRefreshResult>();
 
         foreach (var setting in Settings.UserRepos)
         {
@@ -224,6 +225,7 @@ public sealed class RepositoryService
                 if (result is null)
                 {
                     notModified++;
+                    results.Add(new RepositoryRefreshResult(setting.Name, url, RefreshOutcome.NotModified));
                     continue;
                 }
 
@@ -239,19 +241,22 @@ public sealed class RepositoryService
                 if (_cacheStore.Save(setting.LocalPath, refreshed))
                 {
                     updated++;
+                    results.Add(new RepositoryRefreshResult(setting.Name, url, RefreshOutcome.Updated));
                 }
                 else
                 {
                     failed++;
+                    results.Add(new RepositoryRefreshResult(setting.Name, url, RefreshOutcome.Failed, "缓存写入失败"));
                 }
             }
             catch (Exception exception) when (exception is HttpRequestException or IOException or TaskCanceledException or RepositoryParseException or JsonException)
             {
                 failed++;
+                results.Add(new RepositoryRefreshResult(setting.Name, url, RefreshOutcome.Failed, exception.Message));
             }
         }
 
-        return new RefreshSummary(updated, notModified, failed);
+        return new RefreshSummary(updated, notModified, failed, results);
     }
 
     public async Task<ImportSummary> ImportAsync(string content, CancellationToken cancellationToken)

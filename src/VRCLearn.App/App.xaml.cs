@@ -156,6 +156,8 @@ public partial class App : Application
 
             _ = services.GetRequiredService<IUnityEditorLocator>().RefreshFromHubAsync(CancellationToken.None);
 
+            _ = services.GetRequiredService<RepositoriesViewModel>().RefreshOnStartupAsync();
+
             startupLogger.LogInformation(
                 "VRCLearn Launcher {Version} started. OS: {OS}, language: {Language}, log level: {Level}, root: {Root}, config: {Config}, data: {Data}",
                 typeof(App).Assembly.GetName().Version?.ToString(3) ?? "0.0.0",

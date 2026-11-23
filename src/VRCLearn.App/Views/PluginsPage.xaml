@@ -60,7 +60,8 @@
                 <ui:ProgressRing
                     Grid.Column="5"
                     Margin="{StaticResource Gap.Inline}"
-                    Style="{StaticResource BusyRing}" />
+                    Style="{StaticResource SpinningRing}"
+                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
             </Grid>
 
         <StackPanel Grid.Row="1" Margin="32,16,32,0">

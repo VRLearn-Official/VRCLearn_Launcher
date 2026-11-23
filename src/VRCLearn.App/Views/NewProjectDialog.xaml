@@ -78,7 +78,10 @@
                     Click="OnCreateClick"
                     Content="{markup:Tr Dialog.Create}"
                     Style="{StaticResource DialogButton}" />
-                <ui:ProgressRing Margin="12,0,0,0" Style="{StaticResource BusyRing}" />
+                <ui:ProgressRing
+                    Margin="12,0,0,0"
+                    Style="{StaticResource SpinningRing}"
+                    Visibility="{Binding IsBusy, Converter={StaticResource BooleanToVisibilityConverter}}" />
             </StackPanel>
         </StackPanel>
     </views:DialogChrome>

@@ -177,6 +177,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
 
     public UpdateViewModel Update { get; }
 
+    public RepositoriesViewModel Repositories => _repositories;
+
     public ProgressService Progress { get; }
 
     public ToastService Toasts { get; }

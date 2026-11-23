@@ -247,6 +247,23 @@
                     </ListBoxItem>
                 </ListBox>
                 </StackPanel>
+
+                <StackPanel
+                    Margin="18,0,18,16"
+                    HorizontalAlignment="Left"
+                    VerticalAlignment="Bottom"
+                    Orientation="Horizontal"
+                    Visibility="{Binding Repositories.IsRefreshing, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <ui:ProgressRing
+                        Width="14"
+                        Height="14"
+                        Style="{StaticResource SpinningRing}" />
+                    <TextBlock
+                        Margin="{StaticResource Gap.Inline}"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource Caption}"
+                        Text="{markup:Tr Repositories.Refreshing}" />
+                </StackPanel>
             </Grid>
         </Border>
 

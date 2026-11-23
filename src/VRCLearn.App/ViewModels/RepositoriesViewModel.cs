@@ -202,22 +202,84 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
 
     public string Export() => _service.Export();
 
-    [RelayCommand]
-    private async Task RefreshAsync()
+    [ObservableProperty]
+    [NotifyCanExecuteChangedFor(nameof(RefreshCommand))]
+    private bool _isRefreshing;
+
+    [RelayCommand(CanExecute = nameof(CanRefresh))]
+    private Task RefreshAsync() => RefreshRepositoriesAsync(announce: true);
+
+    public async Task RefreshOnStartupAsync()
     {
-        await WithBusyAsync(async () =>
+        if (_service.List().Any(x => x.Url is not null))
+        {
+            await RefreshRepositoriesAsync(announce: false);
+        }
+    }
+
+    private bool CanRefresh() => !IsRefreshing;
+
+    private async Task RefreshRepositoriesAsync(bool announce)
+    {
+        if (IsRefreshing)
+        {
+            return;
+        }
+
+        IsRefreshing = true;
+
+        try
         {
             var summary = await _service.RefreshAsync(CancellationToken.None);
 
-            if (summary.Failed > 0)
+            foreach (var result in summary.Results)
             {
-                _logger.LogWarning("刷新仓库：{Failed} 个失败，{Updated} 个已更新", summary.Failed, summary.Updated);
+                var name = string.IsNullOrWhiteSpace(result.Name)
+                    ? result.Url.AbsoluteUri
+                    : result.Name;
+
+                if (result.Outcome == RefreshOutcome.Failed)
+                {
+                    _logger.LogWarning(
+                        "刷新仓库失败：{Repository}（{Url}）：{Detail}",
+                        name,
+                        result.Url,
+                        result.Detail ?? "");
+                }
+                else
+                {
+                    _logger.LogInformation(
+                        "刷新仓库：{Repository}（{Url}）{Outcome}",
+                        name,
+                        result.Url,
+                        result.Outcome == RefreshOutcome.Updated ? "已更新" : "未变化");
+                }
             }
 
-            Status = _localization.Format("Repositories.Status.Refreshed", summary.Updated, summary.NotModified, summary.Failed);
-        });
+            _logger.LogInformation(
+                "刷新仓库完成：更新 {Updated} 个，未变化 {NotModified} 个，失败 {Failed} 个",
+                summary.Updated,
+                summary.NotModified,
+                summary.Failed);
 
-        Reload();
+            Status = announce
+                ? _localization.Format("Repositories.Status.Refreshed", summary.Updated, summary.NotModified, summary.Failed)
+                : summary.Failed > 0
+                    ? _localization.Format("Repositories.Status.RefreshFailed", summary.Failed)
+                    : null;
+
+            Reload();
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            _logger.LogWarning(exception, "刷新仓库失败");
+
+            Status = _localization.Format("Page.OperationFailed", exception.Message);
+        }
+        finally
+        {
+            IsRefreshing = false;
+        }
     }
 
     public async Task ImportAsync(string content)
@@ -307,7 +369,7 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
 
     public void Release()
     {
-        if (IsBusy)
+        if (IsBusy || IsRefreshing)
         {
             return;
         }
