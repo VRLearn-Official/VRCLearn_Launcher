@@ -319,7 +319,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -File build/pack-plugin.ps1 `
 
 - 索引地址固定为 `<hub>/index.json`，结构与市场页一致：每个插件含 `id`、`apiVersion`、`minHostVersion` 与 `versions[]`；每个版本含 `version`、`size`、`sha256`、`url`。
 - 包地址必须与 hub 同 scheme、同主机、同端口，且位于 hub 路径下；相对地址按索引地址解析。
-- 进入插件页时检查，同一 hub 24 小时内不重复请求，失败同样冷却；工具栏可以手动强制检查。
+- 只在启动时自动检查；进入插件页不再自动请求，工具栏可以手动检查。每次检查都会请求 hub（带 ETag，未变化时 304），失败下次仍会重试。
 - 只提示并安装更高版本；`apiVersion` 必须与宿主一致，`minHostVersion` 高于宿主时不提示。
 - 用户确认后才下载。下载文件校验 `sha256`（旧记录没有该字段时改为校验包内清单的 `id` 与 `version`），安装仍走完整的包结构、兼容性与原子替换流程。
 - 已加载的插件更新后不会热重载：窗口关闭、文件在下一次启动时替换，重启前无法再次打开；未加载的插件更新后立即使用新版本。

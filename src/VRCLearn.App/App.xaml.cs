@@ -11,6 +11,7 @@ using VRCLearn.Core.Configuration;
 using VRCLearn.Core.Projects;
 using VRCLearn.Core.Repositories;
 using VRCLearn.Core.Unity;
+using VRCLearn.Core.Vpm;
 using VRCLearn.Infrastructure.Http;
 using VRCLearn.Infrastructure;
 using VRCLearn.Infrastructure.Logging;
@@ -156,7 +157,7 @@ public partial class App : Application
 
             _ = services.GetRequiredService<IUnityEditorLocator>().RefreshFromHubAsync(CancellationToken.None);
 
-            _ = services.GetRequiredService<RepositoriesViewModel>().RefreshOnStartupAsync();
+            _ = RefreshRepositoriesAndCheckPluginsAsync(services);
 
             startupLogger.LogInformation(
                 "VRCLearn Launcher {Version} started. OS: {OS}, language: {Language}, log level: {Level}, root: {Root}, config: {Config}, data: {Data}",
@@ -193,6 +194,46 @@ public partial class App : Application
                 MessageBoxImage.Error);
 
             Shutdown();
+        }
+    }
+
+    private static TimeSpan RepositoryRefreshTimeout(int repositoryCount) =>
+        TimeSpan.FromSeconds(20 * Math.Max(1, repositoryCount));
+
+    private static async Task RefreshRepositoriesAndCheckPluginsAsync(IServiceProvider services)
+    {
+        var logger = services.GetRequiredService<ILogger<App>>();
+        var count = services.GetRequiredService<RepositoryService>()
+            .List()
+            .Count(x => x.Url is not null);
+        var timeout = RepositoryRefreshTimeout(count);
+
+        using var cancellation = new CancellationTokenSource(timeout);
+
+        try
+        {
+            await services.GetRequiredService<RepositoriesViewModel>()
+                .RefreshOnStartupAsync(cancellation.Token);
+        }
+        catch (OperationCanceledException) when (cancellation.IsCancellationRequested)
+        {
+            logger.LogWarning(
+                "仓库刷新超过 {Seconds} 秒（{Count} 个仓库），继续检查插件更新",
+                timeout.TotalSeconds,
+                count);
+        }
+        catch (Exception exception)
+        {
+            logger.LogWarning(exception, "启动时刷新仓库失败");
+        }
+
+        try
+        {
+            await services.GetRequiredService<PluginsViewModel>().CheckOnStartupAsync();
+        }
+        catch (Exception exception) when (exception is not OperationCanceledException)
+        {
+            logger.LogWarning(exception, "启动时检查插件更新失败");
         }
     }
 

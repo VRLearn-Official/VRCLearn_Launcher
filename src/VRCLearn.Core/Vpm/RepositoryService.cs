@@ -249,6 +249,10 @@ public sealed class RepositoryService
                     results.Add(new RepositoryRefreshResult(setting.Name, url, RefreshOutcome.Failed, "缓存写入失败"));
                 }
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception exception) when (exception is HttpRequestException or IOException or TaskCanceledException or RepositoryParseException or JsonException)
             {
                 failed++;

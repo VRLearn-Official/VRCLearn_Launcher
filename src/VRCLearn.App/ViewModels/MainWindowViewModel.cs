@@ -2,6 +2,7 @@ using System.ComponentModel;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.Extensions.Logging;
 using VRCLearn.App.Services;
+using VRCLearn.Core.Vpm;
 using VRCLearn.Infrastructure.Storage;
 
 namespace VRCLearn.App.ViewModels;
@@ -64,6 +65,7 @@ public sealed partial class MainWindowViewModel : ObservableObject
         projectDetail.PropertyChanged += OnProjectDetailChanged;
         localization.PropertyChanged += OnLocalizationChanged;
         update.PropertyChanged += OnUpdateChanged;
+        _repositories.Refreshed += OnRepositoriesRefreshed;
     }
 
     public string SettingsNavLabel =>
@@ -77,6 +79,13 @@ public sealed partial class MainWindowViewModel : ObservableObject
         }
     }
 
+    private void OnRepositoriesRefreshed(RefreshSummary summary)
+    {
+        if (CurrentKey == "project-detail" && summary.Updated > 0)
+        {
+            Toasts.Show(_localization["ProjectDetail.RepositoriesRefreshed"]);
+        }
+    }
 
     private void OnProjectDetailChanged(object? sender, PropertyChangedEventArgs e)
     {
@@ -178,6 +187,8 @@ public sealed partial class MainWindowViewModel : ObservableObject
     public UpdateViewModel Update { get; }
 
     public RepositoriesViewModel Repositories => _repositories;
+
+    public PluginsViewModel Plugins => _plugins;
 
     public ProgressService Progress { get; }
 

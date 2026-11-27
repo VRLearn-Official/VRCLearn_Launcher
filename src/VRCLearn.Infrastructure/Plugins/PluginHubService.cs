@@ -18,11 +18,8 @@ public sealed class PluginHubService(
     PluginHubStateStore states,
     ILogger<PluginHubService> logger)
 {
-    public static TimeSpan CheckInterval { get; } = TimeSpan.FromHours(24);
-
     public async Task<PluginHubCheckResult> CheckAsync(
         IReadOnlyList<PluginHubTarget> installed,
-        bool force,
         CancellationToken cancellationToken)
     {
         var updates = new List<PluginHubUpdateCandidate>();
@@ -59,10 +56,7 @@ public sealed class PluginHubService(
         {
             var entry = state.Hubs.FirstOrDefault(x => string.Equals(x.Hub, hub, StringComparison.Ordinal));
 
-            if (force || entry is null || now - entry.CheckedAt >= CheckInterval)
-            {
-                entry = await RefreshAsync(hub, entry, state, now, cancellationToken).ConfigureAwait(false);
-            }
+            entry = await RefreshAsync(hub, entry, state, now, cancellationToken).ConfigureAwait(false);
 
             if (entry.Failed)
             {

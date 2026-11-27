@@ -51,6 +51,8 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
 
     public ObservableCollection<RepositoryItemViewModel> Repositories { get; } = [];
 
+    public event Action<RefreshSummary>? Refreshed;
+
     [ObservableProperty]
     private string _newRepositoryUrl = "";
 
@@ -209,17 +211,17 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
     [RelayCommand(CanExecute = nameof(CanRefresh))]
     private Task RefreshAsync() => RefreshRepositoriesAsync(announce: true);
 
-    public async Task RefreshOnStartupAsync()
+    public async Task RefreshOnStartupAsync(CancellationToken cancellationToken)
     {
         if (_service.List().Any(x => x.Url is not null))
         {
-            await RefreshRepositoriesAsync(announce: false);
+            await RefreshRepositoriesAsync(announce: false, cancellationToken);
         }
     }
 
     private bool CanRefresh() => !IsRefreshing;
 
-    private async Task RefreshRepositoriesAsync(bool announce)
+    private async Task RefreshRepositoriesAsync(bool announce, CancellationToken cancellationToken = default)
     {
         if (IsRefreshing)
         {
@@ -230,7 +232,7 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
 
         try
         {
-            var summary = await _service.RefreshAsync(CancellationToken.None);
+            var summary = await _service.RefreshAsync(cancellationToken);
 
             foreach (var result in summary.Results)
             {
@@ -269,6 +271,8 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
                     : null;
 
             Reload();
+
+            Refreshed?.Invoke(summary);
         }
         catch (Exception exception) when (exception is not OperationCanceledException)
         {

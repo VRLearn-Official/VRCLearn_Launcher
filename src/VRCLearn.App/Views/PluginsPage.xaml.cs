@@ -13,7 +13,7 @@ public partial class PluginsPage : UserControl
         {
             if (args.NewValue is true && DataContext is PluginsViewModel viewModel)
             {
-                _ = viewModel.ReloadAsync();
+                viewModel.Reload();
             }
         };
     }

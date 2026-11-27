@@ -177,7 +177,7 @@ public sealed partial class PluginsViewModel : PageViewModelBase
             || plugin.SourceText.Contains(query, StringComparison.OrdinalIgnoreCase);
     }
 
-    public async Task ReloadAsync()
+    public void Reload()
     {
         if (IsBusy)
         {
@@ -200,18 +200,30 @@ public sealed partial class PluginsViewModel : PageViewModelBase
         {
             IsBusy = false;
         }
+    }
 
-        await CheckForUpdatesAsync(force: false);
+    public async Task CheckOnStartupAsync()
+    {
+        Rebuild();
+
+        var count = await CheckForUpdatesAsync(announce: false);
+
+        _logger.LogInformation("启动时检查插件更新：发现 {Count} 个可更新", count);
+
+        if (count > 0)
+        {
+            Status = _localization.Format("Plugins.UpdateCheckFound", count);
+        }
     }
 
     [RelayCommand]
-    private Task CheckUpdates() => CheckForUpdatesAsync(force: true);
+    private async Task CheckUpdates() => await CheckForUpdatesAsync(announce: true);
 
-    private async Task CheckForUpdatesAsync(bool force)
+    private async Task<int> CheckForUpdatesAsync(bool announce)
     {
         if (IsCheckingUpdates)
         {
-            return;
+            return 0;
         }
 
         var targets = Plugins
@@ -224,19 +236,19 @@ public sealed partial class PluginsViewModel : PageViewModelBase
             _updates.Clear();
             ApplyUpdates();
 
-            if (force)
+            if (announce)
             {
                 Status = _localization["Plugins.UpdateCheckNone"];
             }
 
-            return;
+            return 0;
         }
 
         IsCheckingUpdates = true;
 
         try
         {
-            var result = await _hub.CheckAsync(targets, force, CancellationToken.None);
+            var result = await _hub.CheckAsync(targets, CancellationToken.None);
 
             foreach (var failure in result.Failures)
             {
@@ -252,7 +264,7 @@ public sealed partial class PluginsViewModel : PageViewModelBase
 
             ApplyUpdates();
 
-            if (force)
+            if (announce)
             {
                 if (result.Updates.Count > 0)
                 {
@@ -269,6 +281,8 @@ public sealed partial class PluginsViewModel : PageViewModelBase
                     Status = _localization["Plugins.UpdateCheckUpToDate"];
                 }
             }
+
+            return result.Updates.Count;
         }
         catch (Exception exception) when (
             exception is HttpRequestException or IOException or InvalidOperationException
@@ -276,10 +290,12 @@ public sealed partial class PluginsViewModel : PageViewModelBase
         {
             _logger.LogWarning(exception, "检查插件更新失败");
 
-            if (force)
+            if (announce)
             {
                 Status = _localization.Format("Plugins.UpdateCheckFailed", exception.Message);
             }
+
+            return 0;
         }
         finally
         {
