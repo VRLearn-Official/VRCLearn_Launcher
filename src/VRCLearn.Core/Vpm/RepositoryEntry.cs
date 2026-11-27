@@ -59,4 +59,6 @@ public sealed record RefreshSummary(
     int Failed,
     IReadOnlyList<RepositoryRefreshResult> Results);
 
+public sealed record RepositoryRefreshProgress(int Current, int Total);
+
 public sealed record ImportSummary(int Added, int AlreadyAdded, int Failed, int UnparseableLines);

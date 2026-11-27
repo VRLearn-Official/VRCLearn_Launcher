@@ -200,19 +200,24 @@ public sealed class RepositoryService
 
     private static readonly IReadOnlyDictionary<string, string> NoHeaders = new Dictionary<string, string>();
 
-    public async Task<RefreshSummary> RefreshAsync(CancellationToken cancellationToken)
+    public async Task<RefreshSummary> RefreshAsync(
+        CancellationToken cancellationToken,
+        IProgress<RepositoryRefreshProgress>? progress = null)
     {
         var updated = 0;
         var notModified = 0;
         var failed = 0;
         var results = new List<RepositoryRefreshResult>();
+        var repositories = Settings.UserRepos
+            .Where(x => x.Url is not null)
+            .ToList();
+        var current = 0;
 
-        foreach (var setting in Settings.UserRepos)
+        foreach (var setting in repositories)
         {
-            if (setting.Url is not { } url)
-            {
-                continue;
-            }
+            var url = setting.Url!;
+
+            progress?.Report(new RepositoryRefreshProgress(++current, repositories.Count));
 
             var cached = _cacheStore.Load(setting.LocalPath);
 

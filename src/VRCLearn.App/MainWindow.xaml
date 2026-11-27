@@ -260,10 +260,13 @@
                             Height="14"
                             Style="{StaticResource SpinningRing}" />
                         <TextBlock
+                            MaxWidth="160"
                             Margin="{StaticResource Gap.Inline}"
                             VerticalAlignment="Center"
                             Style="{StaticResource Caption}"
-                            Text="{markup:Tr Repositories.Refreshing}" />
+                            Text="{Binding Repositories.RefreshStatusText}"
+                            TextTrimming="CharacterEllipsis"
+                            ToolTip="{Binding Repositories.RefreshStatusText}" />
                     </StackPanel>
                     <StackPanel
                         Margin="0,4,0,0"

@@ -40,7 +40,11 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
         _navigation = navigation;
         _logger = logger;
         UserPackages = userPackages;
-        _localization.PropertyChanged += (_, _) => Reload();
+        _localization.PropertyChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(RefreshStatusText));
+            Reload();
+        };
     }
 
     protected override ILogger Logger => _logger;
@@ -208,6 +212,18 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
     [NotifyCanExecuteChangedFor(nameof(RefreshCommand))]
     private bool _isRefreshing;
 
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RefreshStatusText))]
+    private int _refreshCurrent;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(RefreshStatusText))]
+    private int _refreshTotal;
+
+    public string RefreshStatusText => RefreshTotal == 0
+        ? _localization["Repositories.Refreshing"]
+        : _localization.Format("Repositories.RefreshingProgress", RefreshCurrent, RefreshTotal);
+
     [RelayCommand(CanExecute = nameof(CanRefresh))]
     private Task RefreshAsync() => RefreshRepositoriesAsync(announce: true);
 
@@ -229,10 +245,18 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
         }
 
         IsRefreshing = true;
+        RefreshCurrent = 0;
+        RefreshTotal = 0;
 
         try
         {
-            var summary = await _service.RefreshAsync(cancellationToken);
+            var progress = new Progress<RepositoryRefreshProgress>(value =>
+            {
+                RefreshCurrent = value.Current;
+                RefreshTotal = value.Total;
+            });
+
+            var summary = await _service.RefreshAsync(cancellationToken, progress);
 
             foreach (var result in summary.Results)
             {
@@ -283,6 +307,8 @@ public sealed partial class RepositoriesViewModel : PageViewModelBase, IPageView
         finally
         {
             IsRefreshing = false;
+            RefreshCurrent = 0;
+            RefreshTotal = 0;
         }
     }
 

@@ -229,6 +229,7 @@
   "Repositories.Add": "新增",
   "Repositories.Refresh": "重新整理",
   "Repositories.Refreshing": "正在重新整理倉庫…",
+  "Repositories.RefreshingProgress": "正在重新整理倉庫…{0} / {1}",
   "Repositories.ImportTitle": "匯入倉庫",
   "Repositories.Import": "匯入",
   "Repositories.ImportHint": "從倉庫清單檔案匯入倉庫。",
